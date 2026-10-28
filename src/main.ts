@@ -9,7 +9,7 @@ import * as draw from 'starhermit:draw';
 
 // The renderer, input, UI, storage, practice authority and online sockets are
 // all the real StarHermit host API. No browser-only replacement renderer.
-const C={ink:'#112c30',panel:'#142f32',cream:'#f4ead4',gold:'#e9be72',muted:'#9cb9b5',edge:'#345052',red:'#e58a75',green:'#9dcca6'};
+const C={ink:'#0f1a20',panel:'#20160f',cream:'#f3e6c6',gold:'#e4b660',muted:'#b9a888',edge:'#6e5230',red:'#e3836b',green:'#a9d39b',brass:'#c8963e',teak:'#2a1c12',parchment:'#ead9b1',tar:'#120c08'};
 const taskNames:any={helm:'Helm',lookout:'Lookout',guns:'Guns',repair:'Repair',cook:'Galley',forage:'Forage',rest:'Rest'};
 const dirs=['prosper','explore','hunt','survive'];
 const dirNames=['Make our fortune','See what’s out there','Hunt the bastards','Keep everyone alive'];
@@ -96,7 +96,7 @@ async function joinWorld(){try{room=await platform.rooms.joinByCode(joinCode.tri
 function updateBrainFields(){const c=brainConfigs[selectedCrew]||{};endpoint=c.base_url||'http://127.0.0.1:8080/v1';model=c.model||'smollm2-135m';apiKeyEnv=c.api_key_env||'';brainMode=c.mode==='endpoint'?1:0;}
 function saveBrain(){brainConfigs[selectedCrew]={mode:brainMode?'endpoint':'tiny',base_url:endpoint,model,api_key_env:apiKeyEnv};storage.setJson('crew-brains',brainConfigs);flash('Character brain saved on this device. Export it for the local brain officer.');}
 function exportBrains(){saveBrain();files.saveAs('crew-brains.json',JSON.stringify({schema:1,default:{mode:'tiny',base_url:'http://127.0.0.1:8080/v1',model:'smollm2-135m'},crew:brainConfigs},null,2),{type:'application/json'}).catch(e=>flash(String(e)));}
-function meter(name:string,v:number,max:number,color:string,width=215){ui.row(name,()=>{ui.label(name,{color:C.muted,size:11});ui.spacer();ui.label(Math.round(v)+' / '+max,{size:11,color});},{width});ui.style({parts:{fill:{background:color},track:{background:'#28474a'}},height:5}).progress(v/max,width);}
+function meter(name:string,v:number,max:number,color:string,width=215){ui.row(name,()=>{ui.label(name,{color:C.muted,size:11});ui.spacer();ui.label(Math.round(v)+' / '+max,{size:11,color});},{width});ui.style({parts:{fill:{background:color},track:{background:'#3a2716'}},height:5}).progress(v/max,width);}
 function button(label:string,fn:()=>void,selected=false,disabled=false){if(ui.style(selected?'gold':'soft').button(label,{selected,disabled}))fn();}
 function route(id:string){selectedPlace=id;command({type:'sail',destination:id});}
 function openCrew(id:string){selectedCrew=id;panel='crew';updateBrainFields();}
@@ -109,15 +109,28 @@ function parseOrder(){
  if(!task){flash('Try “Peg, repair the hull”, “Fuse, guns” or “Pip, lookout”.');return;}doOrder(task);orderText='';
 }
 onStart(()=>{
- ui.setTheme({fontSize:13,headingSize:20,smallSize:11,padding:12,spacing:8,text:C.cream,muted:C.muted,panel:C.panel,control:'#25464a',hovered:'#365b5e',pressed:'#1c3a3e',field:'#0f272c',accent:C.gold,focus:C.gold,outline:C.edge,radius:7});
+ ui.setTheme({fontSize:13,headingSize:20,smallSize:11,padding:12,spacing:8,text:C.cream,muted:C.muted,panel:C.panel,control:'#3a2716',hovered:'#4d3420',pressed:'#2a1c12',field:'#170f0a',accent:C.gold,focus:C.gold,outline:C.edge,radius:4});
+ // Naval theme: oiled teak planking for bars and rails, brass fittings for buttons, sea-chart parchment for cards.
+ const wood=(shade:string)=>[{type:'linear',angle:180,stops:[shade,shade]},{image:'assets/wood.png',repeat:true,size:[256,256]}] as const;
+ const brassEdge={width:1,color:'#a77a33'},brassBevel=[{x:0,y:1,color:'#f7d79066',inset:true},{x:0,y:-2,color:'#00000055',inset:true}];
  ui.setStyles({
-  button:{padding:{top:9,bottom:9,start:12,end:12},radius:5,text:{size:12},border:{width:1,color:'#3b5958'},background:'#26474a',hovered:{background:'#365b5e'}},
-  '.gold':{background:C.gold,text:{color:C.ink,weight:'bold'},border:{color:C.gold,width:1},hovered:{background:'#f4d396'},selected:{background:C.gold,text:{color:C.ink}}},
-  '.soft':{background:'#234246',border:{color:'#3b5858',width:1},selected:{background:'#3d5b58',text:{color:C.gold}}},
-  '.flat':{background:'transparent',border:{width:0},text:{color:C.muted,size:12},hovered:{background:'#2a4649',text:{color:C.cream}}},
-  '.card':{background:'#1b393c',border:{width:1,color:'#385252'},padding:12,radius:7},
-  dialog:{background:C.panel,border:{width:1,color:'#758278'},radius:10,width:620,padding:22,parts:{backdrop:{background:'#081c22bb'}}},
-  textField:{width:250,padding:10,border:{width:1,color:C.edge},radius:4},select:{width:235},heading:{text:{font:'serif',weight:'bold'}},
+  '.woodbar':{background:wood('#1a110b8c'),border:{width:{bottom:2},color:{bottom:C.brass}},shadow:{x:0,y:3,blur:8,color:'#00000066'}},
+  '.woodstrip':{background:wood('#0f0a06b8'),border:{width:{bottom:1},color:{bottom:'#7a5a2e'}}},
+  '.deckbar':{background:wood('#120c08a6'),border:{width:{top:2},color:{top:C.brass}},shadow:{x:0,y:-3,blur:8,color:'#00000066'}},
+  panel:{background:wood('#1d130ca0'),border:{width:2,color:'#8e6a32',style:'double'},radius:3,shadow:[{x:0,y:4,blur:14,color:'#000000aa'},{x:0,y:0,blur:0,spread:1,color:'#00000088'}]},
+  button:{padding:{top:9,bottom:9,start:12,end:12},radius:3,text:{size:12,color:C.cream},border:brassEdge,background:{type:'linear',angle:180,stops:['#4a3220','#2f1f13']},shadow:brassBevel,
+   hovered:{background:{type:'linear',angle:180,stops:['#5c3f28','#3a2616']},border:{color:C.gold}},pressed:{background:'#24170e'},transition:0.12},
+  '.gold':{background:{type:'linear',angle:180,stops:['#f6d58c','#d9a64c','#b5822f']},text:{color:C.tar,weight:'bold'},border:{color:'#7c5520',width:1},shadow:[{x:0,y:1,color:'#fff3c899',inset:true},{x:0,y:2,blur:4,color:'#00000066'}],
+   hovered:{background:{type:'linear',angle:180,stops:['#fbe3a6','#e6b65c','#c18d36']}},selected:{background:{type:'linear',angle:180,stops:['#f6d58c','#d9a64c','#b5822f']},text:{color:C.tar}}},
+  '.soft':{background:{type:'linear',angle:180,stops:['#3e2a1a','#2a1c12']},border:{color:'#6e5230',width:1},selected:{background:{type:'linear',angle:180,stops:['#5a3d22','#3d2916']},border:{color:C.gold},text:{color:C.gold}}},
+  '.flat':{background:'transparent',border:{width:{top:0,start:0,end:0,bottom:1},color:{bottom:'#8e6a3266'}},radius:0,shadow:[],text:{color:C.muted,size:12},hovered:{background:'#3a271633',text:{color:C.gold}}},
+  '.card':{background:[{type:'linear',angle:180,stops:['#ead9b1a0','#dcc596b0']},{image:'assets/parchment.png',size:'cover'}],border:{width:1,color:'#8a6a3a'},padding:12,radius:2,shadow:{x:0,y:2,blur:6,color:'#00000088'},
+   inside:{label:{text:{color:'#2b1c10'}},paragraph:{text:{color:'#3b2a1a'}}}},
+  dialog:{background:wood('#1c130cc8'),border:{width:3,color:'#9b7436',style:'double'},radius:4,width:620,padding:22,shadow:{x:0,y:10,blur:30,color:'#000000cc'},parts:{backdrop:{background:'#05090dc4'}}},
+  textField:{width:250,padding:10,border:{width:1,color:'#8e6a32'},radius:2,background:'#140d08',text:{color:C.cream}},select:{width:235,border:{width:1,color:'#8e6a32'},radius:3,background:{type:'linear',angle:180,stops:['#4a3220','#2f1f13']}},
+  heading:{text:{font:'serif',weight:'bold',color:'#f6e7c4'}},
+  '.toast':{background:[{type:'linear',angle:180,stops:['#ead9b1c0','#d6bd8cd0']},{image:'assets/parchment.png',size:'cover'}],border:{width:2,color:'#8a6a3a'},radius:2,shadow:{x:0,y:4,blur:12,color:'#000000aa'}},
+  '.tag':{background:'#1a110bdd',border:{width:1,color:'#8e6a3288'},radius:2},
  });
  local();const launched=platform.launchContext();if(launched?.sessionId)connect(launched.sessionId);
 });
@@ -133,7 +146,7 @@ function labelAt(text:string,x:number,y:number,z:number,color:string,id?:string,
  const f=frame(),v=new Vector3(x,y,z).project(camera),px=(v.x+1)*f.width/2,py=(1-v.y)*f.height/2;
  if(px<20||px>f.width-20||py<100||py>f.height-180)return;
  const width=draw.measureText(text,{size:12*f.scale}).width;
- draw.box(px-width/2-9*f.scale,py-6*f.scale,width+18*f.scale,27*f.scale,{background:'#163638df',radius:4*f.scale,border:{width:1,color:'#88a89a66'}});
+ draw.box(px-width/2-9*f.scale,py-6*f.scale,width+18*f.scale,27*f.scale,'tag');
  draw.text(text,px,py,{size:12*f.scale,color,align:'center'});
  if(id){const hit={x:px-width/2-9*f.scale,y:py-6*f.scale,w:width+18*f.scale,h:27*f.scale,id,crew};labelHits.push(hit);ui.target(text,{x:hit.x,y:hit.y,width:hit.w,height:hit.h});}
 }
@@ -160,7 +173,7 @@ function renderScene(){
  else if(s){labelAt(s.name,s.x,6,s.z,C.gold);const l=s.log[s.log.length-1];if(l&&state.time-l.at<8)labelAt(l.name+': '+(l.text.length>54?l.text.slice(0,l.text.lastIndexOf(' ',53)>20?l.text.lastIndexOf(' ',53):53)+'…':l.text),s.x,4.5,s.z+2,C.cream);}
 }
 function header(w:number,scale:number,mobile:boolean){
- draw.rect(0,0,w,76*scale,C.ink);draw.rect(0,75*scale,w,scale,'#60736a');
+ draw.box(0,0,w,76*scale,'woodbar');
  ui.area({x:20*scale,y:10*scale,width:w-40*scale,height:58*scale},()=>ui.row('Header',()=>{
   ui.column('Brand',()=>{ui.heading('Pirate Intelligence',{font:'serif',size:mobile?23:28});ui.label(mobile?'A FINE CREW. A TERRIBLE IDEA.':'A SMALL SHIP. AN UNREASONABLE AMOUNT OF TROUBLE.',{color:C.muted,size:9});},{spacing:1});
   ui.spacer();if(!mobile&&state){for(const [name,val] of [['GOLD',Math.floor(state.myShip?.gold||0)],['TIMBER',Math.floor(state.myShip?.timber||0)],['SHOT',state.myShip?.ammo||0]])ui.column(name as string,()=>{ui.label(name as string,{size:9,color:C.muted});ui.label(String(val),{size:21,color:C.gold,weight:'bold'});},{width:80,spacing:2});}
@@ -168,7 +181,7 @@ function header(w:number,scale:number,mobile:boolean){
  },{width:(w-40*scale)/scale,align:'center',spacing:16}));
 }
 function toolbar(w:number,scale:number,mobile:boolean){
- draw.rect(0,76*scale,w,50*scale,'#1b383a');
+ draw.box(0,76*scale,w,50*scale,'woodstrip');
  ui.area({x:20*scale,y:84*scale,width:w-40*scale,height:40*scale},()=>ui.row('Views',()=>{
   button('Sea chart',()=>{targetZoom=0;},targetZoom<.5);button('Aboard ship',()=>{targetZoom=1;},targetZoom>=.5);
   if(!mobile){ui.label('Q / E or scroll to zoom',{size:11,color:C.muted});ui.spacer();ui.label('DAY '+(state?.day||1)+'   ·   '+(state?.weather||'Fair winds'),{size:11,color:C.muted});}
@@ -202,7 +215,7 @@ function bottom(w:number,h:number,scale:number,mobile:boolean){
  const s=state?.myShip;if(!s)return;
  const destination=places.find(p=>p.id===s.destination)||state.raiders.concat(state.ships).find((p:any)=>'ship:'+p.id===s.destination);
  const width=w/scale,height=h/scale,bh=mobile?156:167,y=height-bh;
- draw.rect(0,y*scale,w,bh*scale,'#102a2ef5');draw.rect(0,y*scale,w,scale,'#45615d');
+ draw.box(0,y*scale,w,bh*scale,'deckbar');
  ui.area({x:20*scale,y:(y+13)*scale,width:(width-40)*scale,height:(bh-20)*scale},()=>ui.row('Bottom',()=>{
   ui.column('Ship talk',()=>{ui.label('OVERHEARD ABOARD',{size:9,color:C.gold,weight:'bold'});const logs=s.log.slice(-(mobile?2:3));for(const l of logs){ui.paragraph(l.name+': “'+l.text+'”',mobile?width-40:Math.min(480,width*.4),{size:11});}ui.label(network,{size:9,color:C.muted});},{width:mobile?width-40:Math.min(490,width*.41),spacing:7});
   if(!mobile){ui.column('Orders and battle',()=>{
@@ -310,13 +323,13 @@ onRender(()=>{
  renderScene();header(w,scale,mobile);toolbar(w,scale,mobile);
  const lw=w/scale,lh=h/scale;dialogWidth=Math.max(260,Math.min(530,lw-70));
  if(!mobile){navPanel(20,144,230,lh-330,scale);ordersPanel(lw-297,144,277,lh-330,scale);}
- else if(mobilePanel)ordersPanel(lw-297,136,277,lh-310,scale);
+ else if(mobilePanel)ordersPanel(12,192,lw-24,lh-192-168,scale);
  if(state?.myShip){
-  if(mobile){ui.area({x:12*scale,y:137*scale,width:(lw-24)*scale,height:48*scale},()=>ui.row('Mobile actions',()=>{button('Destinations',()=>panel='mobileNav');button('Crew',()=>openCrew(selectedCrew));button('Longboat',()=>panel='away');button('Trade',()=>panel='trade');button('More',()=>panel='more');},{spacing:5}));}
+  if(mobile){ui.area({x:12*scale,y:137*scale,width:(lw-24)*scale,height:48*scale},()=>ui.row('Mobile actions',()=>{button('Course',()=>panel='mobileNav');button('Crew',()=>openCrew(selectedCrew));button('Longboat',()=>panel='away');button('Trade',()=>panel='trade');button('More',()=>panel='more');},{spacing:5}));}
   if(panel==='mobileNav'){ui.dialog('Destinations','Chart a course',true,()=>{for(const p of places)button(p.name,()=>{route(p.id);panel='';});button('Contracts',()=>panel='missions');button('Close',()=>panel='');});}
  }
  bottom(w,h,scale,mobile);
  if(panel!=='mobileNav')dialogs();
- if(noticeTime>0){draw.box(w/2-260*scale,132*scale,520*scale,55*scale,{background:'#f0d39a',radius:5*scale});draw.text(notice.length>100?notice.slice(0,100)+'…':notice,w/2,148*scale,{size:12*scale,color:C.ink,align:'center'});}
+ if(noticeTime>0){draw.box(w/2-260*scale,132*scale,520*scale,55*scale,'toast');draw.text(notice.length>100?notice.slice(0,100)+'…':notice,w/2,148*scale,{size:12*scale,color:C.ink,align:'center'});}
  // Model providers never receive platform tokens or authority handles.
 });
