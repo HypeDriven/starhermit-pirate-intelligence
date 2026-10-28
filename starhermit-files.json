@@ -1,0 +1,10 @@
+{
+  "files": {
+    "LICENSE": {"sha256": "420223151f78e03dcd339b760dab7100186564bdf01c98896c4e84d0920a6d16", "size": 5446},
+    "index.html": {"sha256": "0caf8ea90ee18a00d02f0a066dfb4c6a0694fb7eff16de0c2f21896df8d423c8", "size": 1772},
+    "server.js": {"sha256": "5f07fa483f4ffe3df33942e410a8cc7f5faa5b61f52c391f5cc31f6cd3cb0b3a", "size": 18122},
+    "src/main.ts": {"sha256": "db804396f23e5e89bc43b52844b0334280d0aef11e2bab773c2461eb4cd81814", "size": 39608},
+    "starhermit.txt": {"sha256": "92b47d937a1d5930115ae0ab70c844e170d46904ca3271ea6ac1ebb40b34f81a", "size": 543}
+  },
+  "format": 1
+}

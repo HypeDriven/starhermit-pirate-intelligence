@@ -1,0 +1,17 @@
+name=Pirate Intelligence
+description=Six questionable souls. One ship. Your orders. A persistent pirate captain simulation.
+launch=index.html
+engine.api=1
+engine.entry=src/main.ts
+engine.version=1.20.0
+engine.minor=22
+engine.capabilities=platform,storage
+server=server.js
+control.zoomin=Equal+KeyE | Zoom into ship
+control.zoomout=Minus+KeyQ | Zoom out to sea
+control.anchor=Space | Drop or weigh anchor
+control.fire=KeyF | Fire broadside
+control.crew=KeyC | Crew manifest
+control.map=KeyM | Sea chart
+engine.group.zoomin=Ship & sea
+cache..=0

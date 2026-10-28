@@ -1,0 +1,36 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import fs from 'node:fs';
+const code=fs.readFileSync(new URL('../server.js',import.meta.url),'utf8');
+function fixture(){
+ const realm=vm.createContext({});vm.runInContext(code,realm);const game=realm.game;
+ const players=[{id:'alice',name:'Alice'},{id:'bob',name:'Bob'},{id:'brain',name:'Brain officer'}];
+ let ctx={now:1000000,random:.8,pausedMs:0,sessionId:'test-world',players,sessionState:null};
+ let out=game.createSession(ctx);ctx.sessionState=out.sessionState;
+ return {game,ctx,get world(){return ctx.sessionState;},get ship(){return ctx.sessionState.ships.alice;},
+  cmd(data,from='alice'){const copy=JSON.parse(JSON.stringify(ctx));copy.message={from,data};const result=game.onPlayerMessage(copy);if(result.ok&&result.sessionState)ctx.sessionState=result.sessionState;return result;},
+  tick(n=1){for(let i=0;i<n;i++){ctx.now+=1000;const r=game.onTick(JSON.parse(JSON.stringify(ctx)));assert.equal(r.ok,true);ctx.sessionState=r.sessionState;}}
+ };
+}
+test('one ship and six independent characters per authenticated participant',()=>{const f=fixture();assert.equal(Object.keys(f.world.ships).length,3);assert.equal(f.ship.crew.length,6);assert.notEqual(f.ship.crew,f.world.ships.bob.crew);});
+test('private views hide other crews and their learned memories',()=>{const f=fixture();const r=f.cmd({type:'sync'});const a=r.broadcast.find(b=>b.to[0]==='alice').data;assert.equal(a.myShip.id,'alice');assert.equal(a.ships.find(s=>s.id==='bob').crew,undefined);});
+test('direct commands train preferences and have a 35-second priority',()=>{const f=fixture();assert.equal(f.cmd({type:'order',crewId:'peg',task:'rest',issuer:'morrow'}).ok,true);assert.equal(f.ship.crew[3].preferences.rest,.7);f.tick(32);assert.equal(f.ship.crew[3].task,'rest');assert.equal(f.ship.crew[3].memories.length,1);});
+test('specialist refuses off-role task without genuine emergency',()=>{const f=fixture();const r=f.cmd({type:'order',crewId:'tallow',task:'guns',issuer:'morrow',override:true});assert.equal(r.ok,false);assert.equal(f.ship.crew[4].task,'cook');});
+test('captain and first mate can issue emergency warrants; specialist cannot',()=>{const f=fixture();f.ship.hull=30;assert.equal(f.cmd({type:'order',crewId:'tallow',task:'guns',issuer:'peg',override:true}).ok,false);assert.equal(f.cmd({type:'order',crewId:'tallow',task:'guns',issuer:'brisk',override:true}).ok,true);});
+test('a decision delegate can only control a ship explicitly assigned to it',()=>{const f=fixture();const d={type:'decision',ownerId:'alice',crewId:'peg',task:'repair',issuer:'brisk'};assert.equal(f.cmd(d,'brain').ok,false);f.cmd({type:'delegate',userId:'brain'});assert.equal(f.cmd(d,'brain').ok,true);assert.equal(f.cmd(d,'brain').ok,false);});
+test('only delegated participant receives private model context',()=>{const f=fixture();f.cmd({type:'delegate',userId:'brain'});const r=f.cmd({type:'sync'});const b=r.broadcast.find(b=>b.data.type==='brain_context');assert.equal(b.to[0],'brain');assert.equal(b.data.ownerId,'alice');assert.equal(r.broadcast.some(b=>b.to[0]==='bob'&&b.data.type==='brain_context'),false);});
+test('LLM cannot override a live player order',()=>{const f=fixture();f.cmd({type:'delegate',userId:'brain'});f.cmd({type:'order',crewId:'peg',task:'rest',issuer:'morrow'});assert.equal(f.cmd({type:'decision',ownerId:'alice',crewId:'peg',task:'repair'},'brain').ok,false);});
+test('LLM output is bounded to legal task enum',()=>{const f=fixture();assert.equal(f.cmd({type:'decision',ownerId:'alice',crewId:'peg',task:'give_gold'}).ok,false);});
+test('travel arrives and drops anchor, leaving crew navigation autonomous',()=>{const f=fixture();f.cmd({type:'sail',destination:'mossjaw'});f.tick(30);assert.equal(f.ship.anchored,true);assert.equal(f.ship.destination,null);assert.ok(Math.hypot(f.ship.x-12,f.ship.z-17)<6.7);});
+test('away party requires anchorage, two different crew and captain aboard',()=>{const f=fixture();assert.equal(f.cmd({type:'away',job:'timber',crewIds:['peg','pip']}).ok,false);f.ship.x=12;f.ship.z=17;assert.equal(f.cmd({type:'away',job:'timber',crewIds:['morrow','pip']}).ok,false);assert.equal(f.cmd({type:'away',job:'timber',crewIds:['peg','peg']}).ok,false);assert.equal(f.cmd({type:'away',job:'timber',crewIds:['peg','pip']}).ok,true);assert.equal(f.cmd({type:'sail',destination:'saltwick'}).ok,false);f.tick(23);assert.equal(f.ship.away,null);assert.ok(f.ship.timber>=54);assert.equal(f.ship.crew.filter(c=>c.away).length,0);});
+test('trade checks port proximity, money, hold capacity and price differences',()=>{const f=fixture();assert.equal(f.cmd({type:'trade',item:'buy'}).ok,false);f.ship.x=-22;f.ship.z=8;assert.equal(f.cmd({type:'trade',item:'buy'}).ok,true);assert.equal(f.ship.cargo,10);assert.equal(f.ship.gold,300);f.ship.x=25;f.ship.z=-19;f.cmd({type:'trade',item:'sell'});assert.equal(f.ship.gold,530);assert.equal(f.ship.cargo,0);});
+test('broadside validates range, gun crew, shot cost and reload',()=>{const f=fixture();assert.equal(f.cmd({type:'fire',target:'redwake'}).ok,false);f.ship.x=8;f.ship.z=-3;assert.equal(f.cmd({type:'fire',target:'redwake'}).ok,true);assert.equal(f.ship.ammo,30);assert.equal(f.cmd({type:'fire',target:'redwake'}).ok,false);});
+test('ship and crew level with earned XP',()=>{const f=fixture();f.ship.x=-22;f.ship.z=8;assert.equal(f.cmd({type:'upgrade'}).ok,true);assert.equal(f.ship.level,2);assert.equal(f.ship.maxHull,135);f.tick(510);assert.ok(f.ship.crew[0].level>=2);});
+test('contracts pay once and cannot be farmed by accepting again',()=>{const f=fixture();f.cmd({type:'mission',id:'timber'});f.ship.timber=55;f.tick();assert.equal(f.ship.mission,null);assert.equal(f.ship.gold,450);assert.equal(f.cmd({type:'mission',id:'timber'}).ok,false);assert.equal(f.ship.gold,450);});
+test('pause-adjusted clock prevents an offline jump',()=>{const f=fixture();f.ctx.now+=86400000;f.ctx.pausedMs+=86400000;f.tick();assert.equal(f.world.time,1);});
+test('new participant gets one ship and existing ships survive membership change',()=>{const f=fixture();const ctx=JSON.parse(JSON.stringify(f.ctx));ctx.players.push({id:'carol',name:'Carol'});ctx.membership={change:'joined',userId:'carol',name:'Carol'};const r=f.game.onMembershipChange(ctx);assert.equal(r.ok,true);assert.equal(Object.keys(r.sessionState.ships).length,4);assert.equal(r.sessionState.ships.alice.gold,340);});
+test('online clients cannot export internal authority snapshot',()=>{const f=fixture();assert.equal(f.cmd({type:'snapshot'}).ok,false);f.ctx.sessionId='brine-local';assert.equal(f.cmd({type:'snapshot'}).broadcast[0].data.type,'snapshot');});
+test('malformed inputs cannot create invalid world actions',()=>{const f=fixture();for(const data of [null,[],{type:'sail',destination:'__proto__'},{type:'mission',id:'__proto__'},{type:'away',job:'timber',crewIds:'peg'},{type:'trade',item:'gold'}]){const result=f.cmd(data);assert.equal(result.ok,false);}});
+
+test('captain can pursue an NPC or player ship with validated destinations',()=>{const f=fixture();assert.equal(f.cmd({type:'pursue',target:'__proto__'}).ok,false);assert.equal(f.cmd({type:'pursue',target:'redwake'}).ok,true);f.tick(15);assert.ok(Math.hypot(f.ship.x-f.world.raiders[0].x,f.ship.z-f.world.raiders[0].z)<8);});

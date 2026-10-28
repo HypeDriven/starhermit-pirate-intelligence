@@ -1,0 +1,11 @@
+dist/
+__pycache__/
+*.pyc
+crew-brains.json
+.env
+*.key
+*.pem
+upload/
+reference/
+
+.starhermit/

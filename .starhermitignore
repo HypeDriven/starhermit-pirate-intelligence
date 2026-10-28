@@ -1,0 +1,8 @@
+dist/
+upload/
+companion/
+tests/
+scripts/
+reference/
+README.md
+DESIGN.md
