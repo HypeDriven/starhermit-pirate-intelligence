@@ -8,7 +8,6 @@
     "description.md": {"sha256": "97d3151c0cd0e6f9c230e3de8784fd8ee3e866c06e3efb3c6a9675b430fd09ed", "size": 867},
     "favicon.png": {"sha256": "8ec83067dd83a7a2b6f8563947d277219a52ab08e3223ee88d04d40115e28add", "size": 84415},
     "index.html": {"sha256": "296be0e582c3d8eae1c6ce9a0f3fd19d5fbd055206b911123f4ffe5f1ee9f20c", "size": 1777},
-    "publication.json": {"sha256": "e0e20cb846012b6366bfdab36cc3b3036eb85ef34cdad44d44394d9f09f8109e", "size": 1783},
     "server.js": {"sha256": "5f07fa483f4ffe3df33942e410a8cc7f5faa5b61f52c391f5cc31f6cd3cb0b3a", "size": 18122},
     "src/main.ts": {"sha256": "886bc6d940db88d4fedb0e010cbebcd1a165ae8a236bb049e4ee680c195c140a", "size": 41894},
     "starhermit.txt": {"sha256": "6943a4c0952d331420c370a37eaa99be5d4266ab39a686344daf3fa5ff88d24e", "size": 866}
