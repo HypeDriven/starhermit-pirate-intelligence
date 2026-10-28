@@ -10,9 +10,11 @@
     "gameSlug": "546dae33-aa48-4775-bff9-c0c48deb759f",
     "isVerifiedOwner": false,
     "metadataSource": "manual",
-    "createdAt": "2026-10-28T10:06:59.5968658+00:00",
+    "createdAt": "2026-10-28T10:06:59.596865+00:00",
     "coverArtSource": null,
     "coverArtUpdatedAt": null,
+    "submittedByUserId": "2712e04e-461b-4d23-81ae-e40b429128a8",
+    "submittedByUsername": "starhermit",
     "hosting": {
       "hostingEnabled": true,
       "hostedUrl": "https://546dae33-aa48-4775-bff9-c0c48deb759f.starhermit.com/index.html",
@@ -20,10 +22,10 @@
       "pinnedCommitSha": null,
       "deployedCommitSha": null,
       "deployError": null,
-      "deployedAt": "2026-10-28T10:06:59.6178355+00:00",
+      "deployedAt": "2026-10-28T10:07:49.80658+00:00",
       "externalLaunchUrl": null,
       "engineVersion": "1.20.2",
-      "deployWarning": "starhermit.txt pins engine release 1.20.2, which https://wiki.starhermit.com/engine/versions.json does not list; the game will not load until that release is published."
+      "deployWarning": null
     },
     "description": "Six questionable souls. One ship. Your orders. A persistent pirate captain simulation.",
     "releaseNotesUpdatedAt": null,
@@ -34,11 +36,18 @@
     "links": [],
     "isDisabled": false
   },
-  "publishedAt": "2026-10-28T10:07:01.453Z",
-  "sourceCommit": "17998f8b15af2fec7ef2c78e14e930e371f3dd38",
-  "bytesReceived": 25328,
-  "archiveSha256": "085eda12028c5a8a06a2e4bbb790492f89f2f7fddafc8597dbee9232f4598980",
+  "publishedAt": "2026-10-28T10:07:51.317Z",
+  "sourceCommit": "f4e903cbe2174020843f6ce70d6beb8678b4b422",
+  "bytesReceived": 26074,
+  "archiveSha256": "5567936b9626d1f0221277f98707a0a447efee4fffe349422da59fec81197596",
   "result": {
-    "bytesReceived": 25328
+    "clientPublished": true,
+    "serverImageLoaded": false,
+    "imageDigest": null,
+    "bytesReceived": 26074,
+    "mode": "replace",
+    "filesRemoved": 0,
+    "engineVersion": "1.20.2",
+    "deployWarning": null
   }
 }
