@@ -1,0 +1,44 @@
+{
+  "game": {
+    "id": "546dae33-aa48-4775-bff9-c0c48deb759f",
+    "repoUrl": "upload:f3fe22096343492796cec6365f17ca2b",
+    "ownerLogin": "",
+    "repoName": "",
+    "displayName": "Pirate Intelligence",
+    "launchPath": "index.html",
+    "serverScriptPath": "server.js",
+    "gameSlug": "546dae33-aa48-4775-bff9-c0c48deb759f",
+    "isVerifiedOwner": false,
+    "metadataSource": "manual",
+    "createdAt": "2026-10-28T10:06:59.5968658+00:00",
+    "coverArtSource": null,
+    "coverArtUpdatedAt": null,
+    "hosting": {
+      "hostingEnabled": true,
+      "hostedUrl": "https://546dae33-aa48-4775-bff9-c0c48deb759f.starhermit.com/index.html",
+      "deployStatus": "live",
+      "pinnedCommitSha": null,
+      "deployedCommitSha": null,
+      "deployError": null,
+      "deployedAt": "2026-10-28T10:06:59.6178355+00:00",
+      "externalLaunchUrl": null,
+      "engineVersion": "1.20.2",
+      "deployWarning": "starhermit.txt pins engine release 1.20.2, which https://wiki.starhermit.com/engine/versions.json does not list; the game will not load until that release is published."
+    },
+    "description": "Six questionable souls. One ship. Your orders. A persistent pirate captain simulation.",
+    "releaseNotesUpdatedAt": null,
+    "serverRuntime": "script",
+    "bannerArtSource": null,
+    "bannerArtUpdatedAt": null,
+    "tags": [],
+    "links": [],
+    "isDisabled": false
+  },
+  "publishedAt": "2026-10-28T10:07:01.453Z",
+  "sourceCommit": "17998f8b15af2fec7ef2c78e14e930e371f3dd38",
+  "bytesReceived": 25328,
+  "archiveSha256": "085eda12028c5a8a06a2e4bbb790492f89f2f7fddafc8597dbee9232f4598980",
+  "result": {
+    "bytesReceived": 25328
+  }
+}
