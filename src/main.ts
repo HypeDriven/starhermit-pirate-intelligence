@@ -1,5 +1,5 @@
 import { frame, onStart, onRender, onUpdate, onQuit, files } from 'starhermit:engine';
-import { scene, renderer, Color, AmbientLight, DirectionalLight, PerspectiveCamera, Mesh, Group, BoxGeometry, CylinderGeometry, ConeGeometry, SphereGeometry, PlaneGeometry, MeshStandardMaterial, MeshBasicMaterial, BufferGeometry, Float32BufferAttribute, Vector3, DoubleSide, Fog } from 'starhermit:scene';
+import { scene, renderer, Color, AmbientLight, DirectionalLight, PerspectiveCamera, Mesh, Group, BoxGeometry, CylinderGeometry, ConeGeometry, SphereGeometry, PlaneGeometry, MeshStandardMaterial, BufferGeometry, Float32BufferAttribute, Vector3, DoubleSide, Fog } from 'starhermit:scene';
 import { onAction, onWheel, onPointerButton } from 'starhermit:input';
 import { authority } from 'starhermit:script';
 import { storage } from 'starhermit:storage';
@@ -129,7 +129,6 @@ onQuit(()=>{if(state&&!online&&lastSnapshot)storage.setJson('practice-world',las
 let lastSnapshot:any=null;
 // The practice snapshot is reconstructed only from the authority's explicit
 // private export; online session state never comes from device storage.
-function savePractice(){if(!online&&channel)command({type:'snapshot'});}
 function labelAt(text:string,x:number,y:number,z:number,color:string,id?:string,crew=false){
  const f=frame(),v=new Vector3(x,y,z).project(camera),px=(v.x+1)*f.width/2,py=(1-v.y)*f.height/2;
  if(px<20||px>f.width-20||py<100||py>f.height-180)return;
@@ -158,7 +157,7 @@ function renderScene(){
  else if(longboat)longboat.visible=false;
  labelHits=[];
  if(zoom<.65){for(const p of places)labelAt((p.kind==='port'?'⚓ ':'')+p.name,p.x,6.5,p.z,selectedPlace===p.id?C.gold:C.cream,p.id);for(const ss of state.raiders)if(ss.hull>0)labelAt(ss.name,ss.x,7.8,ss.z,C.red);}
- else if(s){labelAt(s.name,s.x,6,s.z,C.gold);const l=s.log[s.log.length-1];if(l&&state.time-l.at<8)labelAt(l.name+': '+l.text.slice(0,54),s.x,4.5,s.z+2,C.cream);}
+ else if(s){labelAt(s.name,s.x,6,s.z,C.gold);const l=s.log[s.log.length-1];if(l&&state.time-l.at<8)labelAt(l.name+': '+(l.text.length>54?l.text.slice(0,l.text.lastIndexOf(' ',53)>20?l.text.lastIndexOf(' ',53):53)+'…':l.text),s.x,4.5,s.z+2,C.cream);}
 }
 function header(w:number,scale:number,mobile:boolean){
  draw.rect(0,0,w,76*scale,C.ink);draw.rect(0,75*scale,w,scale,'#60736a');
@@ -178,7 +177,7 @@ function toolbar(w:number,scale:number,mobile:boolean){
 }
 function navPanel(x:number,y:number,width:number,height:number,scale:number){
  const s=state?.myShip;if(!s)return;
- ui.area({x:x*scale,y:y*scale,width:width*scale,height:height*scale},()=>ui.panel('Navigation',()=>{
+ ui.area({x:x*scale,y:y*scale,width:width*scale,height:height*scale},()=>ui.scrollArea('Navigation rail',{width,height},()=>ui.panel('Navigation',()=>{
   ui.label('THE QUARRELSOME SEA',{color:C.gold,size:10,weight:'bold'});ui.heading(zoom>.5?'Below the bravado':'Pick your next bad idea',{size:19});
   if(zoom>.5){ui.paragraph('One ship. Three decks. Six entirely individual opinions.',width-28,{size:12});for(let i=0;i<3;i++)button(['01  Weather deck','02  Gun deck','03  Cargo hold'][i],()=>{deck=i;},deck===i);ui.label(['Helm · rigging · lookout','Six guns · powder · patching','Spices · provisions · questionable cargo'][deck],{color:C.muted,size:10});if(deck===2){ui.label('Spice cargo: '+s.cargo+' / 50');ui.label('Provisions: '+Math.round(s.food));ui.label('Timber: '+Math.floor(s.timber));}ui.style('gold').button(s.anchored?'⚓  At anchor':'Under way',{disabled:true});}
   else{for(const p of places){if(ui.style(selectedPlace===p.id?'gold':'flat').button(p.name,{content:()=>{ui.label(p.name,{weight:'bold',size:13});ui.label(p.kind==='port'?'PORT & TRADING':p.kind==='wreck'?'SALVAGE':'ISLAND & AWAY MISSIONS',{size:9});}}))selectedPlace=p.id;}
@@ -186,18 +185,18 @@ function navPanel(x:number,y:number,width:number,height:number,scale:number){
   ui.label('SHIP STATUS',{size:10,color:C.gold,weight:'bold'});meter('Hull',s.hull,s.maxHull,s.hull<40?C.red:C.green,width-28);meter('Crew spirit',s.morale,100,C.gold,width-28);
   ui.label('LV '+s.level+'   '+Math.floor(s.xp)+' / '+(s.level*100)+' XP',{color:C.muted,size:10});
   button('Contracts & rumours',()=>{panel='missions';});
- },{width,padding:14,spacing:10}));
+ },{width,padding:14,spacing:10})));
 }
 function ordersPanel(x:number,y:number,width:number,height:number,scale:number){
  const s=state?.myShip;if(!s)return;
- ui.area({x:x*scale,y:y*scale,width:width*scale,height:height*scale},()=>ui.panel('Captain’s desk',()=>{
+ ui.area({x:x*scale,y:y*scale,width:width*scale,height:height*scale},()=>ui.scrollArea('Captain’s desk rail',{width,height},()=>ui.panel('Captain’s desk',()=>{
   ui.label('CAPTAIN’S DESK',{color:C.gold,size:10,weight:'bold'});ui.heading('What’s the plan?',{size:22});
   let d=ui.select('Standing directive',Math.max(0,dirs.indexOf(s.directive)),dirNames);if(d!==dirs.indexOf(s.directive))command({type:'directive',value:dirs[d]});
   ui.paragraph('Your crew chooses how to get there. Direct orders teach them your habits.',width-28,{size:11});
   ui.row('Crew header',()=>{ui.label('SIX SOULS, ONE CHAIN OF COMMAND',{color:C.gold,size:9});},{width:width-28});
   for(const c of s.crew){if(ui.id('crew-'+c.id).style('flat').button(c.name,{content:()=>{ui.row('summary-'+c.id,()=>{ui.label('●',{color:c.color,size:18});ui.column('name-'+c.id,()=>{ui.label(c.name,{size:12,weight:'bold'});ui.label(c.role+' · Lv '+c.level,{size:9,color:C.muted});},{spacing:0});ui.spacer();ui.label(c.away?'AWAY':taskNames[c.task],{size:10,color:c.away?C.gold:C.green});},{width:width-46,spacing:8,align:'center'});}}))openCrew(c.id);}
   ui.row('quick',()=>{button(s.anchored?'Anchor down':'Drop anchor',()=>command({type:'anchor'}));button('Longboat',()=>{panel='away';});},{spacing:6});
- },{width,padding:14,spacing:10}));
+ },{width,padding:14,spacing:10})));
 }
 function bottom(w:number,h:number,scale:number,mobile:boolean){
  const s=state?.myShip;if(!s)return;
@@ -293,7 +292,7 @@ function dialogs(){
    ui.paragraph('StarHermit intentionally does not expose arbitrary HTTP to game scripts. The included local brain officer calls your models and submits bounded decisions through the platform API as an authorised participant.',dialogWidth,{size:12});
    ui.label('1. Install the companion from the source download.',{size:12});ui.label('2. Start the tiny CPU model, or configure your endpoints.',{size:12});ui.label('3. Join the sea with a separate companion account.',{size:12});ui.label('4. Authorise that user ID in World & crew.',{size:12});
    ui.paragraph('Default: SmolLM2-135M-Instruct, Q4_K_M (~105 MB), llama.cpp on CPU. Each crew member can override the base URL, model and API-key environment variable in its own configuration.',dialogWidth,{size:12});
-   ui.paragraph('llama-server -hf QuantFactory/SmolLM2-135M-Instruct-GGUF:Q4_K_M',dialogWidth,{font:'monospace',size:10,color:C.gold});
+   ui.paragraph('llama-server -hf QuantFactory/SmolLM2-135M-Instruct-GGUF:Q4_K_M',dialogWidth,{font:'monospace',size:10});
    ui.column('brain setup',()=>{button('Export per-character config',exportBrains,true);button('Configure a character',()=>{panel='crew';tab='brain';updateBrainFields();});});
    ui.paragraph('Decision-only v0.1: JSON task choices. Pirate shouts are authored game lines. The default instinct scheduler keeps the game playable when a model is absent, slow or invalid.',dialogWidth,{size:11});
   }

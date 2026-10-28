@@ -1,9 +1,10 @@
 name=Pirate Intelligence
 description=Six questionable souls. One ship. Your orders. A persistent pirate captain simulation.
 launch=index.html
+owner=2712e04e-461b-4d23-81ae-e40b429128a8
 engine.api=1
 engine.entry=src/main.ts
-engine.version=1.20.0
+engine.version=1.20.2
 engine.minor=22
 engine.capabilities=platform,storage
 server=server.js
