@@ -1,0 +1,6 @@
+{
+  "files": {
+    "models/smollm2-135m-q8.gguf": {"sha256": "40f7094960b6ede829145d102ca79451b364b27d9d8694d4406e002024cff357", "size": 144811072}
+  },
+  "format": 1
+}

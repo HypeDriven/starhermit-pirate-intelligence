@@ -7,3 +7,6 @@ reference/
 README.md
 DESIGN.md
 publication.json
+
+tools/
+spec.md

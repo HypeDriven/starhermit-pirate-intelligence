@@ -9,3 +9,4 @@ upload/
 reference/
 
 .starhermit/
+models/*.gguf

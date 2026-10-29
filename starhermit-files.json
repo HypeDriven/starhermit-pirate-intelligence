@@ -1,16 +1,26 @@
 {
   "files": {
     "LICENSE": {"sha256": "420223151f78e03dcd339b760dab7100186564bdf01c98896c4e84d0920a6d16", "size": 5446},
+    "LICENSE.md": {"sha256": "420223151f78e03dcd339b760dab7100186564bdf01c98896c4e84d0920a6d16", "size": 5446},
     "assets/parchment.png": {"sha256": "41c6f5091796999dabcd2de1021b396da6f0d38ac1a80c396403b3539cede8e1", "size": 396096},
     "assets/wood.png": {"sha256": "8f4da89c53cc01d053707ae526e63aa1b984466b68da2135bb43fe69bf8255bb", "size": 592775},
     "banner.jpg": {"sha256": "38cdf2df6e963f3ebe01aa97c0412c344ad376fe0c5f315bce178f4e67390e05", "size": 74351},
     "cover.jpg": {"sha256": "46380ed9a2437904dc6d2302a6c462bff1052b7ffaea52506baecfb1ef9ee212", "size": 237831},
     "description.md": {"sha256": "97d3151c0cd0e6f9c230e3de8784fd8ee3e866c06e3efb3c6a9675b430fd09ed", "size": 867},
     "favicon.png": {"sha256": "8ec83067dd83a7a2b6f8563947d277219a52ab08e3223ee88d04d40115e28add", "size": 84415},
-    "index.html": {"sha256": "296be0e582c3d8eae1c6ce9a0f3fd19d5fbd055206b911123f4ffe5f1ee9f20c", "size": 1777},
-    "server.js": {"sha256": "5f07fa483f4ffe3df33942e410a8cc7f5faa5b61f52c391f5cc31f6cd3cb0b3a", "size": 18122},
-    "src/main.ts": {"sha256": "886bc6d940db88d4fedb0e010cbebcd1a165ae8a236bb049e4ee680c195c140a", "size": 41894},
-    "starhermit.txt": {"sha256": "6943a4c0952d331420c370a37eaa99be5d4266ab39a686344daf3fa5ff88d24e", "size": 866}
+    "index.html": {"sha256": "dde9e76131acb4baf3fcf15f3dbc87917f98ac830424de371b206f975a09caca", "size": 1777},
+    "models/LICENSE-Apache-2.0.txt": {"sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30", "size": 11358},
+    "models/index.json": {"sha256": "6ec1a854e92ca5d7720f2b337afa95627721090358f644d895a5aa0fe6b321b7", "size": 19672},
+    "models/kernel.wasm": {"sha256": "6a02e6a49f14b80bb418f009e26eca7b77c89bde223026e8cb2ec4b53f8f531d", "size": 3274},
+    "models/tokenizer.json": {"sha256": "7869f2bbda7f18283e163bf836fd83b5bcf2c65002fe558ecf7dca5472143c15", "size": 1375150},
+    "server.js": {"sha256": "d07f29418e3a44d290a53157d22065bc54a87f270eb6a09a0bb0004f369d52ee", "size": 18168},
+    "src/brain/browser.ts": {"sha256": "98fe3b162ebfc344de84203facad29c74b9f20c3a716dccee8c6425c10f587db", "size": 6022},
+    "src/brain/inference.js": {"sha256": "25675db84d89a9b85dd24a09bef4eda6bda5286f63f624341c1524039da2db25", "size": 4031},
+    "src/brain/policy.js": {"sha256": "3f0ec0a30174ca742754fa3f626435bb54fae8560f9344fe93b28003a4f8a079", "size": 1721},
+    "src/brain/tokenizer.js": {"sha256": "99a91636b61cf8a35ce99776a6aca72f4d34321e908b900b85ad4cabf384b182", "size": 1758},
+    "src/main.ts": {"sha256": "2829682004088c2403d0a770fec4ebcab408891d733a36d6d4213d98f72c0f5c", "size": 43268},
+    "starhermit-remote.json": {"sha256": "257e2012233aad71a673f1e83ce0c542e770c65b48a8caee0d89325bd742e5c9", "size": 169},
+    "starhermit.txt": {"sha256": "c004dd2f40f3846073bc9f923d0202f4933ba893c285f362cb5405895f5e57d6", "size": 947}
   },
   "format": 1
 }

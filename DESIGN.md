@@ -15,7 +15,7 @@ Set intent → choose a voyage → watch the crew negotiate its tasks → interv
 
 ## Characters and command
 
-Mara Morrow is captain, Barnaby Brisk first mate. Little Fuse is gunner, Peg Coppernail carpenter, Auntie Tallow cook, Pip Gulliver navigator. Every character has its own model configuration and preference/memory store. Default model weights may be shared to save RAM; prompts, requests and character state remain individual.
+Mara Morrow is captain, Barnaby Brisk first mate. Little Fuse is gunner, Peg Coppernail carpenter, Auntie Tallow cook, Pip Gulliver navigator. Every character has its own model configuration and preference/memory store. The default SmolLM2 135M weights are shared in the browser; prompts, requests and character state remain individual. Browser CPU usage defaults to Low load (a 10% single-core pacing target), with Balanced, Faster and Paused options. Inference yields in short slices and pauses while hidden.
 
 An officer can warrant off-role work during measurable danger. Direct player orders stay above model proposals and autonomous choices. Invalid orders produce an explanation. The first implementation does not simulate mutiny, death, wounds or permanent personality drift.
 

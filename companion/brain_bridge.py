@@ -52,7 +52,7 @@ def decision(context, character, config):
     """One bounded OpenAI-compatible call. Returns a task, never prose commands."""
     options = dict(config.get('default', {}))
     options.update(config.get('crew', {}).get(character['id'], {}))
-    if options.get('mode') == 'instinct':
+    if options.get('mode') in ('instinct', 'browser'):
         return None
     endpoint = options.get('base_url', 'http://127.0.0.1:8080/v1').rstrip('/')
     parsed = urllib.parse.urlparse(endpoint)

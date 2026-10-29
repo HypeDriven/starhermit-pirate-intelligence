@@ -45,5 +45,8 @@ class TestBrain(unittest.TestCase):
         bridge.decision(self.context,self.character,self.config);self.assertEqual(Model.request['model'],'pegs-brain');self.assertIn('Protect my timbers.',Model.request['messages'][0]['content'])
     def test_instinct_mode_makes_no_call(self):
         self.config['crew']={'peg':{'mode':'instinct'}};self.assertIsNone(bridge.decision(self.context,self.character,self.config))
+    def test_browser_mode_never_calls_localhost(self):
+        self.config={'default':{'mode':'browser'}}
+        self.assertIsNone(bridge.decision(self.context,self.character,self.config))
 
 if __name__=='__main__':unittest.main()

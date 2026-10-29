@@ -1,4 +1,4 @@
-import { frame, onStart, onRender, onUpdate, onQuit, files } from 'starhermit:engine';
+import { frame, onStart, onRender, onUpdate, onQuit, onSuspend, onResume, files } from 'starhermit:engine';
 import { scene, renderer, Color, AmbientLight, DirectionalLight, PerspectiveCamera, Mesh, Group, BoxGeometry, CylinderGeometry, ConeGeometry, SphereGeometry, PlaneGeometry, MeshStandardMaterial, BufferGeometry, Float32BufferAttribute, Vector3, DoubleSide, Fog } from 'starhermit:scene';
 import { onAction, onWheel, onPointerButton } from 'starhermit:input';
 import { authority } from 'starhermit:script';
@@ -6,6 +6,8 @@ import { storage } from 'starhermit:storage';
 import * as platform from 'starhermit:platform';
 import * as ui from 'starhermit:ui';
 import * as draw from 'starhermit:draw';
+import { BrowserBrain } from './brain/browser.js';
+import { LOADS, loadSetting } from './brain/policy.js';
 
 // The renderer, input, UI, storage, practice authority and online sockets are
 // all the real StarHermit host API. No browser-only replacement renderer.
@@ -18,10 +20,17 @@ let selectedPlace='mossjaw',selectedCrew='peg',selectedEnemy='redwake',panel='',
 let notice='',noticeTime=0,elapsed=0,saveClock=0,orderText='',issuer=0,override=false,job=0,party=['peg','pip'];
 let room:any=null,roomSocket:any=null,roomsList:any[]=[],sessionList:any[]=[],joinCode='',delegate='',endpoint='http://127.0.0.1:8080/v1',model='smollm2-135m',apiKeyEnv='',brainMode=0;
 let brainConfigs:any=storage.getJson('crew-brains')||{};
+// Legacy "tiny" entries configured the localhost launcher. They now select
+// the browser default; external endpoints remain an explicit provider.
+for(const id of Object.keys(brainConfigs))if(brainConfigs[id]?.mode==='tiny')brainConfigs[id]={mode:'browser'};
+const browserBrain=new BrowserBrain();
+browserBrain.setLoad(loadSetting(storage.getJson('brain-cpu-load')));
+function brainLoadControl(){const value=ui.select('CPU usage · shared by all browser brains',browserBrain.load,LOADS.map(s=>s.name));if(value!==browserBrain.load){browserBrain.setLoad(value);storage.setJson('brain-cpu-load',value);}ui.paragraph('One inference lane. Targets 10% / 25% / 50% of one CPU core over time. Short work slices and idle gaps keep the game responsive; exact CPU usage varies by device. Pauses when hidden.',dialogWidth,{size:11});}
+
 let labelHits:any[]=[],mobilePanel=false,dialogWidth=530;
 const camera=new PerspectiveCamera(45,16/9,.1,250);
 renderer.camera=camera;scene.background=new Color('#92bbb3');scene.fog=new Fog('#92bbb3',85,165);
-const sun=new DirectionalLight('#ffe8bb',1.35);sun.position.set(-20,45,15);scene.add(sun,sun.target,new AmbientLight('#b3d7d2',.8));
+const sun=new DirectionalLight('#ffe8bb',1.35*Math.PI);sun.position.set(-20,45,15);scene.add(sun,sun.target,new AmbientLight('#b3d7d2',.8*Math.PI));
 const materials:any={};
 function mat(color:string,rough=0.85){if(!materials[color])materials[color]=new MeshStandardMaterial({color,roughness:rough});return materials[color];}
 function box(g:any,x:number,y:number,z:number,w:number,h:number,d:number,color:string){const m=new Mesh(new BoxGeometry(w,h,d),mat(color));m.position.set(x,y,z);g.add(m);return m;}
@@ -88,14 +97,14 @@ function flash(text:string){notice=text;noticeTime=7;}
 function command(c:any){if(!channel||!channel.sendCommand(c))flash('The channel is busy. Try again in a moment.');}
 function got(data:any){if(!data)return;if(data.type==='snapshot'&&!online){lastSnapshot=data.world;storage.setJson('practice-world',lastSnapshot);return;}if(data.type!=='state')return;const oldDelegate=state?.myShip?.delegate;if(!state&&data.myShip)console.info('Authoritative ship ready: '+data.myShip.crew.length+' crew.');state=data;if(state.myShip&&oldDelegate!==state.myShip.delegate)delegate=state.myShip.delegate||'';}
 function watch(c:any){c.on('game',got);c.on('error',(e:any)=>flash(String(e)));c.on('open',()=>c.sendCommand({type:'sync'}));c.on('stopped',(e:any)=>{network='Disconnected · '+e;flash('Connection ended: '+e+'. Open World to reconnect.');});}
-function local(){if(channel)channel.close();online=false;me='captain-local';const saved:any=storage.getJson('practice-world');channel=authority('server.js',{context:{sessionId:'brine-local',players:[{id:me,name:'Captain'}],sessionState:saved||null},rate:1});watch(channel);network='Local practice · saved on device';}
-function connect(id:string){activeSession=id;if(channel)channel.close();me=platform.player()?.userId||'';online=true;channel=platform.connectGame(id);watch(channel);network='StarHermit · connecting';channel.on('open',()=>{network='StarHermit · persistent world';});channel.on('disconnected',()=>{network='Reconnecting to StarHermit…';});}
+function local(){if(channel)channel.close();state=null;online=false;me='captain-local';const saved:any=storage.getJson('practice-world');channel=authority('server.js',{context:{sessionId:'brine-local',players:[{id:me,name:'Captain'}],sessionState:saved||null},rate:1});watch(channel);network='Local practice · saved on device';}
+function connect(id:string){activeSession=id;if(channel)channel.close();state=null;me=platform.player()?.userId||'';online=true;channel=platform.connectGame(id);watch(channel);network='StarHermit · connecting';channel.on('open',()=>{network='StarHermit · persistent world';});channel.on('disconnected',()=>{network='Reconnecting to StarHermit…';});}
 async function listWorlds(){try{sessionList=await platform.sessions.list();roomsList=await platform.rooms.browse({inProgress:true});}catch(e){flash(String(e));}}
 async function makeWorld(){try{room=await platform.rooms.create({name:'The Quarrelsome Sea',teamCount:1,seatsPerTeam:8,isVisible:true,joinInProgress:true,backfillAiPlayers:0});room=await platform.rooms.open(room.id);roomSocket=platform.rooms.connect(room.id);roomSocket.on('roster',(r:any)=>{room=r;if(r.gameSessionId&&!online)connect(r.gameSessionId);});room=await platform.rooms.start(room.id);if(room.gameSessionId)connect(room.gameSessionId);}catch(e){flash(String(e));}}
 async function joinWorld(){try{room=await platform.rooms.joinByCode(joinCode.trim());roomSocket=platform.rooms.connect(room.id);roomSocket.on('roster',(r:any)=>{room=r;if(r.gameSessionId&&!online)connect(r.gameSessionId);});if(room.gameSessionId)connect(room.gameSessionId);else flash('Joined. Waiting for the host to start this sea.');}catch(e){flash(String(e));}}
 function updateBrainFields(){const c=brainConfigs[selectedCrew]||{};endpoint=c.base_url||'http://127.0.0.1:8080/v1';model=c.model||'smollm2-135m';apiKeyEnv=c.api_key_env||'';brainMode=c.mode==='endpoint'?1:0;}
-function saveBrain(){brainConfigs[selectedCrew]={mode:brainMode?'endpoint':'tiny',base_url:endpoint,model,api_key_env:apiKeyEnv};storage.setJson('crew-brains',brainConfigs);flash('Character brain saved on this device. Export it for the local brain officer.');}
-function exportBrains(){saveBrain();files.saveAs('crew-brains.json',JSON.stringify({schema:1,default:{mode:'tiny',base_url:'http://127.0.0.1:8080/v1',model:'smollm2-135m'},crew:brainConfigs},null,2),{type:'application/json'}).catch(e=>flash(String(e)));}
+function saveBrain(){browserBrain.cancel();brainConfigs[selectedCrew]=brainMode?{mode:'endpoint',base_url:endpoint,model,api_key_env:apiKeyEnv}:{mode:'browser'};storage.setJson('crew-brains',brainConfigs);flash(brainMode?'Endpoint saved. Export it for the companion officer.':'Browser brain saved · '+LOADS[browserBrain.load].name+'.');}
+function exportBrains(){saveBrain();files.saveAs('crew-brains.json',JSON.stringify({schema:1,default:{mode:'browser'},browser_cpu:LOADS[browserBrain.load].name,crew:brainConfigs},null,2),{type:'application/json'}).catch(e=>flash(String(e)));}
 function meter(name:string,v:number,max:number,color:string,width=215){ui.row(name,()=>{ui.label(name,{color:C.muted,size:11});ui.spacer();ui.label(Math.round(v)+' / '+max,{size:11,color});},{width});ui.style({parts:{fill:{background:color},track:{background:'#3a2716'}},height:5}).progress(v/max,width);}
 function button(label:string,fn:()=>void,selected=false,disabled=false){if(ui.style(selected?'gold':'soft').button(label,{selected,disabled}))fn();}
 function route(id:string){selectedPlace=id;command({type:'sail',destination:id});}
@@ -137,7 +146,8 @@ onStart(()=>{
 onAction(e=>{if(!e.pressed||ui.capturingKeys())return;if(e.action==='zoomin')targetZoom=1;if(e.action==='zoomout'||e.action==='map')targetZoom=0;if(e.action==='anchor')command({type:'anchor'});if(e.action==='fire')command({type:'fire',target:selectedEnemy});if(e.action==='crew')openCrew(selectedCrew);});
 onWheel((_,dy)=>{if(!ui.pointerOver())targetZoom=Math.max(0,Math.min(1,targetZoom-dy*.15));});
 onPointerButton(e=>{if(e.pressed||e.button!==0||ui.pointerOver())return;for(const l of labelHits)if(e.x>=l.x&&e.x<=l.x+l.w&&e.y>=l.y&&e.y<=l.y+l.h){if(l.crew)openCrew(l.id);else selectedPlace=l.id;return;}});
-onUpdate(dt=>{elapsed+=dt;noticeTime=Math.max(0,noticeTime-dt);zoom+=(targetZoom-zoom)*Math.min(1,dt*5);saveClock+=dt;if(saveClock>10&&state&&!online){saveClock=0;command({type:'snapshot'});}});
+onUpdate(dt=>{elapsed+=dt;noticeTime=Math.max(0,noticeTime-dt);zoom+=(targetZoom-zoom)*Math.min(1,dt*5);saveClock+=dt;if(saveClock>10&&state&&!online){saveClock=0;command({type:'snapshot'});}browserBrain.tick(state,brainConfigs,command,channel);});
+onSuspend(()=>browserBrain.suspend());onResume(()=>browserBrain.resume());
 onQuit(()=>{if(state&&!online&&lastSnapshot)storage.setJson('practice-world',lastSnapshot);});
 let lastSnapshot:any=null;
 // The practice snapshot is reconstructed only from the authority's explicit
@@ -233,12 +243,13 @@ function crewDialog(s:any){
  ui.label('LEVEL '+c.level+'   ·   '+Math.floor(c.xp)+' / '+(c.level*35)+' XP   ·   FATIGUE '+Math.round(c.fatigue)+'%',{color:C.gold,size:11});
  ui.row('crew tabs',()=>{button('Orders & memory',()=>tab='voyage',tab==='voyage');button('Individual brain',()=>tab='brain',tab==='brain');});
  if(tab==='brain'){
-  ui.paragraph('Each character has a separate model, endpoint, prompt and learned orders. The engine is sandboxed: a local brain officer connects through StarHermit’s API.',dialogWidth,{size:12});
-  brainMode=ui.select('Decision provider',brainMode,['Tiny CPU default · SmolLM2 135M','My OpenAI-compatible endpoint']);
-  endpoint=ui.textField('Endpoint base URL',endpoint,{width:dialogWidth,maxChars:240});model=ui.textField('Model ID',model,{width:dialogWidth,maxChars:100});apiKeyEnv=ui.textField('API key environment variable (optional)',apiKeyEnv,{width:dialogWidth,maxChars:60});
+  ui.paragraph('Browser brains share one tiny model while keeping each character’s personality, preferences and learned orders separate.',dialogWidth,{size:12});
+  brainMode=ui.select('Decision provider',brainMode,['Tiny CPU default · in browser','My OpenAI-compatible endpoint']);
+  if(brainMode){endpoint=ui.textField('Endpoint base URL',endpoint,{width:dialogWidth,maxChars:240});model=ui.textField('Model ID',model,{width:dialogWidth,maxChars:100});apiKeyEnv=ui.textField('API key environment variable (optional)',apiKeyEnv,{width:dialogWidth,maxChars:60});ui.paragraph('External endpoints use the optional companion officer. Export after saving.',dialogWidth,{size:11});}
+  else{brainLoadControl();ui.paragraph(browserBrain.status,dialogWidth,{size:11});button('Retry model loading',()=>browserBrain.retry());}
   ui.column('brain save',()=>{button('Save this character',saveBrain,true);button('Export brain configuration',exportBrains);button('Setup help',()=>panel='brains');});
   ui.label('DECISION JSON ONLY · NO MODEL-GENERATED DIALOGUE',{size:10,color:C.gold});
-  ui.paragraph('Current source: '+(c.brain==='local LLM'?'validated local LLM decision':'built-in instinct (no LLM connected)')+'. Missing or invalid model replies fall back to crew instincts.',dialogWidth,{size:11});
+  ui.paragraph('Current source: '+(c.brain==='browser LLM'?'validated browser LLM decision':c.brain==='local LLM'?'validated companion LLM decision':'built-in instinct')+'. Instincts fill gaps while the model loads or thinks.',dialogWidth,{size:11});
  }else{
   issuer=ui.select('Order through',issuer,['Captain Mara Morrow','First mate Barnaby Brisk']);override=ui.checkbox('Emergency warrant for duties outside their role',override);
   ui.label('Ordinary duties: '+c.ordinary.map((t:string)=>taskNames[t]).join(' · '),{size:11,color:C.muted});
@@ -302,10 +313,10 @@ function dialogs(){
    ui.label('Ship Lv '+s.level+' · '+Math.floor(s.xp)+' / '+s.level*100+' XP',{color:C.gold});meter('Hull',s.hull,s.maxHull,C.green,dialogWidth);button('Fit reinforced hull · 250 gold',()=>command({type:'upgrade'}),true);
   }
   if(panel==='brains'){
-   ui.paragraph('StarHermit intentionally does not expose arbitrary HTTP to game scripts. The included local brain officer calls your models and submits bounded decisions through the platform API as an authorised participant.',dialogWidth,{size:12});
-   ui.label('1. Install the companion from the source download.',{size:12});ui.label('2. Start the tiny CPU model, or configure your endpoints.',{size:12});ui.label('3. Join the sea with a separate companion account.',{size:12});ui.label('4. Authorise that user ID in World & crew.',{size:12});
-   ui.paragraph('Default: SmolLM2-135M-Instruct, Q4_K_M (~105 MB), llama.cpp on CPU. Each crew member can override the base URL, model and API-key environment variable in its own configuration.',dialogWidth,{size:12});
-   ui.paragraph('llama-server -hf QuantFactory/SmolLM2-135M-Instruct-GGUF:Q4_K_M',dialogWidth,{font:'monospace',size:10});
+   ui.paragraph('The default SmolLM2 135M brain runs entirely in your browser on CPU. Its 138 MB quantized model downloads once and is cached when browser storage permits. Your crew context stays on this device. No localhost service, Python or extra account is needed.',dialogWidth,{size:12});
+   brainLoadControl();ui.paragraph(browserBrain.status,dialogWidth,{size:12});
+   ui.paragraph('Low load is the default. Decisions arrive slowly to leave CPU time for other work. Crew instincts keep the ship running between decisions. Each character keeps its own memories and preferences.',dialogWidth,{size:12});
+   ui.paragraph('For your own OpenAI-compatible endpoint, choose it under Individual brain and use the optional Python companion with a separate authorised participant account.',dialogWidth,{size:12});
    ui.column('brain setup',()=>{button('Export per-character config',exportBrains,true);button('Configure a character',()=>{panel='crew';tab='brain';updateBrainFields();});});
    ui.paragraph('Decision-only v0.1: JSON task choices. Pirate shouts are authored game lines. The default instinct scheduler keeps the game playable when a model is absent, slow or invalid.',dialogWidth,{size:11});
   }

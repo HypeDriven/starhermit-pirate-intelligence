@@ -1,6 +1,6 @@
 # Pirate Intelligence — v0.1
 
-A playable vertical slice of a persistent pirate crew game, built on the **actual StarHermit engine 1.20.0, host API 1.22**. The attached concept informed the small ships, island landmarks, sea view, and close-up ship management. The first art pass is original low-poly geometry rather than video frames or licensed assets.
+A playable vertical slice of a persistent pirate crew game, built on the **actual StarHermit engine 1.24.0, host API 1.26**. The attached concept informed the small ships, island landmarks, sea view, and close-up ship management. The first art pass is original low-poly geometry rather than video frames or licensed assets.
 
 ## Play
 
@@ -21,7 +21,7 @@ Practice state is saved on the device every ten seconds. Refresh resumes the sam
 - One ship per participant; six individually named crew with roles, ordinary duties, XP, fatigue and preferences.
 - Captain → first mate → specialist hierarchy. Off-role orders require an officer warrant **and** actual danger: hull under 45%, food under 12, or an enemy within 15 fathoms.
 - High-level directives change crew task scoring. Direct commands take priority for 35 seconds, add a bounded task preference, and record the directive and danger context. Praise reinforces a task. This is interpretable preference learning, **not model fine-tuning**.
-- Individual model configurations, private learned context, a local OpenAI-compatible decision adapter and a tiny CPU model launcher. All model choices are validated again by the authority.
+- A browser CPU decision model with per-character context, low-load controls, and optional external OpenAI-compatible models. All task choices are validated again by the authority.
 - Two trading ports with distinct spice prices, resupply, ship upgrades, ship/crew levels, four contracts, NPC and player-ship combat, cannon costs/range/reload and sinking recovery.
 - Three island/wreck destinations, two-person expeditions for timber, treasure or salvage, moving longboat, crew absence and return rewards.
 - Ship/sea camera transition, three deck views, animated low-poly ships, island settlements, authored sailor shouts, and a crew log.
@@ -58,37 +58,50 @@ After launch on StarHermit, sign in using the engine's account menu. In **World 
 
 StarHermit's `persistent: true` pauses an empty session rather than keeping a server ticking forever. The game uses `ctx.now - ctx.pausedMs`; progression freezes while the world is empty and is subject to the platform's recovery retention policy. This is a persistent small shared sea, not a global MMO or an always-running shard. A container-backed shard is the next architecture step for the latter.
 
-## Local LLMs and the tiny CPU default
+## Browser brains and CPU usage
 
-**Decision-model-only** is implemented as constrained JSON task selection. Dialogue is authored; no generative voice/chat pipeline is included. Instincts are deterministic game rules, explicitly labelled in the UI; they are not presented as an LLM.
+**Tiny CPU default · in browser** runs SmolLM2-135M-Instruct Q8_0 locally using single-threaded WebAssembly SIMD. It needs no Python, localhost service, API key or second account. The 138 MB model downloads on first use through StarHermit's verified remote-file API and is cached when browser storage permits. The model, tokenizer and kernel are shared; each character receives its own personality, preferences, recent orders and live ship context. Existing `tiny` character settings now select the browser provider.
 
-The engine sandbox does not expose arbitrary HTTP. Its [documented gameplay API](https://wiki.starhermit.com/docs/api/games.html#gameplay-websocket) also permits only one gameplay socket per user per session. Therefore the local companion uses a **separate participant account**, authorised by the captain for crew task proposals only. It cannot move the captain's ship, trade, spend gold, fire, or bypass emergency restrictions. This is a deliberate compatibility boundary rather than a fabricated engine networking method.
+Under **Individual brain** or **Brain setup**, CPU usage is shared across all browser brains and saved on this device:
 
-1. Install [llama.cpp](https://github.com/ggml-org/llama.cpp/releases), with `llama-server` on PATH, and Python 3.10+.
-2. `python -m pip install -r companion/requirements.txt`
-3. Configure each crew member under **Individual brain**, then export `crew-brains.json`. Alternatively copy `companion/crew-brains.example.json` and edit it. The sample deliberately shows Fuse using a separate endpoint; remove that override if every crew member should use the tiny default.
-4. Join the persistent world with a separate companion account, then close that account's game window before starting the companion. Keep the captain's game window open. Set `STARHERMIT_BRAIN_TOKEN` to the companion account's **game-scoped launch token**, obtained through your own authorised API client. Tokens are read from the environment only, never from command-line arguments or the model prompt.
-5. Start:
+| Setting | Target inference load | Maximum work slice |
+| --- | --- | --- |
+| Low load (default) | 10% of one CPU core | 2 ms |
+| Balanced | 25% of one CPU core | 4 ms |
+| Faster | 50% of one CPU core | 8 ms |
+| Paused | No inference | — |
 
-```sh
-python companion/brain_bridge.py --game ASSIGNED_GAME_UUID --session WORLD_SESSION_UUID --config crew-brains.json --tiny
-```
+These are cooperative pacing targets for inference, not operating-system CPU caps or limits on rendering/downloads. A small indivisible kernel call can exceed a slice on a slow device. Idle gaps follow measured work; unused time never accumulates into a burst. Inference pauses when hidden. Low load produces slower decisions; deterministic instincts fill the gaps. One character thinks at a time, with at least a minute between its requests and a 15-second rest between completed requests at Low load.
 
-The `--tiny` option starts **SmolLM2-135M-Instruct Q4_K_M**, a quantised model of about 105 MB, with CPU inference (`-ngl 0`). llama.cpp downloads and caches weights on the first run. It is small and limited; a larger local model can make better decisions. The bridge calls standard `POST /v1/chat/completions`; LM Studio, llama.cpp, Ollama's OpenAI-compatible API, and other conforming servers can be configured separately for every character. API keys reference local environment variable names.
+The model chooses a single legal task through constrained number-token decoding. The client checks current orders and duties again before sending the result through the captain's existing gameplay socket. The authority revalidates ownership, duty restrictions, emergency warrants and command priority. Pirate dialogue remains authored. No prompts or crew memories are sent to a model service. Native play uses instincts by default; this accelerated provider is for the web runtime.
 
-The companion prints its user ID. Enter it in the captain's **World & crew → Local brain officer** field and authorise. The server then sends that participant private crew context. Model calls happen on your machine, at most one per character per 12 seconds, serially; credentials stay local. API faults, timeouts, malformed JSON, off-role tasks and late replies leave instincts running. The server reverts to instincts after a model is silent for 18 seconds, at its next eight-second watch boundary.
+### Optional external models
 
-Changing endpoints is local configuration. Export again and restart the companion after edits. A tiny model and live StarHermit account connection were **not available for end-to-end testing** here; the adapter was tested against a real local HTTP test server implementing the OpenAI response format. No model weights are bundled or downloaded by the preview.
+Choose **My OpenAI-compatible endpoint**, save the character and export `crew-brains.json`. External endpoints still use `companion/brain_bridge.py` because scripts have no arbitrary HTTP access. Browser-mode entries are skipped by the companion.
+
+1. Install Python 3.10+ and `python -m pip install -r companion/requirements.txt`.
+2. Join the persistent sea with a separate companion participant account, then close that account's game window. Keep the captain's window open.
+3. Set `STARHERMIT_BRAIN_TOKEN` to that participant's game-scoped launch token from your authorised API client.
+4. Run `python companion/brain_bridge.py --game ASSIGNED_GAME_UUID --session WORLD_SESSION_UUID --config crew-brains.json`.
+5. Enter the companion's printed user ID under **World & crew → Local brain officer** and authorise it.
+
+Each endpoint may use its own model and local API-key environment variable. It can propose crew tasks only. The legacy `--tiny` flag still launches llama.cpp on localhost for explicitly configured external characters; it is separate from the browser default.
+
+### Build the browser model assets
+
+The compiled kernel, tokenizer and tensor index are included. Model weights are excluded from Git. Maintainers run `python scripts/prepare-brain.py` to download the pinned GGUF, verify its SHA-256, extract the tokenizer/index and rebuild the SIMD kernel using Rust's `wasm32-unknown-unknown` target. The upstream weights use Apache 2.0; the license is in `models/LICENSE-Apache-2.0.txt`.
+
+`scripts/build.sh` packages the model as a remote object. For a local preview serve `dist/`, including `dist/_remote/`. For StarHermit publication, upload the remote object with the platform tools before publishing the small web package; `starhermit-remote.json` pins it by hash. A source checkout without weights retains that index for packaging, but running locally needs the weights or a populated remote-object cache.
 
 ## Checks
 
 ```sh
-node --test tests/server.test.mjs
+node --test tests/*.test.mjs
 python -m unittest discover -s tests -p 'test_*.py' -v
 starhermit check .
 ```
 
-The rules suite covers three authenticated participants, ownership/privacy, hierarchy, command priority, LLM delegation/rate limits, travel, crew absence, trade prices, combat constraints, levels, one-time contract payouts, membership, paused time and malformed commands. The companion suite exercises its actual HTTP adapter. The real runtime loaded the authoritative ship and six crew, and a temporary headless harness exercised desktop panel and deck code paths. Native GPU rendering was unavailable in the build container. The local HTTP browser preview was rejected by the engine (secure context required), and the private HTTPS site required a ChatGPT sign-in unavailable in the test browser. Visual playtesting is therefore unverified.
+The browser suite checks CPU pacing, request privacy and duties, SIMD math against scalar results, and real-model inference against reference llama.cpp probabilities when weights are available. The rules suite covers three authenticated participants, ownership/privacy, hierarchy, command priority, LLM delegation/rate limits, travel, crew absence, trade prices, combat constraints, levels, one-time contract payouts, membership, paused time and malformed commands. The companion suite exercises its actual HTTP adapter. The real StarHermit runtime passes its headless check. A local packaged browser run with the official engine verifies model downloading/preparation, a completed crew decision, CPU setting changes, pause persistence after reload, and desktop/mobile brain controls. Native GPU rendering is not covered by these checks.
 
 ## Project layout
 
