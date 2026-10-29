@@ -16,16 +16,16 @@
     "submittedByUserId": "2712e04e-461b-4d23-81ae-e40b429128a8",
     "submittedByUsername": "starhermit",
     "hosting": {
-      "hostingEnabled": true,
-      "hostedUrl": "https://546dae33-aa48-4775-bff9-c0c48deb759f.starhermit.com/index.html",
-      "deployStatus": "live",
-      "pinnedCommitSha": null,
-      "deployedCommitSha": null,
       "deployError": null,
-      "deployedAt": "2026-10-28T10:33:54.309487+00:00",
+      "deployStatus": "live",
+      "deployWarning": null,
+      "deployedAt": "2026-10-29T12:28:32.593032+00:00",
+      "deployedCommitSha": null,
+      "engineVersion": "1.24.0",
       "externalLaunchUrl": null,
-      "engineVersion": "1.20.2",
-      "deployWarning": null
+      "hostedUrl": "https://546dae33-aa48-4775-bff9-c0c48deb759f.starhermit.com/index.html",
+      "hostingEnabled": true,
+      "pinnedCommitSha": null
     },
     "description": "Six questionable souls. One small ship. Your orders.\n\nYou are the captain of a patched-up sloop on the Quarrelsome Sea. Set a standing directive (make your fortune, hunt raiders, play it safe) and your crew decide how to get there. Every sailor has a role, a temper and habits of their own, and they learn from the orders you give them.\n\n- Chart a course between ports, islands and wrecks, trade spice, resupply and refit your hull.\n- Send two of the crew ashore by longboat for timber, buried treasure or salvage, and manage the ship short-handed while they are gone.\n- Take on contracts, bring rival ships within range and trade broadsides.\n- Keep the chain of command: off-role orders need an officer's warrant and real danger.\n\nPlay local practice straight away, or sign in to create a persistent shared sea and invite other captains to join it with a room code.",
     "releaseNotesUpdatedAt": "2026-10-28T10:32:50.829198+00:00",
@@ -42,18 +42,26 @@
     "links": [],
     "isDisabled": false
   },
-  "publishedAt": "2026-10-28T10:33:55.903Z",
-  "sourceCommit": "e0fc804a8b83bd262e67ad51b09fc506eef240dc",
-  "bytesReceived": 1407404,
-  "archiveSha256": "16fbd44cdd9849f28ecae3ed57e39571e0be27ebe99dbc3fdba65a375cd9872d",
+  "publishedAt": "2026-10-29T12:28:32.593032+00:00",
+  "sourceCommit": "ccd80dbe6e880ec95c692382fe8e0cf757730458",
+  "bytesReceived": 2081035,
+  "archiveSha256": "ce23de5abfcf8dc37bafcde5f07c554aaaac10538ae3d4536252a8713d27ecc1",
   "result": {
+    "bytesReceived": 2081035,
     "clientPublished": true,
-    "serverImageLoaded": false,
-    "imageDigest": null,
-    "bytesReceived": 1407404,
-    "mode": "replace",
+    "deployWarning": null,
+    "engineVersion": "1.24.0",
     "filesRemoved": 0,
-    "engineVersion": "1.20.2",
-    "deployWarning": null
+    "imageDigest": null,
+    "mode": "replace",
+    "serverImageLoaded": false
+  },
+  "remoteObjects": {
+    "baseUrl": "https://546dae33-aa48-4775-bff9-c0c48deb759f.starhermit.com/_remote/",
+    "held": 0,
+    "listed": 1,
+    "pruned": 0,
+    "sent": 1,
+    "sentBytes": 144811072
   }
 }
