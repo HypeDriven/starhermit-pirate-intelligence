@@ -1,6 +1,6 @@
 # Pirate Intelligence — v0.1
 
-A playable vertical slice of a persistent pirate crew game, built on the **actual StarHermit engine 1.28.0, host API 1.30**. The attached concept informed the small ships, island landmarks, sea view, and close-up ship management. The first art pass is original low-poly geometry rather than video frames or licensed assets.
+A playable vertical slice of a persistent pirate crew game, built on the **actual StarHermit engine 1.29.0, host API 1.31**. The attached concept informed the small ships, island landmarks, sea view, and close-up ship management. The first art pass is original low-poly geometry rather than video frames or licensed assets.
 
 ## Play
 
