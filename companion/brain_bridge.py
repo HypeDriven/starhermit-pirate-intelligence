@@ -58,9 +58,9 @@ def decision(context, character, config):
     parsed = urllib.parse.urlparse(endpoint)
     if parsed.scheme not in ('http', 'https') or not parsed.hostname or parsed.username or parsed.password:
         raise ValueError('Invalid endpoint URL')
-    allowed = list(character['ordinary'])
+    allowed = list(character.get('allowedTasks') or character['ordinary'])
     warrant = context.get('emergency', False)
-    if warrant:
+    if warrant and not character.get('allowedTasks'):
         allowed = sorted(TASKS)
     ship = context['ship']
     prompt = {
@@ -69,7 +69,9 @@ def decision(context, character, config):
         'maxHull': ship['maxHull'], 'food': round(ship['food']),
         'timber': round(ship['timber']), 'ammo': ship['ammo'],
         'sailing': bool(ship['destination']), 'enemies': context['nearbyEnemies'],
-        'fatigue': round(character['fatigue']), 'learnedPreferences': character['preferences'],
+        'fatigue': round(character['fatigue']), 'trust': round(character.get('trust', 50)),
+        'injury': round(character.get('injury', 0)), 'fire': round(ship.get('fire', 0)),
+        'bilge': round(ship.get('leak', 0)), 'preferredDuty': character.get('preferred', 'auto'), 'learnedPreferences': character['preferences'],
         'rememberedOrders': character['memories'][-5:], 'allowedTasks': allowed,
     }
     system = ('You are a pirate crew decision model. Choose ONE useful allowed task. '

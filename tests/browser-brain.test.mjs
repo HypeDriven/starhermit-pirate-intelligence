@@ -51,4 +51,9 @@ test('real tiny model chooses repair for a damaged hull; cached context matches 
  assert.ok(Math.abs(repairProbability-.63590014)<.005);
  const changed=prompt.replace('Hull badly damaged','Exhausted, needs sleep');
  const cached=choose(changed);m.prefix=[];assert.equal(choose(changed),cached);
+ const large=m.choose(prompt.replace('Hull badly damaged','Hull badly damaged. '+'🦜'.repeat(500)),['rest','repair']);
+ let progress;
+ do{progress=large.next();}while(!progress.done&&!progress.value?.token);
+ assert.equal(progress.value.total,256);
+ large.return();m.prefix=[];
 });

@@ -77,12 +77,12 @@ export class BrowserBrain {
    }
    if(!selected){this.status='Ready · waiting for the next crew watch';return;}
    const input=brainRequest(state,selected);
-   this.request={crewId:selected.id,ownerId:state.myShip.id,issuedAt:state.time,manualUntil:selected.manualUntil,emergency:input.emergency,generation:this.generation};
+   this.request={crewId:selected.id,ownerId:state.myShip.id,issuedAt:state.time,manualUntil:selected.manualUntil,revision:selected.orderRevision,emergency:input.emergency,generation:this.generation};
    this.attempts[selected.id]=start;this.iterator=this.model.choose(input.prompt,input.allowed);
    this.status='Thinking for '+selected.name.split(' ')[0];
   }
   const current=state.myShip.crew.find((c:any)=>c.id===this.request.crewId);
-  if(!current||current.away||current.manualUntil!==this.request.manualUntil||state.myShip.id!==this.request.ownerId||
+  if(!current||current.away||current.manualUntil!==this.request.manualUntil||current.orderRevision!==this.request.revision||state.myShip.id!==this.request.ownerId||
      (configs[current.id]&& !['tiny','browser'].includes(configs[current.id].mode))){this.cancel();return;}
   try{
    let done=false;

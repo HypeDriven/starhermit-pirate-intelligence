@@ -1,16 +1,16 @@
-# Pirate Intelligence — v0.1
+# Pirate Intelligence — v0.2
 
-A playable vertical slice of a persistent pirate crew game, built on the **actual StarHermit engine 1.30.0, host API 1.32**. The attached concept informed the small ships, island landmarks, sea view, and close-up ship management. The first art pass is original low-poly geometry rather than video frames or licensed assets.
+A playable pirate crew simulation, built on the **actual StarHermit engine 1.30.0, host API 1.32**. The attached concept informed the small ships, island landmarks, sea view, and close-up ship management. The first art pass is original low-poly geometry rather than video frames or licensed assets.
 
 ## Play
 
-The private HTTPS preview opens directly in local practice. Select an island or port and **Set course**. **E / Q** or the wheel switches between ship and sea views. **C** opens crew orders. **F** fires at the selected target. The left rail becomes a three-deck selector aboard ship. Touch controls are available through the on-screen buttons; landscape is recommended.
+The hosted game opens in local practice. Sign in to create or join a persistent sea. Select an island or port and **Set course**. **E / Q** or the wheel switches between ship and sea views. **C** opens crew orders. **F** fires at the selected target. **H** takes or leaves the manual helm; hold **W/A/D** or arrow keys to sail and steer. The left rail becomes a three-deck selector aboard ship. Touch controls are available through the on-screen buttons; landscape is recommended.
 
 An easy first voyage:
 
 1. Accept **Wood You Kindly** under Contracts.
 2. Sail to Mossjaw Cay. The crew sails and anchors automatically.
-3. Launch Peg and Pip in a longboat to chop timber. Their absence affects staffing.
+3. Launch Peg and Pip in a longboat to chop timber. Choose safe driftwood or the risky grove; their absence affects staffing.
 4. Sail to Saltwick to trade, resupply or fit a hull upgrade.
 5. Set a hunting directive, pick a target and bring it within 17 fathoms.
 
@@ -18,14 +18,15 @@ Practice state is saved on the device every ten seconds. Refresh resumes the sam
 
 ## What is implemented
 
-- One ship per participant; six individually named crew with roles, ordinary duties, XP, fatigue and preferences.
-- Captain → first mate → specialist hierarchy. Off-role orders require an officer warrant **and** actual danger: hull under 45%, food under 12, or an enemy within 15 fathoms.
-- High-level directives change crew task scoring. Direct commands take priority for 35 seconds, add a bounded task preference, and record the directive and danger context. Praise reinforces a task. This is interpretable preference learning, **not model fine-tuning**.
-- A browser CPU decision model with per-character context, low-load controls, and optional external OpenAI-compatible models. All task choices are validated again by the authority.
-- Two trading ports with distinct spice prices, resupply, ship upgrades, ship/crew levels, four contracts, NPC and player-ship combat, cannon costs/range/reload and sinking recovery.
-- Three island/wreck destinations, two-person expeditions for timber, treasure or salvage, moving longboat, crew absence and return rewards.
-- Ship/sea camera transition, three deck views, animated low-poly ships, island settlements, authored sailor shouts, and a crew log.
-- Persistent StarHermit rooms, join codes, join-in-progress, reconnect/resync and saved-session selection. One shared authoritative server file also runs offline with `starhermit:script.authority`.
+- Six named sailors with roles, station reservations, duty explanations, editable habits, contextual preferences, captain trust, shared bonds and adventure stories.
+- Standing repair/rest thresholds, storm shelter and automatic hunting fire. Direct orders and emergency warrants stay above model suggestions.
+- Low-load browser CPU brains with individual context and optional external OpenAI-compatible models.
+- Nine destinations, four shared port markets, three cargo classes, stock replenishment, scarcity prices, one-time contracts and daily deliveries. Harbour guns protect anchored port ships.
+- Manual helm with wind, touch/keyboard controls, reef stops, broadside arcs, three ammunition types and risky boarding of weakened raiders.
+- Fire, flooding, damaged rigging, expedition injuries, rest and medical care; six three-level ship fittings.
+- Safe/risky island and wreck encounters with party skill and bond bonuses; automatic safe return when no choice is made.
+- A welcome guide, sea atlas, captain’s log, exploration milestones, renown, authored crew barks, optional sea ambience and procedural combat/reward sounds.
+- Persistent StarHermit rooms, device practice saves, migration of older snapshots, private crew views, shared authority rules and a scene using instanced repeated geometry.
 
 ## Run and package with StarHermit
 
@@ -44,17 +45,16 @@ On a local desktop, open `http://localhost:8085`. To play natively on Windows, r
 
 ## Online worlds
 
-The private preview is **local practice**, not an already populated multiplayer deployment. Registration on StarHermit requires your publisher account/deployment key, which was not available in this session. The repository root includes the packaged launcher and file index for direct StarHermit GitHub loading. It is also ready for a folder upload:
+The published game is `546dae33-aa48-4775-bff9-c0c48deb759f`. Build a small web upload and a separate verified model object, then publish to that existing game with the registered deployment key:
 
 ```sh
-# With official developer tools and your account credentials configured locally:
-starhermit-tools package --web . --out ../pirate-intelligence-upload
-starhermit-tools publish --new --upload ../pirate-intelligence-upload
+starhermit-tools package --web . --out ../pirate-intelligence-upload --remote-out ../pirate-intelligence-objects
+starhermit-tools publish --game-id 546dae33-aa48-4775-bff9-c0c48deb759f --upload ../pirate-intelligence-upload --remote-out ../pirate-intelligence-objects
 ```
 
-Retain the **assigned game UUID** returned by publishing; it is not the display name or the ChatGPT Sites project ID. Subsequent updates use `--game-id ASSIGNED_UUID` rather than `--new`. Never commit access tokens or private keys.
+Never commit access tokens or private keys. Older online sessions may retain their original rules/build; create a new sea for the expanded feature set when the World panel indicates an older session.
 
-After launch on StarHermit, sign in using the engine's account menu. In **World & crew**, create a persistent sea and share its room code. Other captains join the same room. Worlds support 8 room seats in this slice (a companion officer consumes a seat); the rules cap retained ships at 16. Server code trusts `ctx.message.from`, never a client-supplied owner ID. Ship memories are sent only to their owner and an explicitly authorised companion.
+After launch on StarHermit, sign in using the engine's account menu. In **World & crew**, create a persistent sea and share its room code. Other captains join the same room. Worlds support 8 room seats (a companion officer consumes a seat); the rules cap retained ships at 16. Server code trusts `ctx.message.from`, never a client-supplied owner ID. Ship memories are sent only to their owner and an explicitly authorised companion.
 
 StarHermit's `persistent: true` pauses an empty session rather than keeping a server ticking forever. The game uses `ctx.now - ctx.pausedMs`; progression freezes while the world is empty and is subject to the platform's recovery retention policy. This is a persistent small shared sea, not a global MMO or an always-running shard. A container-backed shard is the next architecture step for the latter.
 

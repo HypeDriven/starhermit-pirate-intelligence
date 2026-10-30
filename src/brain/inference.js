@@ -15,7 +15,11 @@ export class TinyModel {
  *linear(name,input,out){const t=this.tensor(name);for(let row=0;row<t.shape[1];row+=16){this.w.linear(t.p,input.p,out.p,t.shape[0],row,Math.min(row+16,t.shape[1]));yield;}}
  rope(vector,heads,pos){for(let h=0;h<heads;h++)for(let j=0;j<64;j+=2){const angle=pos/Math.pow(this.index.ropeTheta,j/64),c=Math.cos(angle),s=Math.sin(angle),i=h*64+j,a=vector.a[i],b=vector.a[i+1];vector.a[i]=a*c-b*s;vector.a[i+1]=a*s+b*c;}}
  *choose(prompt,allowed){
-  const tokens=this.tokenizer.encode(prompt);if(tokens.length>256)throw Error('Brain context exceeds 256 tokens');
+  const encoded=this.tokenizer.encode(prompt);
+  // Keep the role/current ship context and final task choices even when a
+  // Unicode order uses many byte-level tokens. Long memories must not disable
+  // the shared model for every other sailor.
+  const tokens=encoded.length>256?encoded.slice(0,160).concat(encoded.slice(-96)):encoded;
   let common=0;while(common<tokens.length-1&&common<this.prefix.length&&tokens[common]===this.prefix[common])common++;
   // Prefix K/V rows are valid only after a complete preceding request.
   const oldPrefix=this.prefix;this.prefix=[];

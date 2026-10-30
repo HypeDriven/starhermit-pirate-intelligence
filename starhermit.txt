@@ -6,7 +6,7 @@ owner=2712e04e-461b-4d23-81ae-e40b429128a8
 cover=cover.jpg
 banner=banner.jpg
 tags=Pirates, Simulation, Strategy, Crew management, Multiplayer
-release_notes=Tiny CPU brains now run in the browser. Low load is the default, with Balanced, Faster and Paused controls shared across crew.
+release_notes=Expanded sea: crew bonds and standing orders, risky expeditions, four markets, six ship fittings, manual helm, ammunition and boarding, damage control, a captain’s journal and quieter scene rendering.
 engine.api=1
 engine.entry=src/main.ts
 engine.version=1.30.0
@@ -24,3 +24,8 @@ control.crew=KeyC | Crew manifest
 control.map=KeyM | Sea chart
 engine.group.zoomin=Ship & sea
 cache..=0
+
+control.port=KeyA+ArrowLeft | Turn to port
+control.starboard=KeyD+ArrowRight | Turn to starboard
+control.sailahead=KeyW+ArrowUp | Make way
+control.takehelm=KeyH | Take or leave manual helm

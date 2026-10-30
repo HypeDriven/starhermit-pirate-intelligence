@@ -17,15 +17,23 @@ Set intent → choose a voyage → watch the crew negotiate its tasks → interv
 
 Mara Morrow is captain, Barnaby Brisk first mate. Little Fuse is gunner, Peg Coppernail carpenter, Auntie Tallow cook, Pip Gulliver navigator. Every character has its own model configuration and preference/memory store. The default SmolLM2 135M weights are shared in the browser; prompts, requests and character state remain individual. Browser CPU usage defaults to Low load (a 10% single-core pacing target), with Balanced, Faster and Paused options. Inference yields in short slices and pauses while hidden.
 
-An officer can warrant off-role work during measurable danger. Direct player orders stay above model proposals and autonomous choices. Invalid orders produce an explanation. The first implementation does not simulate mutiny, death, wounds or permanent personality drift.
+An officer can warrant off-role work during measurable danger, including fire and flooding. Direct player orders reserve their stations for 35 seconds; fresh model choices reserve them for 18 seconds. The first mate fills the remaining stations each watch, explaining assignments and asking for uncovered urgent duties. Players can set repair/rest thresholds, shelter through squalls, choose preferred duties, discourage a habit, or forget it.
 
-Training is transparent: an explicit task order adds +0.7 to that character's task preference, praise +0.35, both capped at 6. A bounded history retains the directive and emergency context. This memory is supplied to a connected model. The instinct scheduler uses the task weights directly; contextual generalisation is left to the decision model. A later version should add approval/rejection feedback, editable habits and context-specific weights rather than silently inventing player preferences.
+Orders and praise retain bounded task preferences and separate weights for each directive/danger context. Trust, fatigue and injuries affect working efficiency. Shared expeditions and boarding build sailor-to-sailor bonds and a short history of authored shared stories; strong bonds improve expedition odds. There is no permanent crew death, mutiny or model fine-tuning.
 
 ## Decision-model contract
 
 Input: role, personality, directive, observable ship state, nearby enemies, fatigue, learned preferences, recent orders and allowed task enum. Output: `{"task":"repair"}`. No generated dialogue or free-form executable plans. A model proposal has no authority to modify resources, travel, rewards, damage, experience or rank. The server authenticates the sender, validates explicit delegation, command priority, rate, task, crew presence and emergency warrant.
 
-Budget: independent character calls, one serial call per 12-second watch, eight-second request timeout, latest-state coalescing. Missing models use ordinary game instincts. Default weights are ~105 MB; the much larger engine and interpreter cannot safely host arbitrary model code, so inference stays in the optional local companion. The separate companion seat is the documented API workaround for the current engine sandbox and one-socket rule.
+The browser provider shares one 138 MiB Q8_0 model, runs a serial inference lane with short SIMD work slices and defaults to a 10% single-core pacing target. It uses the captain’s existing authority/socket. Its inputs include current available stations, preferred duty, trust, injuries and damage control; changed orders invalidate unfinished work. The optional external companion retains its separate authorised participant and bounded HTTP calls.
+
+## Sailing, combat and shore work
+
+Nine destinations support four distinct port markets and longer trading routes. Charted courses remain available; manual helm adds wind-influenced movement, dead-man input expiry, reef stops and manual broadside arcs. Round shot, chain shot and grape shot serve different purposes. Two sailors may board a weakened NPC raider for a timed, risky prize attempt. Sinking recalls all away parties and clears stale steering and hazards.
+
+Fires, leaks and rigging damage make repair staffing and pumps useful. The shipyard offers three levels each of hull, sails, guns, hold, hammocks and bilge pump. Safe/risky expedition encounters use party skills, bonds and health; unanswered encounters take the safe haul. Injuries heal through rest or port medical care.
+
+Spice, sailcloth and medicine share the hold. Port stock replenishes and scarcity shifts prices, with a guaranteed local spread to prevent same-port profit or free XP loops. One-time contracts, daily deliveries, exploration, renown and a captain’s journal give the crew further goals.
 
 ## Persistence and multiplayer
 
@@ -33,13 +41,8 @@ The authoritative document contains world time, public locations, raiders and pl
 
 The first online package uses join-in-progress persistent rooms and freezes empty worlds. Next, a server container can host named shards that remain active, journal commands, partition the sea and process offline catch-up. That requires a real deployment, operational budgets and load testing; this slice does not claim MMO scale.
 
-## Next milestones
+## Next playtest decisions
 
-1. **Hosted playtest:** Register on StarHermit, verify two captains and a local brain officer against the actual platform; exercise disconnect/recovery and scopes. Test real tiny-model latency and decision validity on CPU.
-2. **Better crew collaboration:** Explicit task requests between characters, task capacity and reservation, rank-aware refusal dialogue, contextual learned preferences and an editable captain's standing orders book.
-3. **Richer naval play:** Free steering, wind/tacking, broadsides by facing, boarding, repairs by compartment, flooding and fire. This slice uses range-based combat and destination-based sailing.
-4. **Away mission tactics:** Controllable boats, hazards, selectable encounters, salvage puzzles, injuries and rescue. The slice resolves expeditions with timers and bounded loot.
-5. **Persistent economy:** Port stock, cargo classes, supply/demand, player bounties, reputation, ship classes and craft recipes.
-6. **Art and audio:** Authored character silhouettes, cloth sail deformation, birds, weather, deck soundscape and optional authored voice barks. Maintain decision-only LLM scope until gameplay is proven.
+The next changes need observations from a human voyage: whether Low load decisions feel useful, whether manual helm and broadsides are comfortable, and whether trade/boarding/expedition payouts create worthwhile choices. Persistent global shards, player boarding rules, permanent consequences and a larger authored campaign remain separate design and operational decisions. Current rooms support a small shared sea and pause while empty.
 
 Success criteria: captains can leave the routine to crew, understand why an intervention was refused, see a repeat order become a habit, and tell a story about an expedition that made ship staffing awkward. Models should add character and useful autonomy without becoming a requirement for basic play.
