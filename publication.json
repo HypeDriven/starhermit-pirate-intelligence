@@ -19,7 +19,7 @@
       "deployError": null,
       "deployStatus": "live",
       "deployWarning": null,
-      "deployedAt": "2026-10-30T12:15:15.270665+00:00",
+      "deployedAt": "2026-10-30T13:39:53.106553+00:00",
       "deployedCommitSha": null,
       "engineVersion": "1.30.0",
       "externalLaunchUrl": null,
@@ -42,12 +42,12 @@
     "links": [],
     "isDisabled": false
   },
-  "publishedAt": "2026-10-30T12:15:15.270665+00:00",
-  "sourceCommit": "d03f610731f9f3ab132163d1fcecbafe0006cd84",
-  "bytesReceived": 2100468,
-  "archiveSha256": "705efa52d6d36b89ddd5c3c7ff37915bcca82ae7bd707ffc5393d73ed938d77f",
+  "publishedAt": "2026-10-30T13:39:53.106553+00:00",
+  "sourceCommit": "8d14c95ad9af7a416d291daa7fe427a46c74c97f",
+  "bytesReceived": 2105113,
+  "archiveSha256": "fe319b59811ae6097cd4fb53e8c371ca740e2191ae5a1c0dfd16a91663d245ea",
   "result": {
-    "bytesReceived": 2100468,
+    "bytesReceived": 2105113,
     "clientPublished": true,
     "deployWarning": null,
     "engineVersion": "1.30.0",
@@ -65,7 +65,7 @@
     "sentBytes": 0
   },
   "verification": {
-    "automatedTestsPassed": 57,
+    "automatedTestsPassed": 62,
     "browserVoyage": true,
     "narrowViewportWidth": 320,
     "liveMultiplayer": [
@@ -74,6 +74,18 @@
       "private crew state",
       "shared market",
       "reconnect persistence"
+    ],
+    "liveMultiplayerSourceCommit": "d03f610731f9f3ab132163d1fcecbafe0006cd84",
+    "browserDeckCutaways": true,
+    "browserTimberExpeditionAndShoreCamera": true,
+    "liveEngineOptionsAndLowLoadDefault": true,
+    "hostedFilesMatchUpload": [
+      "index.html",
+      "starhermit-files.json",
+      "src/main.ts",
+      "src/navigation.js",
+      "server.js",
+      "starhermit.txt"
     ]
   }
 }
