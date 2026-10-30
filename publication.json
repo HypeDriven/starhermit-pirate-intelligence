@@ -19,9 +19,9 @@
       "deployError": null,
       "deployStatus": "live",
       "deployWarning": null,
-      "deployedAt": "2026-10-29T12:28:32.593032+00:00",
+      "deployedAt": "2026-10-30T12:15:15.270665+00:00",
       "deployedCommitSha": null,
-      "engineVersion": "1.24.0",
+      "engineVersion": "1.30.0",
       "externalLaunchUrl": null,
       "hostedUrl": "https://546dae33-aa48-4775-bff9-c0c48deb759f.starhermit.com/index.html",
       "hostingEnabled": true,
@@ -42,15 +42,15 @@
     "links": [],
     "isDisabled": false
   },
-  "publishedAt": "2026-10-29T12:28:32.593032+00:00",
-  "sourceCommit": "ccd80dbe6e880ec95c692382fe8e0cf757730458",
-  "bytesReceived": 2081035,
-  "archiveSha256": "ce23de5abfcf8dc37bafcde5f07c554aaaac10538ae3d4536252a8713d27ecc1",
+  "publishedAt": "2026-10-30T12:15:15.270665+00:00",
+  "sourceCommit": "d03f610731f9f3ab132163d1fcecbafe0006cd84",
+  "bytesReceived": 2100468,
+  "archiveSha256": "705efa52d6d36b89ddd5c3c7ff37915bcca82ae7bd707ffc5393d73ed938d77f",
   "result": {
-    "bytesReceived": 2081035,
+    "bytesReceived": 2100468,
     "clientPublished": true,
     "deployWarning": null,
-    "engineVersion": "1.24.0",
+    "engineVersion": "1.30.0",
     "filesRemoved": 0,
     "imageDigest": null,
     "mode": "replace",
@@ -58,10 +58,22 @@
   },
   "remoteObjects": {
     "baseUrl": "https://546dae33-aa48-4775-bff9-c0c48deb759f.starhermit.com/_remote/",
-    "held": 0,
+    "held": 1,
     "listed": 1,
     "pruned": 0,
-    "sent": 1,
-    "sentBytes": 144811072
+    "sent": 0,
+    "sentBytes": 0
+  },
+  "verification": {
+    "automatedTestsPassed": 57,
+    "browserVoyage": true,
+    "narrowViewportWidth": 320,
+    "liveMultiplayer": [
+      "two captains",
+      "ownership rejection",
+      "private crew state",
+      "shared market",
+      "reconnect persistence"
+    ]
   }
 }
