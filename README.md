@@ -122,3 +122,7 @@ References: [engine tutorial](https://wiki.starhermit.com/docs/tutorials/starher
 Pirate Intelligence’s first-party game code, assets, companion and documentation are distributed under the same terms as StarHermit Engine: the **PolyForm Noncommercial License 1.0.0**, including its additional permission for commercial game use while the game is published on StarHermit.com, publicly playable there and kept in running order there.
 
 The exact, unmodified `LICENSE-engine` text from the official StarHermit 1.20.0 release is included as [`LICENSE`](LICENSE), preserving its required notice and additional permission. It is included in both the source download and packaged game. Third-party dependencies and externally downloaded model weights retain their respective licenses.
+
+At an island, wait for the anchor, open **Longboat** (or **Go ashore · timber**), leave **Chop timber** and Peg/Pip selected, then **Lower the longboat**. The party rows ashore and returns with timber automatically; the encounter offers an optional risky haul. **Watch the shore party** follows their work. Wrecks offer salvage instead.
+
+**Options → StarHermit engine options** opens runtime graphics and frame-rate settings; **F1** opens it directly. Sound and browser brain CPU controls are also in Options, with **Low load** selected by default. The clock, wind, compass and minimap stay visible during sailing. Aboard ship, select a deck in the left rail, or cycle the deck button on phones.

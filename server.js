@@ -149,7 +149,8 @@ function choose(w,s,c,counts){
  if(emergency(w,s)&&(s.hull<s.maxHull*.4||s.fire>20||s.leak>30)&&c.id!=='morrow'&&s.timber>0&&(!counts||(counts.repair||0)<2))best='repair';
  return best;
 }
-function view(w,id){var own=w.ships[id];if(own){own.inHarbour=harbourSafe(own);own.emergency=emergency(w,own);}return {type:'state',schema:1,featureVersion:2,time:w.time,day:Math.floor(w.time/240)+1,weather:w.weather,wind:Math.sin(w.time/240),places:PLACES,ships:Object.keys(w.ships).map(function(k){var s=w.ships[k];return {id:s.id,name:s.name,ownerName:s.ownerName,x:s.x,z:s.z,hull:s.hull,maxHull:s.maxHull,heading:s.heading,level:s.level,anchored:s.anchored,fire:s.fire||0,leak:s.leak||0,lastShot:s.lastShot,lastTarget:s.lastTarget||''};}),raiders:w.raiders,myShip:own||null,goods:GOODS,fittings:FITTINGS,contracts:BOOK,markets:w.markets,prices:PLACES.filter(function(p){return p.kind==='port';}).map(function(p){var prices={};Object.keys(GOODS).forEach(function(g){prices[g]=portPrice(w,p,g);});return {id:p.id,goods:prices};})};}
+function windKnots(w){return Math.round(12+3*Math.sin(w.time/90)+(w.weather!=='Fair winds'?8:0));}
+function view(w,id){var own=w.ships[id];if(own){own.inHarbour=harbourSafe(own);own.emergency=emergency(w,own);}return {type:'state',schema:1,featureVersion:2,time:w.time,day:Math.floor(w.time/240)+1,weather:w.weather,wind:Math.sin(w.time/240),windKnots:windKnots(w),places:PLACES,ships:Object.keys(w.ships).map(function(k){var s=w.ships[k];return {id:s.id,name:s.name,ownerName:s.ownerName,x:s.x,z:s.z,hull:s.hull,maxHull:s.maxHull,heading:s.heading,level:s.level,anchored:s.anchored,fire:s.fire||0,leak:s.leak||0,lastShot:s.lastShot,lastTarget:s.lastTarget||''};}),raiders:w.raiders,myShip:own||null,goods:GOODS,fittings:FITTINGS,contracts:BOOK,markets:w.markets,prices:PLACES.filter(function(p){return p.kind==='port';}).map(function(p){var prices={};Object.keys(GOODS).forEach(function(g){prices[g]=portPrice(w,p,g);});return {id:p.id,goods:prices};})};}
 function result(ctx,w){var b=[];for(var i=0;i<ctx.players.length;i++)b.push({to:[ctx.players[i].id],data:view(w,ctx.players[i].id)});var keys=Object.keys(w.ships);for(var j=0;j<keys.length;j++){var s=w.ships[keys[j]];if(s.delegate&&ctx.players.some(function(p){return p.id===s.delegate;}))b.push({to:[s.delegate],data:{type:'brain_context',ownerId:s.id,time:w.time,ship:s,emergency:emergency(w,s),nearbyEnemies:w.raiders.filter(function(r){return r.hull>0&&distance(s,r)<17;}).map(function(r){return {name:r.name,hull:r.hull};})}});}return {ok:true,sessionState:w,broadcast:b};}
 function near(s,kind){var best=null,d=999;for(var i=0;i<PLACES.length;i++){var p=PLACES[i],n=distance(s,p);if((!kind||p.kind===kind)&&n<d){d=n;best=p;}}return d<7?best:null;}
 function mission(w,s){var m=s.mission;if(!m)return;var port=near(s,'port'),done=
@@ -183,7 +184,7 @@ function fire(w,s,target,ammunition){
  if(harbourSafe(s)||(!e.npc&&harbourSafe(e)))return 'Harbour guns protect anchored ships. Leave port before fighting.';
  if(['round','chain','grape'].indexOf(ammunition||'round')<0)return 'Unknown ammunition.';if(s.boarding)return 'Wait for the boarding party.';
  if(s.controlMode==='manual'&&Math.abs(Math.sin(Math.atan2(e.x-s.x,e.z-s.z)-s.heading))<.45)return 'Target outside the broadside arc. Turn your flank toward it.';
- if(distance(s,e)>17)return 'Out of range. Close to 17 fathoms.';if(w.time-s.lastShot<7)return 'Cannons reloading.';if(s.ammo<2)return 'Out of shot. Resupply in port.';
+ if(distance(s,e)>17)return 'Out of range. Close to 170 m.';if(w.time-s.lastShot<7)return 'Cannons reloading.';if(s.ammo<2)return 'Out of shot. Resupply in port.';
  var g=s.crew.filter(function(c){return !c.away&&c.task==='guns';}).length;
  if(!g)return 'Put someone on the guns first.';
  s.lastShot=w.time;s.lastTarget=e.id;s.ammo-=2;var damage=14+g*5*taskEffect(s,'guns')+s.level*2+(s.upgrades.guns||0)*4;if(ammunition==='chain'){damage*=.5;e.rigDamage=Math.min(70,(e.rigDamage||0)+25);}if(ammunition==='grape'){damage*=.4;e.shock=Math.min(60,(e.shock||0)+20);}e.hull=Math.max(0,e.hull-damage);log(s,w.time,'Little Fuse','BOOM! '+e.name+' has fewer opinions now.','combat');
@@ -197,7 +198,7 @@ function tick(w,dt,random){
   var s=w.ships[keys[k]];s.clock=w.time;if(s.controlMode==='manual'&&w.time>=(s.steerUntil||0)&&s.steerThrottle){s.steerThrottle=0;s.anchored=true;}
   if(s.boarding&&w.time>=s.boarding.finishAt)finishBoarding(w,s,random);
   if(s.controlMode==='manual'&&!s.boarding&&!s.away&&w.time<(s.steerUntil||0)&&!s.anchored){
-   s.heading+=(s.steerTurn||0)*dt*.6;var oldX=s.x,oldZ=s.z,wind=Math.sin(w.time/240),tail=.75+.25*Math.cos(s.heading-wind),speed=1.7*(1+s.upgrades.sails*.1)*(1-s.rigDamage/120)*tail;
+   s.heading+=(s.steerTurn||0)*dt*.6;var oldX=s.x,oldZ=s.z,wind=Math.sin(w.time/240),tail=.75+.25*Math.cos(s.heading-wind),speed=1.7*(1+s.upgrades.sails*.1)*(1-s.rigDamage/120)*tail*(.85+.15*windKnots(w)/12);
    s.x=clamp(s.x+Math.sin(s.heading)*speed*dt*(s.steerThrottle||0),-65,65);s.z=clamp(s.z+Math.cos(s.heading)*speed*dt*(s.steerThrottle||0),-65,65);
    var shore=near(s);if(shore&&shore.kind!=='wreck'&&distance(s,shore)<4.8){s.x=oldX;s.z=oldZ;s.steerThrottle=0;s.anchored=true;if(w.time-(s.lastGrounding===undefined?-999:s.lastGrounding)>10){s.lastGrounding=w.time;s.hull=Math.max(1,s.hull-1);log(s,w.time,'Pip','Mind the reef! Anchor down before we become scenery.','danger');}}if(shore&&distance(s,shore)<6.65&&s.visited.indexOf(shore.id)<0){s.visited.push(shore.id);s.reputation+=3;xp(s,15);log(s,w.time,'Pip','Charted '+shore.name+' from the helm.','travel');}
   }
@@ -263,7 +264,7 @@ globalThis.game={
    if(s.away||s.boarding)error='The ship needs its away crew back first.';
    else if(!e)error='Boarding is available against raiders only.';
    else if(harbourSafe(s))error='Leave the harbour before boarding a raider.';
-   else if(distance(s,e)>7)error='Close within 7 fathoms to board.';
+   else if(distance(s,e)>7)error='Close within 70 m to board.';
    else if(e.hull>e.maxHull*.45)error='Weaken the raider below 45% hull before boarding.';
    else if(e.boardedBy)error='Another captain is already boarding that prize.';
    else if(ids.length!==2||party.length!==2)error='Choose two fit sailors and keep the captain aboard.';
@@ -271,7 +272,7 @@ globalThis.game={
   }
   else if(m.type==='fire')error=fire(w,s,m.target,m.ammunition);
   else if(m.type==='away'){
-   var p=near(s);if(!s.anchored||!p||p.kind==='port')error='Anchor within 7 fathoms of an island or wreck.';
+   var p=near(s);if(!s.anchored||!p||p.kind==='port')error='Anchor within 70 m of an island or wreck.';
    else if(s.away||s.boarding)error='The longboat or boarding party is already away.';
    else if(['timber','treasure','salvage'].indexOf(m.job)<0)error='Unknown away job.';
    else if(p.kind!=='wreck'&&m.job==='salvage')error='Salvage is available at the Crooked Wreck.';

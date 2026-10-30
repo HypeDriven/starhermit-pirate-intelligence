@@ -13,15 +13,16 @@
     "models/index.json": {"sha256": "6ec1a854e92ca5d7720f2b337afa95627721090358f644d895a5aa0fe6b321b7", "size": 19672},
     "models/kernel.wasm": {"sha256": "6a02e6a49f14b80bb418f009e26eca7b77c89bde223026e8cb2ec4b53f8f531d", "size": 3274},
     "models/tokenizer.json": {"sha256": "7869f2bbda7f18283e163bf836fd83b5bcf2c65002fe558ecf7dca5472143c15", "size": 1375150},
-    "server.js": {"sha256": "f7388181afabb8724b5683c97adce63d0174b3333477f818072130f9fab991c6", "size": 43581},
+    "server.js": {"sha256": "f67d9b0980166de20e247f1d35629acc8b5527c19c4991ff89fdf7d5f1a059a2", "size": 43714},
     "src/brain/browser.ts": {"sha256": "13f6440d876fb5efb9472c8323693b82046128578aae060a7cc132d0cdef5867", "size": 6101},
     "src/brain/inference.js": {"sha256": "6fc3d0d74529a15f9a598383273f44483d9d592eed8faf4e81ff1597d84aabd2", "size": 4254},
     "src/brain/policy.js": {"sha256": "79a316195e912d538d097843152ef1ab8d3c1e61bd3686b32a58833b9d7d8e7d", "size": 2142},
     "src/brain/tokenizer.js": {"sha256": "99a91636b61cf8a35ce99776a6aca72f4d34321e908b900b85ad4cabf384b182", "size": 1758},
-    "src/main.ts": {"sha256": "c3217c390aea457ca955aabc689ecb481def8cb46b9d3d60351eb9e456e0141c", "size": 65059},
+    "src/main.ts": {"sha256": "0a1b2280eab7e085c9baa418a2062d4c1242dc5a554fa887839f12fba5381a0a", "size": 75044},
+    "src/navigation.js": {"sha256": "102aeffb5e57aff029cf3565c8462ce08c0da47eea08e456172e8d93cc60245c", "size": 1346},
     "src/sound.ts": {"sha256": "a4d8c0740fe2310114912651431853ca75381793959a86b0c567a6b9a81748e3", "size": 2067},
     "starhermit-remote.json": {"sha256": "257e2012233aad71a673f1e83ce0c542e770c65b48a8caee0d89325bd742e5c9", "size": 169},
-    "starhermit.txt": {"sha256": "c2d63727ca4f9720548fde2a48cea4a3b002018f2237b1e9f24ccab47f1d29fa", "size": 1213}
+    "starhermit.txt": {"sha256": "8589e66f3dc30fcc1f8d56122a07ada3422b1a02d5835dd32048a893b1f0b4dc", "size": 1221}
   },
   "format": 1
 }
