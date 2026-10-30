@@ -8,7 +8,7 @@
     "cover.jpg": {"sha256": "46380ed9a2437904dc6d2302a6c462bff1052b7ffaea52506baecfb1ef9ee212", "size": 237831},
     "description.md": {"sha256": "97d3151c0cd0e6f9c230e3de8784fd8ee3e866c06e3efb3c6a9675b430fd09ed", "size": 867},
     "favicon.png": {"sha256": "8ec83067dd83a7a2b6f8563947d277219a52ab08e3223ee88d04d40115e28add", "size": 84415},
-    "index.html": {"sha256": "e860f27615503678f3fd4073757dbebef9898594ce9768f646ee6bed8a3ab7c6", "size": 1793},
+    "index.html": {"sha256": "e41d3c964484ea621e2730b8360276e68b11cd2344d11b344f7b9d4317934164", "size": 1797},
     "models/LICENSE-Apache-2.0.txt": {"sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30", "size": 11358},
     "models/index.json": {"sha256": "6ec1a854e92ca5d7720f2b337afa95627721090358f644d895a5aa0fe6b321b7", "size": 19672},
     "models/kernel.wasm": {"sha256": "6a02e6a49f14b80bb418f009e26eca7b77c89bde223026e8cb2ec4b53f8f531d", "size": 3274},
@@ -20,7 +20,7 @@
     "src/brain/tokenizer.js": {"sha256": "99a91636b61cf8a35ce99776a6aca72f4d34321e908b900b85ad4cabf384b182", "size": 1758},
     "src/main.ts": {"sha256": "2829682004088c2403d0a770fec4ebcab408891d733a36d6d4213d98f72c0f5c", "size": 43268},
     "starhermit-remote.json": {"sha256": "257e2012233aad71a673f1e83ce0c542e770c65b48a8caee0d89325bd742e5c9", "size": 169},
-    "starhermit.txt": {"sha256": "2c11444118086311ad878b68eae5325450d5d3552855d2494e9ce1a622cb4834", "size": 947}
+    "starhermit.txt": {"sha256": "788fb1aa4a0e79f93d0bd28373b1d115375817c44cb7374ebb70374cd8e0ea29", "size": 947}
   },
   "excluded": ["DESIGN.md", "README.md", "companion/", "package.json", "publication.json", "scripts/", "spec.md", "tests/", "tools/", "tsconfig.json"],
   "format": 1
