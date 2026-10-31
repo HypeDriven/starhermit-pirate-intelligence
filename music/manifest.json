@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "generator": "YuE2 BF16 \u00b7 full ABC planning \u00b7 32 sampling steps",
+  "tracks": [
+    {
+      "model": "YuE2 BF16",
+      "prompt": "Instrumental pirate adventure soundtrack, nautical Celtic folk, warm expressive fiddle melody, concertina, wooden flute, acoustic lute and bouzouki, steady hand drums and low strings, swaying 6/8 sea shanty rhythm, adventurous and hopeful, 104 BPM, clean acoustic production, gentle beginning and flowing instrumental variations, no singing, no voices, no electronic drums",
+      "duration": 31.0,
+      "seed": 31415,
+      "file": "music/open-sea.ogg",
+      "title": "The Quarrelsome Sea",
+      "sourceDuration": 90.0,
+      "sourceRangeSeconds": [
+        0,
+        34
+      ],
+      "masteringGain": 0.6791194115725446,
+      "loopCrossfadeSeconds": 3,
+      "sha256": "99a18aa87406649567eb35743300478a22bf9b5bb5ca8a892afdb168af941ad1"
+    },
+    {
+      "model": "YuE2 BF16",
+      "prompt": "Instrumental quiet pirate harbour at dusk, intimate Celtic maritime folk, gentle fingerpicked lute, warm concertina chords, soft fiddle and wooden flute, calm rolling waves of melody, 74 BPM, warm spacious acoustic recording, peaceful tavern and lantern light atmosphere, no singing, no voices, no electronic instruments",
+      "duration": 19.0,
+      "seed": 27182,
+      "file": "music/lantern-harbour.ogg",
+      "title": "Lanterns at Saltwick",
+      "sourceDuration": 65.0,
+      "sourceRangeSeconds": [
+        0,
+        22
+      ],
+      "masteringGain": 0.7897391967123086,
+      "loopCrossfadeSeconds": 3,
+      "sha256": "09cbd30ebba61ec1f314a1c83f3199104ec021b95b132bef444b19522e3591da"
+    },
+    {
+      "model": "YuE2 BF16",
+      "prompt": "Instrumental pirate naval battle soundtrack, driving Celtic fiddle ostinato and low orchestral strings, concertina accents, deep marching toms and snare rolls, urgent swashbuckling adventure, bold nautical melody, 128 BPM, dynamic dramatic acoustic orchestral production, no singing, no voices, no electronic instruments",
+      "duration": 37.0,
+      "seed": 16180,
+      "file": "music/black-sails.ogg",
+      "title": "Black Sails, Brass Guns",
+      "sourceDuration": 65.0,
+      "sourceRangeSeconds": [
+        0,
+        40
+      ],
+      "masteringGain": 0.6907493939500404,
+      "loopCrossfadeSeconds": 3,
+      "sha256": "9eab49b08de8b83427c71a24bdeec13043612183dbee5ed5b585487cfd5fa576"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "note": "An automated instrumental screen is a useful check, not a listening guarantee. Reports apply to the selected instrumental passages; final masters add only level and loop-seam processing.",
+  "tracks": [
+    {
+      "track": "open-sea",
+      "status": "passed_automated_vocal_screen",
+      "duration": 31.0,
+      "policy": "full-timeline-ast-clap-whisper-v3",
+      "strongVocalWindows": 0,
+      "audioValidation": {
+        "finite": true,
+        "channels": 2,
+        "sample_rate": 48000,
+        "subtype": "PCM_24",
+        "sample_peak": 0.5311629772186279,
+        "decoded_pcm_sha256": "aafdae9e3cd89ad92c74eac8b9103ebdae80fc7d3ad5c013cedee256cf892123"
+      }
+    },
+    {
+      "track": "lantern-harbour",
+      "status": "passed_automated_vocal_screen",
+      "duration": 19.0,
+      "policy": "full-timeline-ast-clap-whisper-v3",
+      "strongVocalWindows": 0,
+      "audioValidation": {
+        "finite": true,
+        "channels": 2,
+        "sample_rate": 48000,
+        "subtype": "PCM_24",
+        "sample_peak": 0.4660094976425171,
+        "decoded_pcm_sha256": "798eacef0d45cccf3599740d04f86f8b344111b1d8623de5465bc007f443c5d2"
+      }
+    },
+    {
+      "track": "black-sails",
+      "status": "passed_automated_vocal_screen",
+      "duration": 37.0,
+      "policy": "full-timeline-ast-clap-whisper-v3",
+      "strongVocalWindows": 0,
+      "audioValidation": {
+        "finite": true,
+        "channels": 2,
+        "sample_rate": 48000,
+        "subtype": "PCM_24",
+        "sample_peak": 0.6774789094924927,
+        "decoded_pcm_sha256": "89222fd5c5091e161856a862f6a7cd0daae0773de0fb1bbd41ee3c393d0c3e37"
+      }
+    }
+  ]
+}

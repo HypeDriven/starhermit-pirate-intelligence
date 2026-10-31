@@ -22,10 +22,10 @@ python - <<'BUILD'
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 with ZipFile('dist/pirate-intelligence-source.zip', 'w', ZIP_DEFLATED) as archive:
-    for folder in ['src','companion','tests','scripts','tools','models']:
+    for folder in ['src','companion','tests','scripts','tools','models','assets','music','sfx']:
         for p in sorted(Path(folder).rglob('*')):
             if p.is_file() and '__pycache__' not in p.parts and p.suffix not in ['.pyc','.gguf']:
                 archive.write(p, 'pirate-intelligence/'+str(p))
-    for name in ['README.md','DESIGN.md','spec.md','LICENSE','LICENSE.md','server.js','starhermit.txt','tsconfig.json','package.json','.gitignore','.starhermitignore','index.html','starhermit-files.json','starhermit-remote.json']:
+    for name in ['README.md','DESIGN.md','spec.md','LICENSE','LICENSE.md','server.js','starhermit.txt','tsconfig.json','package.json','.gitignore','.starhermitignore','index.html','starhermit-files.json','starhermit-remote.json','cover.jpg','banner.jpg','description.md']:
         archive.write(name,'pirate-intelligence/'+name)
 BUILD
