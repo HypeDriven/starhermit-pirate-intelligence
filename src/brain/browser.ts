@@ -1,7 +1,7 @@
 import { files, runtime } from 'starhermit:engine';
 import { Tokenizer } from './tokenizer.js';
 import { TinyModel } from './inference.js';
-import { LOADS, loadSetting, brainRequest, nextWorkAt } from './policy.js';
+import { LOADS, loadSetting, brainRequest, designRequest, nextWorkAt } from './policy.js';
 
 // The game already runs off the browser's rendering thread. SIMD math runs in
 // that realm so it uses the browser's WASM engine rather than an interpreted
@@ -19,6 +19,7 @@ export class BrowserBrain {
  private nextAt=0;
  private cursor=0;
  private attempts:Record<string,number>={};
+ private briefs:Record<string,boolean>={};
  private generation=0;
  private stream:any=null;
  private paused=false;
@@ -70,6 +71,15 @@ export class BrowserBrain {
    this.nextAt=nextWorkAt(performance.now(),performance.now()-start,setting.duty);return;
   }
   if(!this.iterator){
+   // A sketch on the workshop table comes first: the sailor picks a favourite.
+   const brief=state.myShip.workshop?.brief,designer=brief&&eligible.find((c:any)=>c.id===brief.crewId);
+   if(brief&&designer&&!this.briefs[brief.id]&&state.time<brief.decideBy-3&&state.workshop){
+    this.briefs[brief.id]=true;const input=designRequest(state,designer,brief);
+    this.request={design:true,briefId:brief.id,options:input.options,crewId:designer.id,ownerId:state.myShip.id,generation:this.generation};
+    this.iterator=this.model.choose(input.prompt,input.options);this.status=designer.name.split(' ')[0]+' is sketching';
+   }
+  }
+  if(!this.iterator){
    let selected:any=null;
    for(let i=0;i<eligible.length;i++){
     const c=eligible[(this.cursor+i)%eligible.length];
@@ -82,6 +92,15 @@ export class BrowserBrain {
    this.status='Thinking for '+selected.name.split(' ')[0];
   }
   const current=state.myShip.crew.find((c:any)=>c.id===this.request.crewId);
+  if(this.request.design){
+   if(state.myShip.workshop?.brief?.id!==this.request.briefId||state.myShip.id!==this.request.ownerId){this.cancel();return;}
+   let done=false;
+   do{const result=this.iterator.next();
+    if(result.done){const index=this.request.options.indexOf(result.value);if(index>=0&&this.request.generation===this.generation)send({type:'mod.pick',briefId:this.request.briefId,index,source:'browser'});
+     this.status='Ready · '+(current?.name.split(' ')[0]||'crew')+' picked a sketch';this.iterator=null;this.request=null;done=true;break;}
+   }while(performance.now()-start<setting.slice);
+   const end=performance.now();this.nextAt=Math.max(nextWorkAt(end,end-start,setting.duty),done?end+setting.rest*1000:0);return;
+  }
   if(!current||current.away||current.manualUntil!==this.request.manualUntil||current.orderRevision!==this.request.revision||state.myShip.id!==this.request.ownerId||
      (configs[current.id]&& !['tiny','browser'].includes(configs[current.id].mode))){this.cancel();return;}
   try{

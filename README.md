@@ -28,6 +28,16 @@ Practice state is saved on the device every ten seconds. Refresh resumes the sam
 - A welcome guide, sea atlas, captain’s log, exploration milestones, renown, authored crew barks, optional sea ambience and procedural combat/reward sounds.
 - Persistent StarHermit rooms, device practice saves, migration of older snapshots, private crew views, shared authority rules and a scene using instanced repeated geometry.
 
+## Crew workshop and Plucks
+
+The crew sketch cosmetic mods (sails, hull paint, colours, clothing, weapons) as validated data. The authority makes the candidates and the crew's model picks one. Commissioning a sketch creates a StarHermit Pluck order, which the player approves on the dashboard (`https://dashboard.starhermit.com/plucks/orders/{id}`). The authority applies a design only from the platform's paid-order feed (`ctx.pluckOrders`). Owned designs persist in `playerStates`. Register the catalog once with the owner's account token:
+
+```bash
+STARHERMIT_TOKEN=<owner token> scripts/register-pluck-items.sh
+```
+
+Commissions need engine host API 1.33 (`engine.capabilities=plucks`). On older engines the workshop still sketches and previews.
+
 ## Run and package with StarHermit
 
 Download the [official Linux or Windows runtime](https://wiki.starhermit.com/docs/tutorials/starhermit-engine.html). No engine binaries are included in this repository.

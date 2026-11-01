@@ -1,4 +1,4 @@
-import {scene,Mesh,InstancedMesh,Group,BoxGeometry,CylinderGeometry,SphereGeometry,PlaneGeometry,TorusGeometry,RingGeometry,BufferGeometry,Float32BufferAttribute,MeshStandardMaterial,MeshBasicMaterial,Vector3,Vector4,Matrix4,DoubleSide,PointLight} from 'starhermit:scene';
+import {scene,Color,Mesh,InstancedMesh,Group,BoxGeometry,CylinderGeometry,SphereGeometry,PlaneGeometry,TorusGeometry,RingGeometry,BufferGeometry,Float32BufferAttribute,MeshStandardMaterial,MeshBasicMaterial,Vector3,Vector4,Matrix4,DoubleSide,PointLight} from 'starhermit:scene';
 import {METRES,SHIP_SCALE} from './navigation.js';
 
 // Editable, shared game geometry keeps decks, crew and rigging interactive.
@@ -26,7 +26,7 @@ function cannon(g:any,x:number,y:number,z:number,side:number){box(g,x,y+.08,z,.4
 }
 const widths=[[-4.05,.66],[-3.6,1.12],[-2.7,1.53],[-1.5,1.64],[0,1.65],[1.6,1.5],[2.8,1.12],[3.8,.48],[4.35,.025]];
 function widthAt(z:number){for(let i=1;i<widths.length;i++)if(z<=widths[i][0]){const a=widths[i-1],b=widths[i],t=(z-a[0])/(b[0]-a[0]);return a[1]+(b[1]-a[1])*t;}return .025;}
-function boatHull(g:any,enemy=false){
+function boatHull(g:any,enemy=false){const belts:any[]=[];
  const colors=enemy?['#272e30','#42352d','#775039','#9b6d43','#493f31']:['#203f3d','#315450','#6e4a31','#9f7248','#4b382a'];
  for(let belt=0;belt<5;belt++){
   const v:number[]=[],ind:number[]=[];
@@ -35,7 +35,7 @@ function boatHull(g:any,enemy=false){
    for(const [section,t] of [[i,belt/5],[i+1,belt/5],[i+1,(belt+1)/5],[i,(belt+1)/5]]){const [z,w]=widths[section],keel=-1.55+Math.pow(Math.abs(z)/4.4,3)*.7,sheer=1.22+Math.pow(Math.abs(z)/4.4,4)*.28;v.push(side*w*(.30+.70*Math.sin(t*Math.PI/2)),keel+(sheer-keel)*t,z);}
    if(side>0)ind.push(n,n+2,n+1,n,n+3,n+2);else ind.push(n,n+1,n+2,n,n+2,n+3);
   }
-  mesh(g,geometry(v,ind),new MeshStandardMaterial({color:colors[belt],roughness:.78,side:DoubleSide}));
+  const beltMat=new MeshStandardMaterial({color:colors[belt],roughness:.78,side:DoubleSide});belts.push(beltMat);mesh(g,geometry(v,ind),beltMat);
  }
  for(let j=0;j<32;j++){const z=-3.83+j*.25,w=widthAt(z)-.1;box(g,0,1.25,z,Math.max(.08,w*2),.10,.238,j%4===0?'#b89562':j%4===1?'#d1ae73':'#c6a16b');if(j%3===0)for(const side of [-1,1])sphere(g,side*Math.max(.02,w-.1),1.307,z,.018,'#70573c');}
  for(const side of [-1,1]){
@@ -43,11 +43,34 @@ function boatHull(g:any,enemy=false){
   for(let z=-3.5;z<3.6;z+=.55)box(g,side*widthAt(z),1.38,z,.06,.45,.065,'#bfa36d');
  }
  box(g,0,.9,-4.04,1.3,.55,.12,'#294743');for(const x of [-.43,0,.43])box(g,x,.92,-4.115,.20,.27,.035,'#e6bc74');
+ return belts;
 }
+// Crew-designed patterns (data-only mods). pattern/emblem are enum codes from the
+// authority's tables; the accent colour comes from its fixed palette.
+const PATTERN_WGSL=`fn modMask(u: vec2f) -> f32 { let p=uniforms.pattern; var m=0.0;
+ if(p>0.5&&p<1.5){m=step(0.5,fract(u.x*4.0));}
+ else if(p>1.5&&p<2.5){m=step(abs(fract(u.y*2.2+abs(u.x-0.5)*2.4)-0.5),0.2);}
+ else if(p>2.5&&p<3.5){m=select(0.0,1.0,(u.x>0.5)!=(u.y>0.5));}
+ else if(p>3.5&&p<4.5){m=step(0.78,fract(sin(floor(u.x*6.0)*12.9898+floor(u.y*5.0)*78.233)*43758.5453));}
+ else if(p>4.5&&p<5.5){m=step(0.5,u.x);}
+ else if(p>5.5&&p<6.5){m=1.0-step(0.12,min(min(u.x,1.0-u.x),min(u.y,1.0-u.y)));}
+ let e=uniforms.emblem; if(e>0.5){ let d=(u-vec2f(0.5,0.48))*vec2f(1.0,1.25); let r=length(d); let a=atan2(d.y,d.x); var k=0.0;
+  if(e<1.5){k=(1.0-step(0.16,r))*step(0.045,length(d-vec2f(-0.06,0.03)))*step(0.045,length(d-vec2f(0.06,0.03)));}
+  else if(e<2.5){k=1.0-step(0.09+0.08*pow(abs(cos(a*2.5)),3.0),r);}
+  else if(e<3.5){k=step(0.13,r)*(1.0-step(0.17,r))+(1.0-step(0.17,r))*(1.0-step(0.02,min(abs(d.x),abs(d.y))));}
+  else if(e<4.5){k=(1.0-step(0.025,abs(d.x)))*(1.0-step(0.17,abs(d.y)))+step(0.11,r)*(1.0-step(0.15,r))*step(0.0,-d.y);}
+  else if(e<5.5){k=1.0-step(0.08+0.06*abs(sin(a*4.0+r*20.0)),r);}
+  else if(e<6.5){k=(1.0-step(0.08,r))+(1.0-step(0.16,r))*step(0.6,abs(cos(a*6.0)));}
+  else {k=(1.0-step(0.15,r))*step(0.13,length(d-vec2f(0.06,0.03)));}
+  m=select(m,1.0-m,k>0.5); if(p<0.5){m=step(0.5,k);} }
+ return clamp(m,0.0,1.0); }`;
+function modUniforms(){return {pattern:{value:0},emblem:{value:0},ar:{value:0},ag:{value:0},ab:{value:0}};}
+const ACCENT=`let accent=vec3f(uniforms.ar,uniforms.ag,uniforms.ab); let mm=modMask(s.uv);`;
 function canvas(g:any,w:number,h:number,z:number,y:number,color:string){const v:number[]=[],ind:number[]=[],uv:number[]=[];const nx=12,ny=8;
  for(let j=0;j<=ny;j++)for(let i=0;i<=nx;i++){const u=i/nx,t=j/ny,edge=Math.sin(t*Math.PI);v.push((u-.5)*w*(1-.13*t),y-t*h+.12*Math.cos(u*Math.PI*2)*t,z+Math.sin(u*Math.PI)*edge*.38);uv.push(u,t);}
  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const a=j*(nx+1)+i;ind.push(a,a+nx+1,a+1,a+1,a+nx+1,a+nx+2);}
- const material=new MeshStandardMaterial({color,roughness:.94,side:DoubleSide,hooks:{uniforms:{furl:{value:1},top:{value:y}},vertex:`fn vertex(v: Vertex) -> Vertex {var o=v;o.position.y=uniforms.top-(uniforms.top-v.position.y)*uniforms.furl;o.position.z=v.position.z*uniforms.furl;return o;}`,surface:`fn surface(s: Surface) -> Surface { var o=s; let seam=1.0-smoothstep(0.018,0.034,abs(fract(s.uv.x*7.0)-0.5)); let weave=sin(s.uv.x*420.0)*sin(s.uv.y*350.0)*0.025; o.base_color=vec4f(s.base_color.rgb*(0.94+weave-seam*0.12),s.base_color.a); return o; }`}});
+ const material=new MeshStandardMaterial({color,roughness:.94,side:DoubleSide,hooks:{uniforms:{furl:{value:1},top:{value:y},...modUniforms()},vertex:`fn vertex(v: Vertex) -> Vertex {var o=v;o.position.y=uniforms.top-(uniforms.top-v.position.y)*uniforms.furl;o.position.z=v.position.z*uniforms.furl;return o;}`,surface:PATTERN_WGSL+`
+fn surface(s: Surface) -> Surface { var o=s; ${ACCENT} let seam=1.0-smoothstep(0.018,0.034,abs(fract(s.uv.x*7.0)-0.5)); let weave=sin(s.uv.x*420.0)*sin(s.uv.y*350.0)*0.025; o.base_color=vec4f(mix(s.base_color.rgb,accent,mm)*(0.94+weave-seam*0.12),s.base_color.a); return o; }`}});
  const cloth=mesh(g,geometry(v,ind,uv),material);cloth.userData.animated=true;return cloth;
 }
 export function crewDoll(color:string,index:number){
@@ -65,7 +88,7 @@ export function crewDoll(color:string,index:number){
  g.userData.uniform=uniform;g.userData.limbs=limbs;g.userData.tool=tool;return g;
 }
 export function shipModel(enemy=false){
- const g=new Group(),hull=new Group(),rig=new Group(),guns=new Group(),hold=new Group(),section=new Group(),people=new Group(),sails:any[]=[];g.add(hull,rig,guns,hold,section,people);g.scale.set(SHIP_SCALE,SHIP_SCALE,SHIP_SCALE);boatHull(hull,enemy);
+ const g=new Group(),hull=new Group(),rig=new Group(),guns=new Group(),hold=new Group(),section=new Group(),people=new Group(),sails:any[]=[];g.add(hull,rig,guns,hold,section,people);g.scale.set(SHIP_SCALE,SHIP_SCALE,SHIP_SCALE);const belts=boatHull(hull,enemy);
  box(hull,0,1.64,-2.95,2.12,.67,1.35,enemy?'#5b3e35':'#34534c');
  for(const x of [-.72,-.36,0,.36,.72]){box(hull,x,1.72,-3.64,.25,.29,.03,'#d9b76b');box(hull,x,1.72,-3.66,.025,.3,.015,'#765533');}
  for(let i=0;i<8;i++)box(hull,0,2.02,-3.68+i*.19,2.3,.09,.18,i%2?'#895738':'#a06c43');
@@ -76,13 +99,13 @@ export function shipModel(enemy=false){
  cylinder(hull,0,1.48,2.75,.12,.18,.42,'#694b32');for(let i=0;i<4;i++){const a=i*Math.PI/2;beam(hull,[0,1.64,2.75],[Math.cos(a)*.45,1.64,2.75+Math.sin(a)*.45],.025,'#bb9861');}
  for(const side of [-1,1])for(let j=0;j<3;j++)cannon(hull,side*1.25,1.39,-1.35+j*1.37,side);
  beam(hull,[0,1.3,3.3],[0,2.0,5.25],.065,'#9d7846');for(const side of [-1,1])beam(hull,[side*.7,1.3,3.1],[0,2.0,5.2],.013,'#bca774');
- const flags:any[]=[];
+ const flags:any[]=[],emblems:any[]=[];
  for(let j=0;j<2;j++){
   const z=j?-1.65:1.15,top=j?5.9:6.8;beam(rig,[0,1.3,z],[0,top,z],.075,'#88623e');cylinder(rig,0,1.45,z,.15,.17,.20,'#b99b57');
   for(const side of [-1,1]){beam(rig,[side*1.45,1.45,z-.65],[0,top-.7,z],.013,'#a39771');beam(rig,[side*1.45,1.45,z+.7],[0,top-.7,z],.013,'#a39771');for(let q=0;q<10;q++){const t=q/10;beam(rig,[side*(1-t)*1.4,1.5+t*(top-2.2),z-.65*(1-t)],[side*(1-t)*1.4,1.5+t*(top-2.2),z+.7*(1-t)],.009,'#aca17d');}}
   for(let level=0;level<2;level++){const y=top-.6-level*1.65,w=(j?2.7:3.9)*(level?.95:.82);beam(rig,[-w/2,y,z],[w/2,y,z],.041,'#9c7848');const sail=canvas(rig,w,level?1.55:1.4,z+.06,y,enemy?'#bd725a':'#efe2bd');sails.push(sail);}
-  const flag=mesh(rig,new PlaneGeometry(.93,.43,8,2),new MeshStandardMaterial({color:enemy?'#803c38':'#284640',side:DoubleSide}),.46,top-.05,z);flags.push(flag);flag.userData.animated=true;
-  const emblem=sphere(rig,.46,top-.05,z+.025,.11,'#e8d4a3');emblem.scale.z=.15;for(const side of [-1,1])sphere(rig,.46+side*.036,top-.04,z+.045,.022,'#29423c');
+  const flag=mesh(rig,new PlaneGeometry(.93,.43,8,2),new MeshStandardMaterial({color:enemy?'#803c38':'#284640',side:DoubleSide,hooks:{uniforms:modUniforms(),surface:PATTERN_WGSL+`\nfn surface(s: Surface) -> Surface { var o=s; ${ACCENT} o.base_color=vec4f(mix(s.base_color.rgb,accent,mm),s.base_color.a); return o; }`}}),.46,top-.05,z);flags.push(flag);flag.userData.animated=true;
+  const emblem=new Group();rig.add(emblem);sphere(emblem,.46,top-.05,z+.025,.11,'#e8d4a3').scale.z=.15;for(const side of [-1,1])sphere(emblem,.46+side*.036,top-.04,z+.045,.022,'#29423c');emblems.push(emblem);
  }
  for(const y of [1.25,.2,-.8]){box(section,-1.43,y,-.15,.16,.10,6.6,'#d4b276');}
  for(let j=0;j<14;j++)box(section,-1.45,-.1,-3.4+j*.5,.11,2.65,.47,j%2?'#8a643f':'#98764c');box(section,0,-.1,-3.52,2.9,2.65,.10,'#705135');
@@ -96,7 +119,7 @@ export function shipModel(enemy=false){
  const flames:any[]=[];for(let i=0;i<4;i++){const f=mesh(g,ball,new MeshBasicMaterial({color:i%2?'#ffd286':'#ed7d3e'}),(i%2?-.8:.8),1.7+i*.2,-1.4+i*.8);f.scale.set(.2,.4,.2);f.visible=false;flames.push(f);}
  const wake=mesh(g,new RingGeometry(.65,1,32,1,Math.PI*.12,Math.PI*.76),new MeshBasicMaterial({color:'#b2e3d9',transparent:true,opacity:.32,depthWrite:false}),0,-.68,-3.6);wake.rotation.x=-Math.PI/2;wake.scale.set(1.2,3.3,1);wake.visible=false;
  const light=new PointLight('#ffd49a',0,20,2);light.position.set(0,2,-3);g.add(light);
- return {g,hull,rig,sails,guns,hold,section,people,dolls,flames,enemy,flags,wake,light};
+ return {g,hull,rig,sails,guns,hold,section,people,dolls,flames,enemy,flags,emblems,belts,beltDefaults:belts.map((m:any)=>'#'+m.color.getHexString()),sailDefault:enemy?'#bd725a':'#efe2bd',flagDefault:enemy?'#803c38':'#284640',wake,light};
 }
 export function makeLongboat(){
  const g=new Group();const v:number[]=[],ind:number[]=[];const cross=[[-1,.14],[-.8,.43],[.55,.43],[1.08,.04]];
@@ -161,3 +184,44 @@ export function animateEnvironment(time:number,dt:number,focus:any){
  for(const p of particles){if(p.age>=p.life){p.m.visible=false;continue;}p.age+=dt;p.m.position.x+=p.vx*dt;p.m.position.z+=p.vz*dt;p.m.position.y+=p.vy*dt;const s=.4+p.age*1.7;p.m.scale.set(s,s,s);p.m.material.opacity=.60*(1-p.age/p.life);}
 }
 export function animateShip(obj:any,time:number,moving:boolean,mine:boolean,light:number){for(let i=0;i<obj.sails.length;i++)obj.sails[i].rotation.y=Math.sin(time*.6+i)*.045;for(const flag of obj.flags){flag.rotation.y=Math.sin(time*2.4)*.18;flag.rotation.z=Math.sin(time*3)*.04;}obj.wake.visible=moving;obj.wake.scale.y=3.3+Math.sin(time*1.5)*.18;obj.light.intensity=mine?(1-light)*9:0;}
+
+// ---- Applying crew-designed mods (validated data from the authority) ----
+const CREW_IDS=['morrow','brisk','fuse','peg','tallow','pip'];
+const SAIL_CODES=[0,1,2,3,4],FLAG_CODES=[0,5,6];
+function setAccent(material:any,hex:string,pattern:number,emblem:number){const u=material.hooks?.uniforms;if(!u)return;const c=new Color(hex);u.ar.value=c.r;u.ag.value=c.g;u.ab.value=c.b;u.pattern.value=pattern;u.emblem.value=emblem;}
+function shade(hex:string,f:number){const c=new Color(hex);c.multiplyScalar(f);return '#'+c.getHexString();}
+function outfitPiece(d:any,garment:number,primary:string,secondary:string){
+ const g=new Group();
+ if(garment===0){const coat=cylinder(g,0,.36,0,.2,.24,.36,primary);coat.scale.z*=.9;box(g,0,.46,.17,.05,.3,.02,secondary);}
+ else if(garment===1){const sash=box(g,0,.43,.12,.06,.42,.05,secondary);sash.rotation.z=.75;box(g,.15,.3,.13,.09,.14,.04,secondary);}
+ else if(garment===2){const b=sphere(g,0,.96,-.01,.205,primary);b.scale.set(.205,.1,.185);box(g,-.05,.93,-.2,.06,.12,.03,secondary);}
+ else if(garment===3){const brim=sphere(g,0,1.05,0,.29,primary);brim.scale.set(.31,.045,.24);const crown=sphere(g,0,1.11,-.015,.22,primary);crown.scale.set(.22,.11,.16);sphere(g,0,1.16,.15,.035,secondary);}
+ else {box(g,0,.47,.12,.27,.3,.05,primary);for(let i=0;i<3;i++)sphere(g,0,.38+i*.08,.15,.014,secondary);}
+ d.add(g);return g;
+}
+function weaponPiece(d:any,kind:number,primary:string,secondary:string){
+ const g=new Group();g.position.set(-.24,.32,.04);
+ if(kind===0){box(g,0,-.1,0,.025,.34,.012,'#d9dcd6');box(g,0,.08,0,.11,.03,.03,secondary);box(g,0,.13,0,.03,.08,.03,primary);}
+ else if(kind===1){box(g,0,0,0,.03,.4,.03,primary);box(g,.05,.17,0,.11,.08,.015,'#bcc0bb');}
+ else if(kind===2){const barrel=box(g,0,-.03,.04,.025,.25,.025,'#3a3631');barrel.rotation.x=.2;box(g,0,.1,0,.05,.09,.06,primary);sphere(g,0,.13,.0,.02,secondary);}
+ else if(kind===3){box(g,0,.15,0,.02,.8,.02,primary);const tip=box(g,0,.58,0,.06,.1,.012,'#d9dcd6');tip.rotation.z=.78;g.position.set(-.3,.25,-.05);}
+ else {cylinder(g,0,0,0,.025,.035,.3,primary);sphere(g,0,.16,0,.03,secondary);}
+ d.add(g);return g;
+}
+export function applyLook(obj:any,look:any,palette:any[]){
+ const key=JSON.stringify(look||null);if(obj.userData?.lookKey===key)return;obj.userData={...(obj.userData||{}),lookKey:key};
+ const hex=(i:number,fallback:string)=>palette?.[i]?.hex||fallback;
+ const sail=look?.sail?.spec,hull=look?.hull?.spec,flag=look?.flag?.spec;
+ for(const s of obj.sails){s.material.color.set(sail?hex(sail.primary,obj.sailDefault):obj.sailDefault);setAccent(s.material,sail?hex(sail.secondary,'#000'):'#000',sail?SAIL_CODES[sail.pattern]??0:0,sail?sail.emblem:0);if(!sail)s.material.hooks.uniforms.pattern.value=0;}
+ obj.belts.forEach((m:any,i:number)=>{if(!hull){m.color.set(obj.beltDefaults[i]);return;}const p=hex(hull.primary,obj.beltDefaults[i]),q=hex(hull.secondary,p);
+  const c=hull.pattern===1&&i===3?q:hull.pattern===2&&i%2?q:hull.pattern===3&&i===4?'#c6a15b':hull.pattern===3&&i===3?q:shade(p,.62+i*.1);m.color.set(c);});
+ for(let i=0;i<obj.flags.length;i++){const m=obj.flags[i].material;m.color.set(flag?hex(flag.primary,obj.flagDefault):obj.flagDefault);setAccent(m,flag?hex(flag.secondary,'#000'):'#000',flag?FLAG_CODES[flag.pattern]??0:0,flag?flag.emblem:0);if(obj.emblems[i])obj.emblems[i].visible=!flag||flag.emblem===0;}
+ for(let i=0;i<obj.dolls.length;i++){const d=obj.dolls[i],mods=look?.crew?.[CREW_IDS[i]]||{};
+  for(const old of d.userData.mods||[])d.remove(old);d.userData.mods=[];
+  const base=d.userData.baseColor||(d.userData.baseColor='#'+d.userData.uniform[0].material.color.getHexString());
+  const cloth=mods.clothing?.spec,arms=mods.weapon?.spec;
+  for(const m of d.userData.uniform)m.material=mat(cloth?hex(cloth.primary,base):base);
+  if(cloth)d.userData.mods.push(outfitPiece(d,cloth.pattern,hex(cloth.primary,base),hex(cloth.secondary,'#ccad67')));
+  if(arms)d.userData.mods.push(weaponPiece(d,arms.pattern,hex(arms.primary,'#6b4a2e'),hex(arms.secondary,'#ccad67')));
+ }
+}

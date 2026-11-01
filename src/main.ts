@@ -7,10 +7,12 @@ import * as platform from 'starhermit:platform';
 import * as ui from 'starhermit:ui';
 import * as draw from 'starhermit:draw';
 import {FontFace,fonts} from 'starhermit:canvas';
+import {commission,commissions,plucksReady,plucksStatus,openApproval,openWallet,walletReady} from './plucks.js';
+import {describeDesign} from './brain/policy.js';
 import {cue,soundSettings,initAudio,audioUpdate,audioStatus,audioSuspend,audioResume} from './sound.js';
 import {audioEvents} from './audio-events.js';
 import {seaChart} from './charts.js';
-import {box,sphere,mat,crewDoll,makeLongboat,shipModel,buildIslands,createOcean,animateEnvironment,animateShip,burst} from './visuals.js';
+import {applyLook,box,sphere,mat,crewDoll,makeLongboat,shipModel,buildIslands,createOcean,animateEnvironment,animateShip,burst} from './visuals.js';
 import { BrowserBrain } from './brain/browser.js';
 import { LOADS, loadSetting } from './brain/policy.js';
 import { METRES, bearing, compass, clock, daylight, windSpeed, smoothPose, boatProgress } from './navigation.js';
@@ -77,6 +79,45 @@ function exportBrains(){saveBrain();files.saveAs('crew-brains.json',JSON.stringi
 function meter(name:string,v:number,max:number,color:string,width=215){ui.row(name,()=>{ui.label(name,{color:C.muted,size:11});ui.spacer();ui.label(Math.round(v)+' / '+max,{size:11,color});},{width});ui.style({parts:{fill:{background:color},track:{background:'#3a2716'}},height:5}).progress(v/max,width);}
 function button(label:string,fn:()=>void,selected=false,disabled=false){if(ui.style(selected?'gold':'soft').button(label,{selected,disabled}))fn();}
 function wideButton(label:string,fn:()=>void,selected=false){if(ui.style({width:dialogWidth}).button(label,{selected,content:()=>ui.paragraph(label,dialogWidth-24,{size:12})}))fn();}
+let workshopKind='sail',workshopCrew=0,workshopFor=0,preview:any=null;
+// A preview is drawn only on this captain's screen and never sent anywhere.
+function previewLook(look:any){
+ if(!preview||elapsedNow()>preview.until)return look;const d=preview.design,out:any={...(look||{}),crew:{...(look?.crew||{})}};
+ if(state.workshop?.kinds?.[d.kind]?.slot==='crew')out.crew[d.targetId]={...(out.crew[d.targetId]||{}),[d.kind]:{kind:d.kind,spec:d.spec}};else out[d.kind]={kind:d.kind,spec:d.spec,name:d.name};
+ return out;
+}
+function elapsedNow(){return performance.now()/1000;}
+function workshopPanel(s:any){
+ const t=state.workshop,k=s.workshop||{designs:[]},names=s.crew.map((c:any)=>c.name.split(' ')[0]);if(!t)return;
+ ui.paragraph('Your crew sketch improvements for the ship and each other. Each sailor has their own taste, and their brain picks a favourite sketch. A commission costs Plucks, StarHermit’s currency, and you approve every spend on your StarHermit dashboard. The game can only ask.',dialogWidth,{size:12});
+ const note=plucksStatus(online);if(note)ui.paragraph(note,dialogWidth,{size:11,color:C.gold});
+ ui.row('Wallet',()=>{button('Get Plucks on StarHermit',()=>openWallet(),false,!walletReady());},{spacing:6});
+ if(k.brief){const c=s.crew.find((x:any)=>x.id===k.brief.crewId);ui.heading((c?.name.split(' ')[0]||'Crew')+' is sketching '+(t.kinds[k.brief.kind]?.label||'').toLowerCase(),{size:16});
+  ui.paragraph('Their pick lands in '+Math.max(0,Math.ceil(k.brief.decideBy-state.time))+'s. You may choose for them:',dialogWidth,{size:11});
+  k.brief.candidates.forEach((spec:any,i:number)=>wideButton((i+1)+'. '+describeDesign(t,k.brief.kind,spec),()=>command({type:'mod.pick',briefId:k.brief.id,index:i})));}
+ else{
+  ui.heading('Ask for a sketch',{size:16});
+  const kinds=Object.keys(t.kinds);for(const slot of ['ship','crew'])ui.row('Design kind '+slot,()=>{for(const id of kinds.filter(k=>t.kinds[k].slot===slot))button(t.kinds[id].label+' · '+t.kinds[id].price+' PLK',()=>workshopKind=id,workshopKind===id);},{spacing:5});
+  ui.row('Designer',()=>{names.forEach((n:string,i:number)=>button(n,()=>workshopCrew=i,workshopCrew===i,s.crew[i].away));},{spacing:5});
+  const crewItem=t.kinds[workshopKind]?.slot==='crew';
+  if(crewItem)ui.row('Made for',()=>{names.forEach((n:string,i:number)=>button(n,()=>workshopFor=i,workshopFor===i));},{spacing:5});
+  button('Ask '+names[workshopCrew]+' to sketch it',()=>command({type:'mod.commission',crewId:s.crew[workshopCrew].id,kind:workshopKind,targetId:crewItem?s.crew[workshopFor].id:''}),true);
+ }
+ ui.heading('Sketches & commissions',{size:16});
+ if(!k.designs.length)ui.paragraph('No sketches yet. Idle crew at anchor volunteer ideas now and then.',dialogWidth,{size:11});
+ for(const d of k.designs.slice().reverse()){
+  const by=s.crew.find((c:any)=>c.id===d.designer),target=d.targetId?s.crew.find((c:any)=>c.id===d.targetId):null,worn=d.status==='owned'&&(d.targetId?k.outfits?.[d.targetId]?.[d.kind]===d.id:k.look?.[d.kind]===d.id);
+  ui.label(d.name+(target?' · for '+target.name.split(' ')[0]:'')+' · '+(worn?'in use':d.status==='owned'?'owned':d.status==='ordered'?'awaiting approval':d.price+' PLK'),{size:13,color:d.status==='owned'?C.green:C.cream});
+  ui.paragraph('By '+(by?.name||'the crew')+': '+d.describe+'.',dialogWidth,{size:11,color:C.muted});
+  const pending=commissions[d.id];if(pending&&d.status!=='owned'&&(d.status==='ordered'||pending.status!=='pending'))ui.paragraph(pending.message,dialogWidth,{size:11,color:C.gold});
+  ui.row('Design '+d.id,()=>{
+   if(d.status!=='owned')button(preview?.design?.id===d.id&&elapsedNow()<preview.until?'Previewing…':'Preview 30s',()=>{preview={design:d,until:elapsedNow()+30};panel='';});
+   if(d.status==='draft'){button('Commission · '+d.price+' PLK',()=>{void commission(d,by?.name.split(' ')[0]||'Crew',command);},true,!plucksReady(online));button('Scrap',()=>command({type:'mod.discard',designId:d.id}));}
+   if(d.status==='ordered'){button('Approve on StarHermit',()=>openApproval(d.orderId),true);button('Withdraw',()=>command({type:'mod.cancel',designId:d.id}));}
+   if(d.status==='owned'&&!worn)button('Use this',()=>command({type:'mod.equip',designId:d.id}));
+  },{spacing:5});
+ }
+}
 function helmControls(){
  ui.grid('Manual helm',()=>{for(const item of [{label:'Port',turn:-1,throttle:1},{label:'Ahead',turn:0,throttle:1},{label:'Starboard',turn:1,throttle:1}]){const result=ui.widget(item.label,{role:'button',size:{width:72,height:36},style:'soft',draw:(rect,style)=>draw.text(item.label,rect.x+rect.width/2,rect.y+9*frame().scale,{size:12*frame().scale,color:style.colors.text,align:'center'})});if(result.pressed||result.activated){touchTurn=item.turn;touchThrottle=item.throttle;}}button('Stop',()=>command({type:'helm-input',turn:0,throttle:0}));},{columns:dialogWidth<380?2:4,width:Math.min(dialogWidth,340),gap:5});
 }
@@ -156,7 +197,7 @@ function renderScene(){
  const all=state.ships.concat(state.raiders);const visible:any={};
  for(const ss of all){visible[ss.id]=true;let obj=ships[ss.id];if(!obj)obj=buildShip(ss.id,!!ss.npc);obj.g.visible=ss.hull>0;if(!obj.g.visible)continue;const mine=ss.id===me;const pose=poses[ss.id]||ss;obj.g.position.set(pose.x*METRES,Math.sin(elapsed*1.3+ss.x)*.12,pose.z*METRES);obj.g.rotation.y=pose.heading||0;obj.g.rotation.z=Math.sin(elapsed+ss.x)*.012;
   const fire=mine?s.fire:ss.fire||0;for(let i=0;i<obj.flames.length;i++){const flame=obj.flames[i];flame.visible=fire>0;if(fire>0){flame.scale.y=(.35+Math.sin(elapsed*8+i)*.10)*Math.min(2,1+fire/60);flame.position.y=1.6+i*.12+Math.sin(elapsed*5+i)*.12;}}
-  const cut=mine&&zoom>.6&&deck>0;animateShip(obj,elapsed,!ss.anchored&&!cut,mine,light);
+  const cut=mine&&zoom>.6&&deck>0;animateShip(obj,elapsed,!ss.anchored&&!cut,mine,light);if(!ss.npc)applyLook(obj,mine?previewLook(ss.look):ss.look,state.workshop?.palette);
   obj.rig.visible=!cut;for(const sail of obj.sails){sail.visible=true;sail.material.hooks.uniforms.furl.value=mine&&zoom>.6?.16:1;}obj.hull.visible=!cut;obj.guns.visible=cut&&deck===1;obj.hold.visible=cut;obj.section.visible=cut;
   for(let i=0;i<obj.dolls.length;i++){const d=obj.dolls[i],c=mine?s.crew[i]:null;d.visible=(mine?(!c||!c.away):i<3)&&(!cut||(deck===1?['guns','repair'].includes(c?.task):['cook','forage','rest'].includes(c?.task)));if(c){const p=taskPos[c.task]||[0,0],slot=s.crew.slice(0,i).filter((other:any)=>!other.away&&other.task===c.task).length,watch=(elapsed+i*2)%18,walking=watch<4&&c.task!=='rest',stride=walking?Math.sin(elapsed*8+i):Math.sin(elapsed*4+i)*.3;
    d.position.set((cut?(i%2?.2:-.2):p[0])+(walking?Math.sin(watch/4*Math.PI)*.7:0),cut?(deck===1?.28:-.72):1.34,p[1]+slot*.4);d.rotation.y=walking?Math.PI/2:Math.sin(elapsed*.8+i)*.18;d.rotation.z=c.task==='rest'?Math.PI/2:0;
@@ -256,7 +297,7 @@ function bottom(w:number,h:number,scale:number,mobile:boolean){
   if(!mobile){ui.column('Orders and battle',()=>{
    ui.row('command box',()=>{orderText=ui.textField('Direct command',orderText,{width:Math.max(150,width-885),placeholder:'Peg, repair the hull…',maxChars:160});button('Give order  ↵',parseOrder,true);},{spacing:8});
    if(s.controlMode==='manual'&&!s.away&&!s.boarding&&!panel)helmControls();
-   ui.row('actions',()=>{button(s.away?'Longboat · expedition':landing(s)?.kind==='wreck'?'Go ashore · salvage':landing(s)?'Go ashore · timber':'Longboat',openLongboat,!!landing(s));button('Trade in port',()=>{panel='trade';});button('Fire broadside  [F]',()=>command({type:'fire',target:selectedEnemy,ammunition:['round','chain','grape'][ammoType]}));button('Targets',()=>{panel='combat';});button('Shipyard',()=>{panel='yard';});},{spacing:8});
+   ui.row('actions',()=>{button(s.away?'Longboat · expedition':landing(s)?.kind==='wreck'?'Go ashore · salvage':landing(s)?'Go ashore · timber':'Longboat',openLongboat,!!landing(s));button('Trade in port',()=>{panel='trade';});button('Fire broadside  [F]',()=>command({type:'fire',target:selectedEnemy,ammunition:['round','chain','grape'][ammoType]}));button('Targets',()=>{panel='combat';});button('Shipyard',()=>{panel='yard';});button('Workshop',()=>{panel='workshop';});},{spacing:8});
    ui.label(s.away?'Longboat · '+(!s.away.choice&&state.time>=s.away.encounterAt?'encounter ready · ':'')+'returns in '+Math.max(0,Math.ceil(s.away.returnAt-state.time))+'s':s.destination?'Sailing to '+destination?.name+' · '+Math.round(distanceTo(s,destination)*METRES)+' m':s.mission?'CONTRACT: '+s.mission.title:'No contract. The sea is full of bad opportunities.',{size:10,color:C.muted});
   },{spacing:10});}
  },{spacing:24,width:width-40}));
@@ -360,7 +401,7 @@ function worldDialog(){
 }
 function dialogs(){
  const s=state?.myShip;if(!s)return;
- const titles:any={atlas:'The wider Quarrelsome Sea',settings:'Options & performance',book:'The captain’s orders book',logbook:'Tales of the Quarrelsome Sea',combat:'Choose a ship to pick on',crew:'Crew manifest',missions:'Contracts & rumours',away:'Launch the longboat',trade:'A little honest commerce',yard:'The shipwright’s ledger',world:'A sea worth coming back to',brains:'Your crew, your models',help:'Welcome aboard, Captain',more:'The captain’s toolkit'};
+ const titles:any={atlas:'The wider Quarrelsome Sea',settings:'Options & performance',book:'The captain’s orders book',logbook:'Tales of the Quarrelsome Sea',combat:'Choose a ship to pick on',crew:'Crew manifest',missions:'Contracts & rumours',away:'Launch the longboat',trade:'A little honest commerce',yard:'The shipwright’s ledger',workshop:'The crew’s workshop',world:'A sea worth coming back to',brains:'Your crew, your models',help:'Welcome aboard, Captain',more:'The captain’s toolkit'};
  if(!panel)return;
  const f=frame(),sc=ui.preferences().scale;
  const open=ui.style({width:dialogWidth+56}).dialog('Game panel',titles[panel]||'',true,()=>{ui.scrollArea('Panel contents',{width:dialogWidth+12,height:Math.max(140,Math.min(600,f.height/sc-240))},()=>{
@@ -414,6 +455,7 @@ function dialogs(){
    const effects:any={hull:'+25 hull and full repair',sails:'+10% sailing speed',guns:'+4 broadside damage',hold:'+15 cargo capacity',berths:'Faster rest and injury recovery',pump:'Faster bilge repairs and less flooding damage'};
    for(const id of Object.keys(state.fittings||{})){const def=state.fittings[id],level=s.upgrades?.[id]||0;ui.heading(def.name+' · '+level+' / '+def.max,{size:17});ui.paragraph(effects[id],dialogWidth,{size:12});button(level>=def.max?'Fully fitted':'Fit '+def.name.toLowerCase()+' · '+def.cost*(level+1)+' gold',()=>command({type:'upgrade',fitting:id}),false,!ready||level>=def.max);}
   }
+  if(panel==='workshop')workshopPanel(s);
   if(panel==='brains'){
    ui.paragraph('The default SmolLM2 135M brain runs entirely in your browser on CPU. Its 138 MB quantized model downloads once and is cached when browser storage permits. Your crew context stays on this device. No localhost service, Python or extra account is needed.',dialogWidth,{size:12});
    brainLoadControl();ui.paragraph(browserBrain.status,dialogWidth,{size:12});
@@ -422,7 +464,7 @@ function dialogs(){
    ui.column('brain setup',()=>{button('Export per-character config',exportBrains,true);button('Configure a character',()=>{panel='crew';tab='brain';updateBrainFields();});});
    ui.paragraph('Decision-only v0.1: JSON task choices. Pirate shouts are authored game lines. The default instinct scheduler keeps the game playable when a model is absent, slow or invalid.',dialogWidth,{size:11});
   }
-  if(panel==='more'){for(const [label,id] of [['Sea atlas','atlas'],['Sound & CPU settings','settings'],['Captain’s log','logbook'],['Contracts','missions'],['Combat targets','combat'],['Shipyard','yard'],['Standing orders & watch','book'],['How to sail','help']])button(label,()=>panel=id);}
+  if(panel==='more'){for(const [label,id] of [['Sea atlas','atlas'],['Sound & CPU settings','settings'],['Captain’s log','logbook'],['Contracts','missions'],['Combat targets','combat'],['Shipyard','yard'],['Crew workshop','workshop'],['Standing orders & watch','book'],['How to sail','help']])button(label,()=>panel=id);}
   if(panel==='help'){if(welcomeArt)ui.image('The Quarrelsome Sea',welcomeArt,{width:dialogWidth,height:dialogWidth/2});
    const next=nextVoyage(s);ui.heading('Your next good idea',{size:19});ui.paragraph(next.text,dialogWidth,{size:13});button(next.label,next.run,true);
    for(const text of ['1  Pick an island or port and set course. The crew sails for you.','2  Set a standing directive; crew choose tasks from their roles.','3  Give direct orders or praise good work to teach task preferences.','4  Zoom in with E to inspect three decks. Q returns to the sea.','5  Anchor at islands and send two crew on a longboat expedition.','6  Trade spice between ports, fulfil contracts and level up.','7  Assign Little Fuse to Guns, close to 170 m and fire with F.','8  H takes the manual helm. Hold W with A / D to steer; show your flank for a broadside.','9  Crew ties and the orders book explain habits, trust and useful partnerships.','10  Visit the shipyard and treat injuries at a port. Watch fire, bilge and rigging damage.'])ui.paragraph(text,dialogWidth,{size:13});

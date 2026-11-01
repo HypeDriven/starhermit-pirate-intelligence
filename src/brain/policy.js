@@ -24,3 +24,17 @@ export function brainRequest(state,crew){
 // Fraction of one core averaged over work + deliberate idle time. No accumulated
 // credit: returning from a hidden tab can never trigger a catch-up burst.
 export function nextWorkAt(end,busy,duty){return duty>0?end+busy*(1/duty-1):Infinity;}
+// Workshop sketches: the model only picks one of the authority's candidates.
+export function describeDesign(tables,kind,spec){
+ const K=tables?.kinds?.[kind],p=tables?.palette;if(!K||!p)return 'sketch';
+ const e=tables.emblems[spec.emblem];
+ return p[spec.primary].name.toLowerCase()+' '+K.patterns[spec.pattern]+', '+p[spec.secondary].name.toLowerCase()+(e==='none'?' trim':' '+e);
+}
+export function designRequest(state,crew,brief){
+ const tables=state.workshop,options=brief.candidates.map(c=>describeDesign(tables,brief.kind,c));
+ const target=brief.targetId?state.myShip.crew.find(c=>c.id===brief.targetId):null;
+ const prompt='<|im_start|>system\nYou are a pirate choosing your favourite design. Reply with the design number only.<|im_end|>\n<|im_start|>user\n'
+  +clean(crew.role,24)+': '+clean(crew.trait,70)+'\nDesigning: '+clean(tables?.kinds?.[brief.kind]?.label||brief.kind,24)+(target?' for '+clean(target.name,24):' for the ship')+'.\n'
+  +options.map((t,i)=>i+'='+t).join(', ')+'<|im_end|>\n<|im_start|>assistant\n';
+ return {prompt,options};
+}

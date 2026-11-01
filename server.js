@@ -150,7 +150,7 @@ function choose(w,s,c,counts){
  return best;
 }
 function windKnots(w){return Math.round(12+3*Math.sin(w.time/90)+(w.weather!=='Fair winds'?8:0));}
-function view(w,id){var own=w.ships[id];if(own){own.inHarbour=harbourSafe(own);own.emergency=emergency(w,own);}return {type:'state',schema:1,featureVersion:2,time:w.time,day:Math.floor(w.time/240)+1,weather:w.weather,wind:Math.sin(w.time/240),windKnots:windKnots(w),places:PLACES,ships:Object.keys(w.ships).map(function(k){var s=w.ships[k];return {id:s.id,name:s.name,ownerName:s.ownerName,x:s.x,z:s.z,hull:s.hull,maxHull:s.maxHull,heading:s.heading,level:s.level,anchored:s.anchored,fire:s.fire||0,leak:s.leak||0,lastShot:s.lastShot,lastTarget:s.lastTarget||''};}),raiders:w.raiders,myShip:own||null,goods:GOODS,fittings:FITTINGS,contracts:BOOK,markets:w.markets,prices:PLACES.filter(function(p){return p.kind==='port';}).map(function(p){var prices={};Object.keys(GOODS).forEach(function(g){prices[g]=portPrice(w,p,g);});return {id:p.id,goods:prices};})};}
+function view(w,id){var own=w.ships[id];if(own){own.inHarbour=harbourSafe(own);own.emergency=emergency(w,own);}return {type:'state',schema:1,featureVersion:2,time:w.time,day:Math.floor(w.time/240)+1,weather:w.weather,wind:Math.sin(w.time/240),windKnots:windKnots(w),places:PLACES,ships:Object.keys(w.ships).map(function(k){var s=w.ships[k];return {id:s.id,name:s.name,ownerName:s.ownerName,x:s.x,z:s.z,hull:s.hull,maxHull:s.maxHull,heading:s.heading,level:s.level,anchored:s.anchored,fire:s.fire||0,leak:s.leak||0,lastShot:s.lastShot,lastTarget:s.lastTarget||'',look:lookOf(s)};}),raiders:w.raiders,myShip:own||null,goods:GOODS,fittings:FITTINGS,workshop:{kinds:MOD_KINDS,palette:MOD_PALETTE,emblems:MOD_EMBLEMS},contracts:BOOK,markets:w.markets,prices:PLACES.filter(function(p){return p.kind==='port';}).map(function(p){var prices={};Object.keys(GOODS).forEach(function(g){prices[g]=portPrice(w,p,g);});return {id:p.id,goods:prices};})};}
 function result(ctx,w){var b=[];for(var i=0;i<ctx.players.length;i++)b.push({to:[ctx.players[i].id],data:view(w,ctx.players[i].id)});var keys=Object.keys(w.ships);for(var j=0;j<keys.length;j++){var s=w.ships[keys[j]];if(s.delegate&&ctx.players.some(function(p){return p.id===s.delegate;}))b.push({to:[s.delegate],data:{type:'brain_context',ownerId:s.id,time:w.time,ship:s,emergency:emergency(w,s),nearbyEnemies:w.raiders.filter(function(r){return r.hull>0&&distance(s,r)<17;}).map(function(r){return {name:r.name,hull:r.hull};})}});}return {ok:true,sessionState:w,broadcast:b};}
 function near(s,kind){var best=null,d=999;for(var i=0;i<PLACES.length;i++){var p=PLACES[i],n=distance(s,p);if((!kind||p.kind===kind)&&n<d){d=n;best=p;}}return d<7?best:null;}
 function mission(w,s){var m=s.mission;if(!m)return;var port=near(s,'port'),done=
@@ -191,11 +191,180 @@ function fire(w,s,target,ammunition){
  if(e.hull<=0){s.kills++;s.reputation+=12;s.gold+=120;xp(s,65);log(s,w.time,'Mara','Send a boat for the spoils. +120 gold.','reward');if(e.npc)e.respawn=w.time+100;else recoverShip(w,e);}
  return null;
 }
+/* ---- Shipwright's workshop: crew-designed runtime mods paid in Plucks ----
+   Designs are data, never code: every field is an index into the authored tables
+   below, so neither a model nor a client can inject geometry, script or text.
+   The crew's model only picks one of the candidates the authority generated.
+   A design is applied only when the platform reports a PAID order for this
+   captain (platformPluckOrder). The client can link an order id, but a link
+   never applies anything by itself, and the game never spends Plucks. */
+var MOD_KINDS={
+ sail:{item:'mod.sail',price:8,label:'Sail canvas',slot:'ship',patterns:['plain','stripes','chevron','quartered','patched'],noun:['Canvas','Mainsail','Topsail','Storm sail']},
+ hull:{item:'mod.hull',price:10,label:'Hull paint',slot:'ship',patterns:['plain','band','chequer','gilded'],noun:['Livery','Paint','Strakes','Trim']},
+ flag:{item:'mod.flag',price:5,label:'Colours',slot:'ship',patterns:['plain','split','border'],noun:['Colours','Jack','Pennant','Ensign']},
+ clothing:{item:'mod.clothing',price:4,label:'Crew clothing',slot:'crew',patterns:['coat','sash','bandana','tricorn','waistcoat'],noun:['Coat','Sash','Bandana','Tricorn','Waistcoat']},
+ weapon:{item:'mod.weapon',price:6,label:'Crew weapon',slot:'crew',patterns:['cutlass','axe','flintlock','harpoon','pin'],noun:['Cutlass','Boarding axe','Flintlock','Harpoon','Belaying pin']}
+};
+var MOD_PALETTE=[
+ {name:'Crimson',hex:'#a8322d'},{name:'Saffron',hex:'#d9a23a'},{name:'Bone',hex:'#efe2bd'},{name:'Midnight',hex:'#1f2c44'},
+ {name:'Sea-glass',hex:'#5f9e8f'},{name:'Tar',hex:'#26221f'},{name:'Rust',hex:'#9b5631'},{name:'Plum',hex:'#6b3b5e'},
+ {name:'Brass',hex:'#c6a15b'},{name:'Storm',hex:'#6d7f8a'},{name:'Kelp',hex:'#3f5f3a'},{name:'Coral',hex:'#d77a64'}
+];
+var MOD_EMBLEMS=['none','skull','star','compass','anchor','kraken','sun','moon'];
+var MOD_ADJ=['Brazen','Crooked','Lucky','Sullen','Dashing','Thrifty','Ominous','Jolly','Salted','Quarrelsome','Gilded','Ragged'];
+/* Each sailor has authored taste: favourite colours, emblems and the work they volunteer for. */
+var MOD_TASTE={
+ morrow:{colors:[0,5,8],emblems:[1,2],kinds:['flag','sail','clothing'],line:'If they must fear us, they may as well admire the tailoring.'},
+ brisk:{colors:[3,8,2],emblems:[4,3],kinds:['sail','hull'],line:'Proper canvas. Regulation stitches. Mostly.'},
+ fuse:{colors:[0,1,11],emblems:[6,1],kinds:['weapon','flag'],line:'What if it was louder? And red? And louder?'},
+ peg:{colors:[6,10,5],emblems:[4,0],kinds:['hull','weapon'],line:'Good paint keeps the worm out. Pretty paint keeps the captain quiet.'},
+ tallow:{colors:[7,11,2],emblems:[7,6],kinds:['clothing','flag'],line:'A sailor in a decent coat eats slower. Less soup gets spilled.'},
+ pip:{colors:[4,3,9],emblems:[3,2],kinds:['sail','flag','clothing'],line:'I drew it on the chart first. To scale.'}
+};
+var MOD_LIMITS={designs:12,briefWait:20,cooldown:45,volunteerEvery:240,orderWindow:960,ordersHeld:12};
+function workshop(s){
+ if(!s.workshop||typeof s.workshop!=='object')s.workshop={};
+ var k=s.workshop;if(!Array.isArray(k.designs))k.designs=[];if(!k.orders||typeof k.orders!=='object')k.orders={};
+ if(!k.delivered||typeof k.delivered!=='object')k.delivered={};if(!k.look||typeof k.look!=='object')k.look={};
+ if(!k.outfits||typeof k.outfits!=='object')k.outfits={};if(k.brief===undefined)k.brief=null;if(!k.cooldowns)k.cooldowns={};
+ if(k.next===undefined)k.next=1;if(k.volunteerAt===undefined)k.volunteerAt=(s.clock||0)+MOD_LIMITS.volunteerEvery;
+ return k;
+}
+function own(o,key){return !!o&&Object.prototype.hasOwnProperty.call(o,key);}
+function modSpec(kind,spec){
+ /* Re-validates a stored or proposed spec; returns a clean copy or null. */
+ var K=own(MOD_KINDS,kind)?MOD_KINDS[kind]:null;if(!K||!spec||typeof spec!=='object')return null;
+ var p=spec.primary,q=spec.secondary,pt=spec.pattern,e=spec.emblem,a=spec.adj,n=spec.noun;
+ function ok(v,len){return Number.isInteger(v)&&v>=0&&v<len;}
+ if(!ok(p,MOD_PALETTE.length)||!ok(q,MOD_PALETTE.length)||!ok(pt,K.patterns.length)||!ok(e,MOD_EMBLEMS.length)||!ok(a,MOD_ADJ.length)||!ok(n,K.noun.length))return null;
+ return {primary:p,secondary:q,pattern:pt,emblem:e,adj:a,noun:n};
+}
+function modName(kind,spec){var K=MOD_KINDS[kind];return 'The '+MOD_ADJ[spec.adj]+' '+MOD_PALETTE[spec.primary].name+' '+K.noun[spec.noun];}
+function modDescribe(kind,spec){
+ var K=MOD_KINDS[kind],e=MOD_EMBLEMS[spec.emblem];
+ return MOD_PALETTE[spec.primary].name.toLowerCase()+' '+K.patterns[spec.pattern]+' with '+MOD_PALETTE[spec.secondary].name.toLowerCase()+(e==='none'?' trim':' '+e);
+}
+/* Deterministic per-call generator from the authority's random draw. */
+function rng(seed,salt){var r=typeof seed==='function'?seed():Number(seed)||0;var x=Math.floor((r*2147483646+salt*7919+1)%2147483646)+1;return function(){x=(x*48271)%2147483647;return (x-1)/2147483646;};}
+function pick(list,random){return list[Math.floor(random()*list.length)%list.length];}
+function candidates(kind,c,random){
+ var K=MOD_KINDS[kind],t=MOD_TASTE[c.id]||MOD_TASTE.morrow,out=[];
+ for(var i=0;i<4;i++){
+  var spec={primary:i<2?t.colors[i%t.colors.length]:Math.floor(random()*MOD_PALETTE.length)%MOD_PALETTE.length,
+   secondary:pick(t.colors.concat([2,8]),random),pattern:Math.floor(random()*K.patterns.length)%K.patterns.length,
+   emblem:i%2?pick(t.emblems,random):Math.floor(random()*MOD_EMBLEMS.length)%MOD_EMBLEMS.length,
+   adj:Math.floor(random()*MOD_ADJ.length)%MOD_ADJ.length,noun:0};
+  spec.noun=K.slot==='crew'?spec.pattern:Math.floor(random()*K.noun.length)%K.noun.length;
+  if(spec.secondary===spec.primary)spec.secondary=(spec.primary+2)%MOD_PALETTE.length;
+  out.push(spec);
+ }
+ return out;
+}
+function tasteScore(c,spec){var t=MOD_TASTE[c.id]||MOD_TASTE.morrow;return (t.colors.indexOf(spec.primary)>=0?2:0)+(t.colors.indexOf(spec.secondary)>=0?1:0)+(t.emblems.indexOf(spec.emblem)>=0?1.5:0);}
+function crewById(s,id){for(var i=0;i<s.crew.length;i++)if(s.crew[i].id===id)return s.crew[i];return null;}
+function openBrief(w,s,c,kind,targetId,random,why){
+ var k=workshop(s);
+ if(k.brief)return 'Finish the current design first.';
+ if(!own(MOD_KINDS,kind))return 'Unknown design.';
+ if(MOD_KINDS[kind].slot==='crew'){if(!crewById(s,targetId))return 'Choose who it is for.';}else targetId='';
+ if(!c||c.away)return 'That sailor is not aboard.';
+ if(c.injury>=60||c.fatigue>=85)return c.name.split(' ')[0]+' needs rest before drawing anything.';
+ if(w.time<(k.cooldowns[c.id]||0))return c.name.split(' ')[0]+' is still sketching the last idea.';
+ k.brief={id:'b'+(k.next++),crewId:c.id,kind:kind,targetId:targetId,openedAt:w.time,decideBy:w.time+MOD_LIMITS.briefWait,candidates:candidates(kind,c,random),reason:why||'captain'};
+ k.cooldowns[c.id]=w.time+MOD_LIMITS.cooldown;
+ return null;
+}
+function closeBrief(w,s,index,source){
+ var k=workshop(s),b=k.brief;if(!b)return 'No design is on the table.';
+ if(!Number.isInteger(index)||index<0||index>=b.candidates.length)return 'Choose one of the sketches.';
+ var spec=modSpec(b.kind,b.candidates[index]),c=crewById(s,b.crewId);if(!spec||!c){k.brief=null;return 'The sketch blew overboard.';}
+ var design={id:'d'+(k.next++),kind:b.kind,spec:spec,name:modName(b.kind,spec),describe:modDescribe(b.kind,spec),designer:c.id,targetId:b.targetId,
+  item:MOD_KINDS[b.kind].item,price:MOD_KINDS[b.kind].price,status:'draft',createdAt:w.time,source:source==='browser'?'browser':'instinct'};
+ k.designs.push(design);k.brief=null;if(redeemCredit(w,s,design))log(s,w.time,'Brisk','An already-paid commission covers this one.','workshop');c.fatigue=clamp(c.fatigue+6,0,100);
+ while(k.designs.length>MOD_LIMITS.designs){var drop=-1;for(var i=0;i<k.designs.length;i++)if(k.designs[i].status==='draft'){drop=i;break;}if(drop<0)break;k.designs.splice(drop,1);}
+ var target=design.targetId?crewById(s,design.targetId):null;
+ log(s,w.time,c.name.split(' ')[0],'Sketched '+design.name+(target?' for '+target.name.split(' ')[0]:'')+': '+design.describe+'. '+(MOD_TASTE[c.id]||MOD_TASTE.morrow).line,'workshop');
+ return null;
+}
+function workshopTick(w,s,random){
+ var k=workshop(s),b=k.brief;
+ if(b&&w.time>=b.decideBy){
+  /* Instinct: the sailor picks the sketch closest to their own taste. */
+  var c=crewById(s,b.crewId),best=0;if(c)for(var i=1;i<b.candidates.length;i++)if(tasteScore(c,b.candidates[i])>tasteScore(c,b.candidates[best]))best=i;
+  closeBrief(w,s,best,'instinct');
+ }
+ Object.keys(k.orders).forEach(function(id){var o=k.orders[id];if(w.time-o.linkedAt>MOD_LIMITS.orderWindow&&!k.delivered[id]){var d=findDesign(s,o.designId);if(d&&d.status==='ordered'&&d.orderId===id)d.status='draft';delete k.orders[id];}});
+ /* Idle, calm, anchored crew volunteer the odd improvement on their own. */
+ if(!k.brief&&s.anchored&&!s.away&&!emergency(w,s)&&w.time>=k.volunteerAt){
+  k.volunteerAt=w.time+MOD_LIMITS.volunteerEvery;
+  var idle=s.crew.filter(function(c){return !c.away&&c.fatigue<60&&w.time>=(k.cooldowns[c.id]||0);});
+  if(idle.length){var c2=idle[Math.floor(random()*idle.length)%idle.length],t=MOD_TASTE[c2.id]||MOD_TASTE.morrow,kind=t.kinds[Math.floor(random()*t.kinds.length)%t.kinds.length];
+   openBrief(w,s,c2,kind,MOD_KINDS[kind].slot==='crew'?c2.id:'',random,'volunteer');}
+ }
+}
+function findDesign(s,id){var k=workshop(s);for(var i=0;i<k.designs.length;i++)if(k.designs[i].id===id)return k.designs[i];return null;}
+function equip(s,d){
+ var k=workshop(s);
+ if(MOD_KINDS[d.kind].slot==='ship')k.look[d.kind]=d.id;
+ else{if(!k.outfits[d.targetId])k.outfits[d.targetId]={};k.outfits[d.targetId][d.kind]=d.id;}
+}
+function workshopCommand(w,s,m,ctx){
+ var k=workshop(s),d;
+ if(m.type==='mod.commission'){var c=crewById(s,m.crewId);return openBrief(w,s,c,m.kind,typeof m.targetId==='string'?m.targetId:'',rng(ctx.random,w.time),'captain')||(log(s,w.time,c.name.split(' ')[0],'Give me a moment and some charcoal, Captain.','workshop'),null);}
+ if(m.type==='mod.pick'){
+  /* From the captain's own socket (their browser brain or their own choice). */
+  if(!k.brief||m.briefId!==k.brief.id)return 'That sketch is no longer on the table.';
+  return closeBrief(w,s,m.index,m.source==='browser'?'browser':'captain');
+ }
+ if(m.type==='mod.discard'){d=findDesign(s,m.designId);if(!d||d.status!=='draft')return 'Only unbought sketches can be scrapped.';k.designs.splice(k.designs.indexOf(d),1);return null;}
+ if(m.type==='mod.equip'){d=findDesign(s,m.designId);if(!d||d.status!=='owned')return 'Commission it first.';equip(s,d);log(s,w.time,'Peg','Swapped in '+d.name+'.','workshop');return null;}
+ if(m.type==='mod.ordered'){
+  /* The client created a platform order for this design. Recording the link
+     is harmless: nothing is applied until the platform reports it paid. */
+  d=findDesign(s,m.designId);
+  if(ctx.sessionId==='brine-local')return 'Commissions need a signed-in StarHermit sea.';
+  if(!d||d.status==='owned')return 'Nothing to commission.';
+  if(typeof m.orderId!=='string'||!/^[0-9a-f-]{36}$/i.test(m.orderId))return 'Invalid order.';
+  if(own(k.delivered,m.orderId)||own(k.orders,m.orderId))return 'That order is already linked.';
+  if(Object.keys(k.orders).length>=MOD_LIMITS.ordersHeld)return 'Too many commissions awaiting approval.';
+  k.orders[m.orderId]={designId:d.id,item:d.item,linkedAt:w.time};d.status='ordered';d.orderId=m.orderId;
+  log(s,w.time,'Brisk','Commission sent to StarHermit. Approve '+d.price+' PLK in your dashboard and the yard gets to work.','workshop');
+  return null;
+ }
+ if(m.type==='mod.cancel'){d=findDesign(s,m.designId);if(!d||d.status!=='ordered')return 'Nothing pending.';delete k.orders[d.orderId];d.status='draft';d.orderId='';return null;}
+ return 'Unknown command.';
+}
+/* Called only with a platform-verified paid order (never from a player message). */
+function platformPluckOrder(w,order){
+ if(!order||typeof order!=='object'||order.status!=='paid'||typeof order.id!=='string'||typeof order.userId!=='string')return false;
+ var s=own(w.ships,order.userId)?w.ships[order.userId]:null;if(!s)return false;
+ var k=workshop(s);if(own(k.delivered,order.id))return false;
+ var link=own(k.orders,order.id)?k.orders[order.id]:null,d=null;
+ if(link)d=findDesign(s,link.designId);
+ if(!d||d.item!==order.itemKey){
+  /* Lost link (closed tab between ordering and linking): oldest matching unbought sketch. */
+  d=null;for(var i=0;i<k.designs.length;i++){var x=k.designs[i];if(x.item===order.itemKey&&x.status!=='owned'){d=x;break;}}
+ }
+ k.delivered[order.id]={at:w.time,item:order.itemKey,designId:d?d.id:''};var held=Object.keys(k.delivered);if(held.length>500)delete k.delivered[held[0]];delete k.orders[order.id];
+ if(!d){log(s,w.time,'Brisk','A paid commission arrived with no sketch to match. Ask the crew to draw something and it will be honoured.','workshop');k.credit=k.credit||{};k.credit[order.itemKey]=(k.credit[order.itemKey]||0)+1;return true;}
+ d.status='owned';d.orderId=order.id;d.paidAt=w.time;equip(s,d);
+ var c=crewById(s,d.designer);if(c){c.trust=clamp(c.trust+3,0,100);cxp(c,10);}s.morale=clamp(s.morale+3,0,100);
+ log(s,w.time,c?c.name.split(' ')[0]:'Peg','The yard finished '+d.name+'! '+(d.targetId?crewById(s,d.targetId).name.split(' ')[0]+' is wearing it already.':'She looks magnificent.'),'workshop');
+ return true;
+}
+function redeemCredit(w,s,d){var k=workshop(s);if(k.credit&&k.credit[d.item]>0){k.credit[d.item]--;d.status='owned';d.paidAt=w.time;equip(s,d);return true;}return false;}
+function lookOf(s){
+ /* Public appearance only: resolved specs, no order ids or private state. */
+ var k=workshop(s),out={};
+ Object.keys(k.look).forEach(function(kind){var d=findDesign(s,k.look[kind]);if(d&&d.status==='owned')out[kind]={kind:kind,spec:modSpec(kind,d.spec),name:d.name};});
+ var crewLook={};Object.keys(k.outfits).forEach(function(cid){var o=k.outfits[cid],r={};Object.keys(o).forEach(function(kind){var d=findDesign(s,o[kind]);if(d&&d.status==='owned')r[kind]={kind:kind,spec:modSpec(kind,d.spec)};});crewLook[cid]=r;});
+ out.crew=crewLook;return out;
+}
 function tick(w,dt,random){
  w.time+=dt;if(Math.floor(w.time/60)>w.marketWatch){w.marketWatch=Math.floor(w.time/60);Object.keys(w.markets).forEach(function(p){Object.keys(GOODS).forEach(function(g){w.markets[p][g]=Math.min(90,w.markets[p][g]+5);});});}w.weather=Math.floor(w.time/180)%3===2?'Squall on the horizon':'Fair winds';
  var keys=Object.keys(w.ships);
  for(var k=0;k<keys.length;k++){
-  var s=w.ships[keys[k]];s.clock=w.time;if(s.controlMode==='manual'&&w.time>=(s.steerUntil||0)&&s.steerThrottle){s.steerThrottle=0;s.anchored=true;}
+  var s=w.ships[keys[k]];s.clock=w.time;workshopTick(w,s,rng(random,w.time+k));if(s.controlMode==='manual'&&w.time>=(s.steerUntil||0)&&s.steerThrottle){s.steerThrottle=0;s.anchored=true;}
   if(s.boarding&&w.time>=s.boarding.finishAt)finishBoarding(w,s,random);
   if(s.controlMode==='manual'&&!s.boarding&&!s.away&&w.time<(s.steerUntil||0)&&!s.anchored){
    s.heading+=(s.steerTurn||0)*dt*.6;var oldX=s.x,oldZ=s.z,wind=Math.sin(w.time/240),tail=.75+.25*Math.cos(s.heading-wind),speed=1.7*(1+s.upgrades.sails*.1)*(1-s.rigDamage/120)*tail*(.85+.15*windKnots(w)/12);
@@ -339,8 +508,55 @@ globalThis.game={
    else error='Unknown habit change.';
   }
   else if(m.type==='praise'){var c=s.crew.filter(function(c){return c.id===m.crewId;})[0];if(!c)error='Unknown crew.';else if(w.time-(c.lastPraise===undefined?-999:c.lastPraise)<15)error='Give them a watch to earn it.';else{c.lastPraise=w.time;c.orderRevision++;c.trust=clamp(c.trust+2,0,100);learn(w,s,c,c.task,.2);c.preferences[c.task]=clamp((c.preferences[c.task]||0)+.35,0,6);s.morale=clamp(s.morale+1,0,100);log(s,w.time,c.name.split(' ')[0],'I’ll remember that, Captain.');}}
+  else if(m.type.indexOf('mod.')===0)error=workshopCommand(w,s,m,ctx);
   else if(m.type!=='sync')error='Unknown command.';
   if(error)return {ok:false,error:error};mission(w,s);progress(w,s);s.crew.forEach(function(c){c.allowedTasks=available(w,s,c);});return result(ctx,w);
  },
  onTick:function(ctx){var w=ctx.sessionState;migrate(w);var now=ctx.now-(ctx.pausedMs||0),dt=clamp((now-w.lastTick)/1000,0,2);w.lastTick=now;tick(w,dt,ctx.random);return result(ctx,w);}
 };
+/* Paid Pluck orders reach the authority only through ctx.pluckOrders, which the
+   platform fills from its own order rows (spec: pull with acknowledgement).
+   An order is acknowledged in the same result that applies it, so applying and
+   acknowledging commit together. Owned designs live in playerStates[userId]
+   so a paid cosmetic follows the captain to every sea. */
+globalThis.game.pluckOrders=true;
+function wardrobeOf(s){
+ var k=workshop(s),owned=k.designs.filter(function(d){return d.status==='owned'&&d.orderId;}).slice(-40).map(function(d){return {orderId:d.orderId,kind:d.kind,spec:d.spec,name:d.name,describe:d.describe,designer:d.designer,targetId:d.targetId,item:d.item,price:d.price,paidAt:d.paidAt};});
+ function ref(id){var d=findDesign(s,id);return d&&d.status==='owned'?d.orderId:'';}
+ var look={};Object.keys(k.look).forEach(function(kind){var r=ref(k.look[kind]);if(r)look[kind]=r;});
+ var outfits={};Object.keys(k.outfits).forEach(function(cid){Object.keys(k.outfits[cid]).forEach(function(kind){var r=ref(k.outfits[cid][kind]);if(r){outfits[cid]=outfits[cid]||{};outfits[cid][kind]=r;}});});
+ return {version:1,owned:owned,look:look,outfits:outfits,delivered:Object.keys(k.delivered).slice(-200)};
+}
+function importWardrobe(w,s,doc){
+ if(!doc||typeof doc!=='object'||!Array.isArray(doc.owned))return;var k=workshop(s),byOrder={};
+ k.designs.forEach(function(d){if(d.orderId)byOrder[d.orderId]=d;});
+ (Array.isArray(doc.delivered)?doc.delivered:[]).forEach(function(id){if(typeof id==='string'&&!own(k.delivered,id))k.delivered[id]={at:w.time,item:'',designId:'',imported:true};});
+ doc.owned.forEach(function(o){
+  if(!o||typeof o.orderId!=='string'||byOrder[o.orderId]||!own(MOD_KINDS,o.kind))return;var spec=modSpec(o.kind,o.spec);if(!spec)return;
+  var target=MOD_KINDS[o.kind].slot==='crew'?(crewById(s,o.targetId)?o.targetId:''):'';if(MOD_KINDS[o.kind].slot==='crew'&&!target)return;
+  var d={id:'d'+(k.next++),kind:o.kind,spec:spec,name:modName(o.kind,spec),describe:modDescribe(o.kind,spec),designer:own(MOD_TASTE,o.designer)?o.designer:'peg',targetId:target,item:MOD_KINDS[o.kind].item,price:MOD_KINDS[o.kind].price,status:'owned',orderId:o.orderId,paidAt:Number(o.paidAt)||0,createdAt:w.time,source:'wardrobe'};
+  k.designs.push(d);byOrder[o.orderId]=d;
+ });
+ function find(orderId){return typeof orderId==='string'&&byOrder[orderId]?byOrder[orderId]:null;}
+ if(doc.look&&typeof doc.look==='object')Object.keys(doc.look).forEach(function(kind){var d=find(doc.look[kind]);if(d&&d.kind===kind&&!k.look[kind])k.look[kind]=d.id;});
+ if(doc.outfits&&typeof doc.outfits==='object')Object.keys(doc.outfits).forEach(function(cid){if(!crewById(s,cid))return;var o=doc.outfits[cid]||{};Object.keys(o).forEach(function(kind){var d=find(o[kind]);if(d&&d.kind===kind&&d.targetId===cid){k.outfits[cid]=k.outfits[cid]||{};if(!k.outfits[cid][kind])k.outfits[cid][kind]=d.id;}});});
+}
+function settlePlatform(ctx,res){
+ if(!res||!res.ok||!res.sessionState||!res.sessionState.ships)return res;
+ var w=res.sessionState,states=ctx.playerStates&&typeof ctx.playerStates==='object'?ctx.playerStates:{},changed=false,acks=[];
+ (ctx.players||[]).forEach(function(p){var s=own(w.ships,p.id)?w.ships[p.id]:null;if(!s)return;var doc=own(states,p.id)&&states[p.id]?states[p.id].wardrobe:null;if(doc){var n=workshop(s).designs.length;importWardrobe(w,s,doc);if(workshop(s).designs.length!==n)changed=true;}});
+ (Array.isArray(ctx.pluckOrders)?ctx.pluckOrders:[]).slice(0,20).forEach(function(o){
+  if(!o||typeof o.id!=='string'||typeof o.userId!=='string'||!own(w.ships,o.userId))return;
+  if(platformPluckOrder(w,{id:o.id,userId:o.userId,itemKey:o.itemKey,status:'paid'}))changed=true;
+  acks.push(o.id);
+ });
+ var docs={},anyDoc=false;
+ (ctx.players||[]).forEach(function(p){var s=own(w.ships,p.id)?w.ships[p.id]:null;if(!s)return;var before=own(states,p.id)&&states[p.id]?states[p.id]:null,wr=wardrobeOf(s);
+  if(!before||JSON.stringify(before.wardrobe||null)!==JSON.stringify(wr)){var doc={};if(before)Object.keys(before).forEach(function(key){doc[key]=before[key];});doc.wardrobe=wr;docs[p.id]=doc;anyDoc=true;}});
+ if(changed&&ctx.players){var fresh=result(ctx,w);res.broadcast=fresh.broadcast;}
+ if(acks.length)res.pluckOrdersDelivered=acks;
+ if(anyDoc){res.playerStates=res.playerStates||{};Object.keys(docs).forEach(function(id){res.playerStates[id]=docs[id];});}
+ return res;
+}
+['createSession','onMembershipChange','onPlayerMessage','onTick'].forEach(function(name){var inner=globalThis.game[name];globalThis.game[name]=function(ctx){return settlePlatform(ctx,inner(ctx));};});
+
