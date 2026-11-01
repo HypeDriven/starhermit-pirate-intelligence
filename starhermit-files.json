@@ -13,7 +13,7 @@
     "cover.jpg": {"sha256": "57c4f0c0f0952424b6a1208c4c5b0943a72e41e56f6647d53725232674c272b3", "size": 777676},
     "description.md": {"sha256": "97d3151c0cd0e6f9c230e3de8784fd8ee3e866c06e3efb3c6a9675b430fd09ed", "size": 867},
     "favicon.png": {"sha256": "8ec83067dd83a7a2b6f8563947d277219a52ab08e3223ee88d04d40115e28add", "size": 84415},
-    "index.html": {"sha256": "e41d3c964484ea621e2730b8360276e68b11cd2344d11b344f7b9d4317934164", "size": 1797},
+    "index.html": {"sha256": "099c7c0d117cc9c5ecc197652e755f7f6ac6287578a6ff66252d49bfaba72f33", "size": 1797},
     "models/LICENSE-Apache-2.0.txt": {"sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30", "size": 11358},
     "models/index.json": {"sha256": "6ec1a854e92ca5d7720f2b337afa95627721090358f644d895a5aa0fe6b321b7", "size": 19672},
     "models/kernel.wasm": {"sha256": "6a02e6a49f14b80bb418f009e26eca7b77c89bde223026e8cb2ec4b53f8f531d", "size": 3274},
@@ -53,7 +53,7 @@
     "src/sound.ts": {"sha256": "640dbb1664d37018eea7a57f2712dc89c3204d82108ee8ed74135d7de4aafb7d", "size": 3265},
     "src/visuals.ts": {"sha256": "c274825ccedf5395c3d2390ee1080bc825aae83a340e2d8e2e8d4b9f400edb8e", "size": 30050},
     "starhermit-remote.json": {"sha256": "257e2012233aad71a673f1e83ce0c542e770c65b48a8caee0d89325bd742e5c9", "size": 169},
-    "starhermit.txt": {"sha256": "843edc9436b24f8eec5ffb0d0bba36c4540b304463deae1ba0d1b7127f2968ea", "size": 1235}
+    "starhermit.txt": {"sha256": "9ec4e9bb8005784fa2b8cb0ca01e6ca7939bd4be7c6905c3d0593e741b85b9be", "size": 1242}
   },
   "format": 1
 }
