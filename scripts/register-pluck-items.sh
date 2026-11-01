@@ -4,7 +4,7 @@
 # launch token: STARHERMIT_TOKEN=... scripts/register-pluck-items.sh
 # Prices must match MOD_KINDS in server.js.
 set -euo pipefail
-: "${STARHERMIT_TOKEN:?set STARHERMIT_TOKEN to the game owner's account token}"
+: "${STARHERMIT_TOKEN:?set STARHERMIT_TOKEN to an account token of the game owner}"
 API="${STARHERMIT_API:-https://api.starhermit.com}/api/v1/me/github-games/546dae33-aa48-4775-bff9-c0c48deb759f/plucks/items"
 while IFS='|' read -r key name price; do
   curl -fsS -X PUT "$API/$key" -H "Authorization: Bearer $STARHERMIT_TOKEN" -H 'Content-Type: application/json' \
