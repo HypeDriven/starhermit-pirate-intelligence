@@ -22,7 +22,7 @@
       "pinnedCommitSha": null,
       "deployedCommitSha": null,
       "deployError": null,
-      "deployedAt": "2026-10-31T12:23:12.488512+00:00",
+      "deployedAt": "2026-11-01T14:01:32.662397+00:00",
       "externalLaunchUrl": null,
       "engineVersion": "1.30.0",
       "deployWarning": null
@@ -42,19 +42,19 @@
     "links": [],
     "isDisabled": false
   },
-  "publishedAt": "2026-10-31T12:23:12.752Z",
-  "sourceCommit": "8bd01eccc41d8e518e3e0a7fc34b6663c16a1418",
-  "bytesReceived": 1894240,
-  "archiveSha256": "a492254df2f8468db1f7e780952af182a84e7ceee860ce5fb0187b7d21c6a3bf",
+  "publishedAt": "2026-11-01T14:01:32.662397+00:00",
+  "sourceCommit": "b2a14260ba7f4a7390cf623102fe78c548630cf6",
+  "bytesReceived": 11745275,
+  "archiveSha256": "bb2c387075a0e48e5ee4ef553a8ae2ce5065b4ea8894356886c133e3898087ab",
   "result": {
+    "bytesReceived": 11745275,
     "clientPublished": true,
-    "serverImageLoaded": false,
-    "imageDigest": null,
-    "bytesReceived": 1894240,
-    "mode": "replace",
-    "filesRemoved": 0,
+    "deployWarning": null,
     "engineVersion": "1.30.0",
-    "deployWarning": null
+    "filesRemoved": 0,
+    "imageDigest": null,
+    "mode": "replace",
+    "serverImageLoaded": false
   },
   "remoteObjects": {
     "baseUrl": "https://546dae33-aa48-4775-bff9-c0c48deb759f.starhermit.com/_remote/",
