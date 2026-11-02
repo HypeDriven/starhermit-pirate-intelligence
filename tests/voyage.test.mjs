@@ -216,3 +216,21 @@ test('raiders leave a ship at the starting anchorage alone but answer fire',()=>
  const f=voyage(),e=f.world.raiders[0];f.tick(20);assert.equal(f.world.raiders[0].ai,'patrol');
  f.world.raiders[0].provokedBy='captain';f.world.raiders[0].provokedAt=f.world.time;f.tick(1);assert.equal(f.world.raiders[0].ai,'engage');
 });
+test('each island offers its own jobs ashore, validated by the authority',()=>{
+ const f=voyage();f.port('mossjaw');
+ assert.equal(f.command({type:'away',job:'powder',crewIds:['fuse','pip']}).ok,false);
+ assert.equal(f.command({type:'away',job:'salvage',crewIds:['fuse','pip']}).ok,false);
+ f.ship.food=40;assert.equal(f.command({type:'away',job:'forage',crewIds:['brisk','tallow']}).ok,true);f.tick(23);
+ assert.equal(f.ship.away,null);assert.ok(f.ship.food>=40+29);
+ const meds=f.ship.goods.medicine;assert.equal(f.command({type:'away',job:'herbs',crewIds:['tallow','pip']}).ok,true);f.tick(23);assert.equal(f.ship.goods.medicine,meds+3);
+ f.port('cinder');const shot=f.ship.ammo;assert.equal(f.command({type:'away',job:'powder',crewIds:['fuse','peg']}).ok,true);f.tick(23);assert.equal(f.ship.ammo,shot+14);
+ assert.equal(f.command({type:'away',job:'timber',crewIds:['fuse','peg']}).ok,false);
+ f.port('whisper');const fame=f.ship.reputation;assert.equal(f.command({type:'away',job:'ruins',crewIds:['pip','peg']}).ok,true);f.tick(23);assert.ok(f.ship.reputation>=fame+6);
+ assert.ok(f.scope.PLACES.filter(p=>p.kind!=='port').every(p=>p.jobs.every(j=>f.scope.JOBS[j])));
+});
+test('foragers fishing over a shoal land three times the catch',()=>{
+ const run=onShoal=>{const f=voyage();const q=f.scope.shoals(f.world.time)[0];f.ship.x=q.x;f.ship.z=onShoal?q.z:q.z+25;f.ship.anchored=true;f.ship.food=20;
+  for(const c of f.ship.crew)if(c.id!=='morrow')f.command({type:'order',crewId:c.id,task:c.id==='pip'||c.id==='peg'?'forage':'rest',issuer:'morrow'});
+  const before=f.ship.food;f.tick(20);return f.ship.food-before;};
+ const there=run(true),away=run(false);assert.ok(there>away*2,'shoal '+there+' vs open water '+away);
+});

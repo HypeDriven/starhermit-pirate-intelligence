@@ -24,7 +24,7 @@
     "music/manifest.txt": {"sha256": "20b031f09bc1d81924a7d0fddaf9407de6a838ee9a0b5ec9b2d521ae995c8632", "size": 1223},
     "music/open-sea.ogg": {"sha256": "99a18aa87406649567eb35743300478a22bf9b5bb5ca8a892afdb168af941ad1", "size": 481044},
     "music/quality.json": {"sha256": "b2bff482ab3575720ff14a0bbe55d0e31790d6490ca1ad4fbf20d030fbd63eab", "size": 1665},
-    "server.js": {"sha256": "6ea81b0b30c15fa19c06c585fc721905f70db294b333853dfeebce144b2b2db1", "size": 75183},
+    "server.js": {"sha256": "f76726489ff4655347adb66afc5138c82774eadf1bac263b822f5d4d373ed3db", "size": 78671},
     "sfx/anchor-chain.ogg": {"sha256": "bff4f632664db52fc3b9ce3092c24e65ea1fd919231966a8da790a9280bb1f30", "size": 35774},
     "sfx/cannon-fire.ogg": {"sha256": "a2a1b3c738a2fffa4f20e94b3c522957da4aa0ce3b0c889573a752d742871dff", "size": 24194},
     "sfx/coins.ogg": {"sha256": "529e59f144998b6eb2d4af6dcfc57d75c5d0a8b22b05b3a3556c26380e73334a", "size": 19940},
@@ -54,13 +54,15 @@
     "src/cloth.ts": {"sha256": "81b18d21b9527045fa2cafab4c1153418f834debb87661f82fae0ae126d59e31", "size": 4313},
     "src/combat.ts": {"sha256": "82a0e8638c3c73ab6fa0c978a2499438e71b2d53bc9884caad98f2b1350b6ed1", "size": 11695},
     "src/crew.ts": {"sha256": "fef94e3934f1d6cce3db3a7cab2c46cb8dcf4cd676a96d974e84f79c5d9d1d70", "size": 7796},
-    "src/main.ts": {"sha256": "2befbf8775ac902cf62d0a533912a61d034c5e98a186f72e477c484dcf8a342b", "size": 78503},
+    "src/islands.ts": {"sha256": "6d8626de93c56f89e67588e416cb71198442dc3e63e6557eca68e56bb1cde9f8", "size": 16858},
+    "src/main.ts": {"sha256": "8630c53d9f78448e94d8ad7389f1caf9e4ba9262fbdbc2eed02eb9cb32dfd357", "size": 81430},
     "src/navigation.js": {"sha256": "102aeffb5e57aff029cf3565c8462ce08c0da47eea08e456172e8d93cc60245c", "size": 1346},
     "src/plucks.ts": {"sha256": "fb0c355769138eee1d3915bb86993e30bfbd812d2256c491ecea81b68752183a", "size": 3764},
+    "src/sealife.ts": {"sha256": "46b1f4c3aa0a8054bf9c41bfbf1095e040c99a45f98b57095a4098708d444a8b", "size": 8662},
     "src/sound.ts": {"sha256": "95bff2320c653dbf669130f05c503b0f5af5e0b1b0dc1780294dc894f57f6949", "size": 3367},
-    "src/visuals.ts": {"sha256": "7df4159f5198c516cfd15d5fe7e868fc912f1d72b7132cd0f4d39c6bcc56e780", "size": 35403},
+    "src/visuals.ts": {"sha256": "4fa34c3f5bf2ec74154397fca2ee095060437b538c8f0c060c5c48da506b38fd", "size": 35634},
     "starhermit-remote.json": {"sha256": "257e2012233aad71a673f1e83ce0c542e770c65b48a8caee0d89325bd742e5c9", "size": 169},
-    "starhermit.txt": {"sha256": "7174def49a7e6b2fbfcd072b122d0f05b92c91338cbc36f1f43412d7a7dd21d4", "size": 1581}
+    "starhermit.txt": {"sha256": "0af6f8dee8facaccb94d513e639884f058c4595c78a6c29fa1475062d24d1abe", "size": 1535}
   },
   "format": 1
 }

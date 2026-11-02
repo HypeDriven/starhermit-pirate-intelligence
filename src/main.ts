@@ -1,6 +1,6 @@
 import { frame, onStart, onRender, onUpdate, onQuit, onSuspend, onResume, files, openMenu } from 'starhermit:engine';
 import {scene,renderer,Color,AmbientLight,DirectionalLight,HemisphereLight,PerspectiveCamera,Group,Vector3,Fog,TextureLoader,ACESFilmicToneMapping,PCFShadowMap} from 'starhermit:scene';
-import { onAction, onWheel, onPointerButton, isDown } from 'starhermit:input';
+import { onAction, onWheel, onPointerButton, onPointerMove, buttons, isDown } from 'starhermit:input';
 import { authority } from 'starhermit:script';
 import { storage } from 'starhermit:storage';
 import * as platform from 'starhermit:platform';
@@ -14,9 +14,11 @@ import {audioEvents} from './audio-events.js';
 import {seaChart} from './charts.js';
 import {combatUpdate,combatLabels,cameraShake,inBattle} from './combat.js';
 import {animateCrew} from './crew.js';
+import {buildIslands,animateIslands,jobSite,jobSites,siteLabel} from './islands.js';
+import {createSeaLife,animateSeaLife} from './sealife.js';
 // Other captains' crews are private; their decks show a plausible watch.
 const PEER_CREW={crew:[{task:'helm'},{task:'lookout'},{task:'guns'}]},NPC_CREW={crew:[{task:'helm'},{task:'lookout'},{task:'guns'}]};
-import {applyLook,box,sphere,mat,crewDoll,makeLongboat,shipModel,buildIslands,createOcean,animateEnvironment,animateShip,burst,setWakes} from './visuals.js';
+import {applyLook,box,sphere,mat,crewDoll,makeLongboat,shipModel,createOcean,setShoals,animateEnvironment,animateShip,burst,setWakes} from './visuals.js';
 import { BrowserBrain } from './brain/browser.js';
 import { LOADS, loadSetting } from './brain/policy.js';
 import { METRES, bearing, compass, clock, daylight, windSpeed, smoothPose, boatProgress } from './navigation.js';
@@ -52,18 +54,19 @@ let headingFont='serif';let welcomeArt:any=null,crewArt:any=null;new TextureLoad
 function portrait(c:any,size=36){const i=['morrow','brisk','fuse','peg','tallow','pip'].indexOf(c.id);if(crewArt&&i>=0)ui.style({radius:5,border:{width:1,color:C.brass}}).image(c.name+' portrait',crewArt,{width:size,height:size},{min:[i%3/3,Math.floor(i/3)/2],max:[(i%3+1)/3,(Math.floor(i/3)+1)/2]});else ui.label('●',{color:c.color,size:18});}
 const places:any[]=[
  {id:'saltwick',name:'Saltwick',kind:'port',x:-22,z:8,tag:'A respectable den of thieves'},
- {id:'mossjaw',name:'Mossjaw Cay',kind:'island',x:12,z:17,tag:'Timber, treasure & terrible mosquitoes'},
+ {id:'mossjaw',name:'Mossjaw Cay',kind:'island',x:12,z:17,tag:'Timber, treasure & terrible mosquitoes',jobs:['timber','treasure','forage','herbs']},
  {id:'gallows',name:'Gallows Reach',kind:'port',x:25,z:-19,tag:'Rum dear. Manners optional.'},
- {id:'rattle',name:'Rattlebone Isle',kind:'island',x:-22,z:-23,tag:'Dead men tell excellent directions'},
- {id:'wreck',name:'The Crooked Wreck',kind:'wreck',x:32,z:23,tag:'Salvage for the morally flexible'},
+ {id:'rattle',name:'Rattlebone Isle',kind:'island',x:-22,z:-23,tag:'Dead men tell excellent directions',jobs:['timber','treasure','ruins']},
+ {id:'wreck',name:'The Crooked Wreck',kind:'wreck',x:32,z:23,tag:'Salvage for the morally flexible',jobs:['salvage']},
  {id:'brasshaven',name:'Brasshaven',kind:'port',x:-44,z:36,tag:'Canvas, foundries and ambitious invoices'},
  {id:'winterwake',name:'Winterwake',kind:'port',x:38,z:-45,tag:'Cold water. Warm purses.'},
- {id:'cinder',name:'Cinder Shoal',kind:'island',x:48,z:-2,tag:'Black sand and a sailor’s buried wages'},
- {id:'whisper',name:'Whispering Key',kind:'island',x:-45,z:-38,tag:'A grove that remembers every visitor'}
+ {id:'cinder',name:'Cinder Shoal',kind:'island',x:48,z:-2,tag:'Black sand and a sailor’s buried wages',jobs:['treasure','powder','forage']},
+ {id:'whisper',name:'Whispering Key',kind:'island',x:-45,z:-38,tag:'A grove that remembers every visitor',jobs:['timber','herbs','ruins']}
 ];
-buildIslands(places);const {sea}=createOcean(places);
+const JOB_TEXT:any={timber:'Chop timber · 25–45 wood',treasure:'Seek treasure · 75 safe, up to 200 risky',salvage:'Salvage wreck · shot and timber',forage:'Hunt & gather · provisions and spirit',herbs:'Gather herbs · medicine crates, eases injuries',powder:'Dig saltpetre · 14–30 shot',ruins:'Explore ruins · renown, relics and gold'};
+buildIslands(places);const {sea}=createOcean(places);createSeaLife();
 const ships:any={},shots:any[]=[];let sceneSky='';
-let longboat:any=null,shoreParty:any=null,battleFrame=0;const battleAim={x:0,z:0};let snapshotAt=0,frameDt=1/60,cameraYaw=Math.atan2(30,39),cameraRange=1;const poses:any={};
+let longboat:any=null,shoreParty:any=null,battleFrame=0;const battleAim={x:0,z:0};let snapshotAt=0,frameDt=1/60,cameraYaw=Math.atan2(30,39),cameraRange=1,orbitYaw=0,orbitPitch=0,orbiting:{x:number,y:number,moved:number}|null=null;const poses:any={};
 function buildShip(id:string,enemy=false){const obj=shipModel(enemy);scene.add(obj.g);ships[id]=obj;return obj;}
 const taskPos:any={helm:[0,-2.4],lookout:[.8,2.3],guns:[-1.0,0],repair:[.9,-.7],cook:[-.7,-1.7],forage:[.8,1.3],rest:[-.7,-2.4]};
 function flash(text:string){notice=text;noticeTime=7;}
@@ -167,6 +170,9 @@ onStart(()=>{files.fetch('assets/fonts/CormorantGaramond.ttf').then(()=>{fonts.a
 });
 onAction(e=>{if(!e.pressed||ui.capturingKeys())return;if(e.action==='zoomin')targetZoom=1;if(e.action==='zoomout'||e.action==='map')targetZoom=0;if(e.action==='takehelm')command({type:'helm-mode',mode:state?.myShip?.controlMode==='manual'?'course':'manual'});if(e.action==='anchor')command({type:'anchor'});if(e.action==='fire')command({type:'fire',target:selectedEnemy,ammunition:['round','chain','grape'][ammoType]});if(e.action==='fireport')broadside('port');if(e.action==='firestarboard')broadside('starboard');if(e.action==='crew')openCrew(selectedCrew);});
 onWheel((_,dy)=>{if(!ui.pointerOver())targetZoom=Math.max(0,Math.min(1,targetZoom-dy*.15));});
+// Middle-button drag orbits the camera around the ship; a middle click without dragging recentres it.
+onPointerButton(e=>{if(e.button!==1)return;if(e.pressed){if(!ui.pointerOver())orbiting={x:e.x,y:e.y,moved:0};}else{if(orbiting&&orbiting.moved<4){orbitYaw=0;orbitPitch=0;}orbiting=null;}});
+onPointerMove((x,y)=>{if(!orbiting)return;if(!(buttons()&2)){orbiting=null;return;}const f=frame(),k=1/Math.max(1,f.scale),dx=(x-orbiting.x)*k,dy=(y-orbiting.y)*k;orbiting.moved+=Math.abs(dx)+Math.abs(dy);orbitYaw-=dx*.008;orbitPitch=Math.max(-.5,Math.min(.75,orbitPitch+dy*.005));orbiting.x=x;orbiting.y=y;});
 onPointerButton(e=>{if(e.pressed||e.button!==0||ui.pointerOver())return;for(const l of labelHits)if(e.x>=l.x&&e.x<=l.x+l.w&&e.y>=l.y&&e.y<=l.y+l.h){if(l.crew)openCrew(l.id);else selectedPlace=l.id;return;}});
 onUpdate(dt=>{frameDt=Math.min(dt,.1);elapsed+=dt;audioUpdate(dt,state,zoom>.65);noticeTime=Math.max(0,noticeTime-dt);zoom+=(targetZoom-zoom)*Math.min(1,dt*5);saveClock+=dt;if(saveClock>10&&state&&!online){saveClock=0;command({type:'snapshot'});}steer(dt);browserBrain.tick(state,brainConfigs,command,channel);});
 onSuspend(()=>{touchTurn=0;touchThrottle=0;manualSending=false;audioSuspend();browserBrain.suspend();});onResume(()=>{audioResume();browserBrain.resume();});
@@ -188,37 +194,41 @@ function renderScene(){
  const allShips=state?state.ships.concat(state.raiders):[];
  for(const ship of allShips)poses[ship.id]=smoothPose(poses[ship.id],ship,frameDt);
  const shipPose=s?poses[s.id]||s:{x:0,z:0},focus={x:shipPose.x,z:shipPose.z};
- if(s?.away){const p=places.find(p=>p.id===s.away.place)!,dx=shipPose.x-p.x,dz=shipPose.z-p.z,d=Math.max(.1,Math.hypot(dx,dz)),move=boatProgress(state.time+Math.min(.3,elapsed-snapshotAt),s.away);focus.x+=(p.x+dx/d*1.2-shipPose.x)*move;focus.z+=(p.z+dz/d*1.2-shipPose.z)*move;}
+ if(s?.away){const p=places.find(p=>p.id===s.away.place)!,dx=shipPose.x-p.x,dz=shipPose.z-p.z,d=Math.max(.1,Math.hypot(dx,dz)),move=boatProgress(state.time+Math.min(.3,elapsed-snapshotAt),s.away);const site=jobSite(p.id,s.away.job),sx=site?site.x/METRES:p.x+dx/d*2.2,sz=site?site.z/METRES:p.z+dz/d*2.2;focus.x+=(sx-shipPose.x)*move;focus.z+=(sz-shipPose.z)*move;}
  const foe=s&&!s.away&&inBattle(state,me)?battleTarget(s):null,foePose=foe&&(poses[foe.id]||foe),foeGap=foe?Math.hypot(foePose.x-shipPose.x,foePose.z-shipPose.z):0;battleFrame+=((foe?1:0)-battleFrame)*(1-Math.exp(-frameDt*1.5));if(foe){battleAim.x=foePose.x-shipPose.x;battleAim.z=foePose.z-shipPose.z;}focus.x+=battleAim.x*.45*battleFrame;focus.z+=battleAim.z*.45*battleFrame;
  const cx=focus.x*zoom*METRES,cz=focus.z*zoom*METRES,dist=1-zoom;
  const narrow=f.width/ui.preferences().scale<600;cameraRange+=((narrow?1.2:1)*(s?.away?1.15:1)*(1+battleFrame*(Math.min(3.4,Math.max(1.3,foeGap*.24))-1))-cameraRange)*(1-Math.exp(-frameDt*(foe?2:5)));const p=s?.away&&places.find(p=>p.id===s.away.place),yaw=p?Math.atan2(shipPose.x-p.x,shipPose.z-p.z):Math.atan2(30,39);cameraYaw+=Math.atan2(Math.sin(yaw-cameraYaw),Math.cos(yaw-cameraYaw))*(1-Math.exp(-frameDt*4));
- const quake=cameraShake()*zoom,qx=Math.sin(elapsed*53)*quake*.6,qy=Math.sin(elapsed*71)*quake*.4;camera.position.set(qx+cx+340*dist+Math.sin(cameraYaw)*49.2*zoom*cameraRange,qy+660*dist+39*zoom*cameraRange,cz+540*dist+Math.cos(cameraYaw)*49.2*zoom*cameraRange);camera.lookAt(cx,zoom*4.8,cz);camera.updateMatrixWorld();
+ const quake=cameraShake()*zoom,qx=Math.sin(elapsed*53)*quake*.6,qy=Math.sin(elapsed*71)*quake*.4;const yawNow=cameraYaw+orbitYaw*zoom,elev=Math.max(.12,Math.min(1.42,Math.atan2(39,49.2)+orbitPitch*zoom)),reach=62.8*zoom*cameraRange,flat=Math.cos(elev)*reach;camera.position.set(qx+cx+340*dist+Math.sin(yawNow)*flat,qy+660*dist+Math.sin(elev)*reach,cz+540*dist+Math.cos(yawNow)*flat);camera.lookAt(cx,zoom*4.8,cz);camera.updateMatrixWorld();
  sea.visible=!(zoom>.6&&deck>0);
- animateEnvironment(elapsed,frameDt,focus);
+ animateEnvironment(elapsed,frameDt,focus);animateIslands(elapsed);
  if(!state)return;
+ setShoals(state.shoals||[]);animateSeaLife(state.time+Math.min(.3,elapsed-snapshotAt),frameDt,focus,state.ships.concat(state.raiders).filter((ss:any)=>ss.hull>0).map((ss:any)=>{const p=poses[ss.id]||ss;return {x:p.x*METRES,z:p.z*METRES,heading:p.heading||0,way:ss.anchored?0:Math.min(1,Math.hypot(ss.vx||0,ss.vz||0)/1.7)};}),state.shoals||[]);
  const storm=state.weather!=='Fair winds',light=daylight(state.time),sky=storm?'#697f82':light>.12?'#a7cfcb':'#203e50';
  if(sceneSky!==sky){sceneSky=sky;scene.background=new Color(sky);scene.fog=new Fog(sky,storm?500:850,storm?1100:1650);}sun.intensity=(.38+light*1.2)*Math.PI;ambient.intensity=(.38+light*.18)*Math.PI;sun.color.set(light>.15?'#ffe6b3':'#b4d0e0');sun.position.set(cx-40,70,cz+35);sun.target.position.set(cx,0,cz);const shadowCamera=sun.shadow.camera as any;shadowCamera.left=-55;shadowCamera.right=55;shadowCamera.top=55;shadowCamera.bottom=-55;shadowCamera.near=.5;shadowCamera.far=220;shadowCamera.updateProjectionMatrix();renderer.shadowMap.enabled=zoom>.35;
  const all=state.ships.concat(state.raiders);const visible:any={};let clothBudget=2;
  for(const ss of all){visible[ss.id]=true;let obj=ships[ss.id];if(!obj)obj=buildShip(ss.id,!!ss.npc);obj.g.visible=ss.hull>0;if(!obj.g.visible)continue;const mine=ss.id===me;const pose=poses[ss.id]||ss;obj.g.position.set(pose.x*METRES,Math.sin(elapsed*1.3+ss.x)*.12,pose.z*METRES);obj.g.rotation.y=pose.heading||0;obj.g.rotation.z=Math.sin(elapsed+ss.x)*.012;
   const fire=mine?s.fire:ss.fire||0;for(let i=0;i<obj.flames.length;i++){const flame=obj.flames[i];flame.visible=fire>0;if(fire>0){flame.scale.y=(.35+Math.sin(elapsed*8+i)*.10)*Math.min(2,1+fire/60);flame.position.y=1.6+i*.12+Math.sin(elapsed*5+i)*.12;}}
-  const cut=mine&&zoom>.6&&deck>0,near=Math.hypot(pose.x*METRES-camera.position.x,pose.z*METRES-camera.position.z)<(zoom>.5?520:260);animateShip(obj,elapsed,!ss.anchored&&!cut,mine,light,{simulate:near&&clothBudget-->0,dt:frameDt,wind:state.wind||0,knots:state.windKnots||12,heading:pose.heading||0,speed:ss.anchored?0:Math.hypot(ss.vx||0,ss.vz||0)||(ss.npc?1.2:1.6),storm,furled:mine&&zoom>.6});if(!ss.npc)applyLook(obj,mine?previewLook(ss.look):ss.look,state.workshop?.palette);
-  obj.rig.visible=!cut;for(const sail of obj.sails){sail.visible=true;sail.material.hooks.uniforms.furl.value=mine&&zoom>.6?.16:1;}obj.hull.visible=!cut;obj.guns.visible=cut&&deck===1;obj.hold.visible=cut;obj.section.visible=cut;
+  const cut=mine&&zoom>.6&&deck>0,near=Math.hypot(pose.x*METRES-camera.position.x,pose.z*METRES-camera.position.z)<(zoom>.5?520:260);animateShip(obj,elapsed,!ss.anchored&&!cut,mine,light,{simulate:near&&clothBudget-->0,dt:frameDt,wind:state.wind||0,knots:state.windKnots||12,heading:pose.heading||0,speed:ss.anchored?0:Math.hypot(ss.vx||0,ss.vz||0)||(ss.npc?1.2:1.6),storm});if(!ss.npc)applyLook(obj,mine?previewLook(ss.look):ss.look,state.workshop?.palette);
+  obj.rig.visible=!cut;{const furlTo=ss.anchored||(mine&&s.away)||(ss.npc&&ss.ai==='patrol'&&Math.hypot(ss.vx||0,ss.vz||0)<.2)?.12:1;obj.furl=(obj.furl??furlTo);obj.furl+=Math.sign(furlTo-obj.furl)*Math.min(Math.abs(furlTo-obj.furl),frameDt*.45);for(const sail of obj.sails){sail.visible=true;sail.material.hooks.uniforms.furl.value=obj.furl;}}obj.hull.visible=!cut;obj.guns.visible=cut&&deck===1;obj.hold.visible=cut;obj.section.visible=cut;
   for(let i=0;i<obj.dolls.length;i++){const d=obj.dolls[i],c=mine?s.crew[i]:null;d.visible=(mine?(!c||!c.away):i<3)&&(!cut||(deck===1?['guns','repair'].includes(c?.task):['cook','forage','rest'].includes(c?.task)));}
   animateCrew(obj,mine?s:ss.npc?NPC_CREW:PEER_CREW,elapsed+(mine?0:[...ss.id].reduce((a:number,ch:string)=>a+ch.charCodeAt(0),0)*1.7),frameDt,cut,deck);
 
  }
  for(const id of Object.keys(ships))if(!visible[id])ships[id].g.visible=false;
- setWakes(all.filter((ss:any)=>ss.hull>0&&!ss.anchored||ss.npc&&ss.hull>0).map((ss:any)=>{const p=poses[ss.id]||ss,v=Math.hypot(ss.vx||0,ss.vz||0);return {x:p.x*METRES,z:p.z*METRES,heading:p.heading||0,way:ss.npc?v/1.6:(ss.vx===undefined?.8:v/1.8),d:Math.hypot(p.x*METRES-camera.position.x,p.z*METRES-camera.position.z)};}).filter((w:any)=>w.way>.05).sort((a:any,b:any)=>a.d-b.d).slice(0,8));
+ setWakes(all.filter((ss:any)=>ss.hull>0&&!ss.anchored||ss.npc&&ss.hull>0).map((ss:any)=>{const p=poses[ss.id]||ss,v=Math.hypot(ss.vx||0,ss.vz||0);return {id:ss.id,x:p.x*METRES,z:p.z*METRES,heading:p.heading||0,way:ss.npc?v/1.6:(ss.vx===undefined?.8:v/1.8),d:Math.hypot(p.x*METRES-camera.position.x,p.z*METRES-camera.position.z)};}).filter((w:any)=>w.way>.05).sort((a:any,b:any)=>a.d-b.d).slice(0,8),elapsed);
  combatUpdate(state,me,serverNow(),frameDt,poses,ships);
- if(s?.away){if(!longboat)longboat=makeLongboat();longboat.visible=true;const p=places.find(p=>p.id===s.away.place)!,time=state.time+Math.min(.3,elapsed-snapshotAt),move=boatProgress(time,s.away),pose=poses[s.id]||s,dx=pose.x-p.x,dz=pose.z-p.z,d=Math.max(.1,Math.hypot(dx,dz)),shore={x:p.x+dx/d*1.7,z:p.z+dz/d*1.7};
+ if(s?.away){if(!longboat)longboat=makeLongboat();longboat.visible=true;const p=places.find(p=>p.id===s.away.place)!,time=state.time+Math.min(.3,elapsed-snapshotAt),move=boatProgress(time,s.away),pose=poses[s.id]||s,dx=pose.x-p.x,dz=pose.z-p.z,d=Math.max(.1,Math.hypot(dx,dz)),shore={x:p.x+dx/d*3.25,z:p.z+dz/d*3.25};
   longboat.position.set((pose.x+(shore.x-pose.x)*move)*METRES,-1.9,(pose.z+(shore.z-pose.z)*move)*METRES);longboat.rotation.y=Math.atan2(shore.x-pose.x,shore.z-pose.z)+(s.away.returnAt-time<5?Math.PI:0);
   for(const oar of longboat.userData.oars)oar.rotation.y=move<1?Math.sign(oar.position.x)*Math.sin(elapsed*5)*.5:0;
   if(!shoreParty){shoreParty=new Group();for(let i=0;i<2;i++){const doll=crewDoll(i?'#8aadaf':'#77a891',i+2);doll.scale.set(1.8,1.8,1.8);doll.position.set(i?1.4:-1.4,0,0);box(doll,.35,.6,0,.06,.8,.06,'#b69863');box(doll,.35,1,0,.35,.2,.1,'#788983');shoreParty.add(doll);}scene.add(shoreParty);}
-  shoreParty.visible=move>=1;shoreParty.position.set(p.x*METRES+dx/d*11,2.85,p.z*METRES+dz/d*11);for(let i=0;i<2;i++){const doll=shoreParty.children[i];doll.rotation.z=Math.sin(elapsed*5+i)*.16;doll.userData.limbs[3].rotation.x=Math.sin(elapsed*5+i);}
+  shoreParty.visible=move>=1;{const site=jobSite(p.id,s.away.job);if(site){shoreParty.position.set(site.x,site.y,site.z);shoreParty.rotation.y=Math.atan2(p.x*METRES-site.x,p.z*METRES-site.z)+Math.PI;}else shoreParty.position.set(p.x*METRES+dx/d*24,3,p.z*METRES+dz/d*24);}for(let i=0;i<2;i++){const doll=shoreParty.children[i];doll.rotation.z=Math.sin(elapsed*5+i)*.16;doll.userData.limbs[3].rotation.x=Math.sin(elapsed*5+i);}
   let rower=0;for(const child of longboat.children)if(child instanceof Group&&child.userData.uniform){child.visible=move<1;const c=s.crew.find((c:any)=>c.id===s.away.crewIds[rower++]);for(const part of child.userData.uniform as any[])part.material=mat(c?.color||'#77a891');const [legL,armL,legR,armR]=child.userData.limbs as any[];legL.rotation.x=legR.rotation.x=-1.3;armL.rotation.x=armR.rotation.x=-1.1+Math.sin(elapsed*5)*.55;}for(let i=0;i<2;i++){const c=s.crew.find((c:any)=>c.id===s.away.crewIds[i]);for(const part of shoreParty.children[i].userData.uniform)part.material=mat(c?.color||'#77a891');}
  }else{if(longboat)longboat.visible=false;if(shoreParty)shoreParty.visible=false;}
 
- labelHits=[];combatLabels((text,x,y,z,color)=>labelAt(text,x,y,z,color));if(zoom>=.65)for(const e of state.raiders)if(e.hull>0&&s&&Math.hypot(e.x-s.x,e.z-s.z)<30){const p=poses[e.id]||e;labelAt(e.name+' · '+(e.ai==='flee'?'fleeing':e.temper||'raider')+' · '+Math.round(e.hull/e.maxHull*100)+'%',p.x*METRES,26,p.z*METRES,e.aim?.target===me?C.red:C.cream,'');}if(s?.away&&zoom>.65&&shoreParty?.visible){labelAt(s.away.crewIds.map((id:string)=>s.crew.find((c:any)=>c.id===id)?.name.split(' ')[0]).join(' & ')+' · '+(s.away.job==='timber'?'Chopping timber':s.away.job==='salvage'?'Gathering salvage':'Seeking treasure'),shoreParty.position.x,6.5,shoreParty.position.z,C.gold);}
+ labelHits=[];combatLabels((text,x,y,z,color)=>labelAt(text,x,y,z,color));if(zoom>=.65)for(const e of state.raiders)if(e.hull>0&&s&&Math.hypot(e.x-s.x,e.z-s.z)<30){const p=poses[e.id]||e;labelAt(e.name+' · '+(e.ai==='flee'?'fleeing':e.temper||'raider')+' · '+Math.round(e.hull/e.maxHull*100)+'%',p.x*METRES,26,p.z*METRES,e.aim?.target===me?C.red:C.cream,'');}if(s?.away&&zoom>.65&&shoreParty?.visible){labelAt(s.away.crewIds.map((id:string)=>s.crew.find((c:any)=>c.id===id)?.name.split(' ')[0]).join(' & ')+' · '+({timber:'Chopping timber',salvage:'Gathering salvage',treasure:'Seeking treasure',forage:'Hunting & gathering',herbs:'Gathering herbs',powder:'Digging saltpetre',ruins:'Exploring ruins'} as any)[s.away.job],shoreParty.position.x,shoreParty.position.y+6.5,shoreParty.position.z,C.gold);}
+ // At anchor by an island, show what there is to do ashore; out at sea, mark fishing grounds.
+ const ashore=s&&!s.away&&zoom>.65?landing(s):null;if(ashore)for(const site of jobSites(ashore.id))labelAt(siteLabel(site.job),site.x,site.y+7,site.z,C.cream);
+ if(s&&zoom>.65)for(const q of state.shoals||[])if(Math.hypot(q.x-s.x,q.z-s.z)<22)labelAt(s.fishing?'Fish shoal · foragers catch ×3':'Fish shoal',q.x*METRES,3,q.z*METRES,C.green);
  if(zoom>=.35&&zoom<.65){for(const p of places)labelAt((p.kind==='port'?'⚓ ':'')+p.name,p.x*METRES,20,p.z*METRES,selectedPlace===p.id?C.gold:C.cream,p.id);for(const ss of state.raiders)if(ss.hull>0)labelAt(ss.name,(poses[ss.id]?.x||ss.x)*METRES,24,(poses[ss.id]?.z||ss.z)*METRES,C.red);}
  else if(s&&zoom>=.65){labelAt(s.name,shipPose.x*METRES,20,shipPose.z*METRES,C.gold);const l=s.log[s.log.length-1];if(l&&state.time-l.at<8)labelAt(l.name+': '+(l.text.length>54?l.text.slice(0,l.text.lastIndexOf(' ',53)>20?l.text.lastIndexOf(' ',53):53)+'…':l.text),shipPose.x*METRES,14,shipPose.z*METRES+6,C.cream);}
 }
@@ -261,7 +271,7 @@ function toolbar(w:number,scale:number,mobile:boolean){
  draw.box(0,76*scale,w,50*scale,'woodstrip');
  ui.area({x:20*scale,y:84*scale,width:w-40*scale,height:40*scale},()=>ui.row('Views',()=>{
   button('Sea chart',()=>{targetZoom=0;},targetZoom<.5);button('Aboard ship',()=>{targetZoom=1;},targetZoom>=.5);
-  if(!mobile){ui.label('Q / E or scroll to zoom',{size:11,color:C.muted});ui.spacer();ui.label(state?.weather||'Fair winds',{size:11,color:C.muted});}
+  if(!mobile){ui.label('Q / E or scroll to zoom · middle-drag to look around',{size:11,color:C.muted});ui.spacer();ui.label(state?.weather||'Fair winds',{size:11,color:C.muted});}
   else{ui.spacer();button('Orders',()=>{mobilePanel=!mobilePanel;});}
  },{width:(w-40*scale)/scale,align:'center',spacing:8}));
 }
@@ -342,7 +352,7 @@ function battleStrip(w:number,h:number,scale:number,mobile:boolean){
  },{width:width-20,spacing:8,align:'center'}));
 }
 function landing(s:any){return s.anchored?places.find(p=>p.kind!=='port'&&distanceTo(s,p)<7):null;}
-function openLongboat(){const p=state?.myShip&&landing(state.myShip);if(!state?.myShip?.away)job=p?.kind==='wreck'?2:0;panel='away';}
+function openLongboat(){if(!state?.myShip?.away)job=0;panel='away';}
 function distanceTo(s:any,p:any){return p?Math.sqrt((s.x-p.x)**2+(s.z-p.z)**2):999;}
 
 function portNear(s:any){return state?.places?.find((p:any)=>p.kind==='port'&&distanceTo(s,p)<7);}
@@ -458,11 +468,11 @@ function dialogs(){
    else{for(const m of Object.values(state.contracts||{}) as any[]){const done=m.id==='daily'?s.dailyDone?.includes(Math.floor(state.time/240)):s.missionsDone?.includes(m.id);ui.style('card').column(m.id,()=>{ui.paragraph(m.title,dialogWidth-24,{weight:'bold',size:15});ui.label(m.reward+' GOLD',{size:11});ui.paragraph(m.desc,dialogWidth-24,{size:12});button(done?(m.id==='daily'?'Done today':'Completed'):'Accept contract',()=>command({type:'mission',id:m.id}),false,done);},{width:dialogWidth,spacing:7});}}
   }
   if(panel==='away'){
-   const p=landing(s);ui.paragraph(p?'Anchored at '+p.name+'. '+(p.kind==='wreck'?'Choose Salvage wreck.':'Choose Chop timber; Peg and Pip make a good timber party.')+' Select two fit sailors, then lower the longboat. They row ashore, work and bring the haul back automatically.':'Anchor within 70 m of an island or wreck before launching.',dialogWidth,{size:12});if(!p&&!s.away){wideButton('Sail to Mossjaw Cay',()=>{route('mossjaw');panel='';},true);}
+   const p=landing(s);ui.paragraph(p?'Anchored at '+p.name+'. '+(p.kind==='wreck'?'Choose Salvage wreck.':'This island offers '+p.jobs.length+' kinds of work ashore. Each needs a different skill: Peg for timber, Pip for treasure and ruins, Brisk for hunting, Tallow for herbs, Fuse for saltpetre.')+' Select two fit sailors, then lower the longboat. They row ashore, work and bring the haul back automatically.':'Anchor within 70 m of an island or wreck before launching.',dialogWidth,{size:12});if(!p&&!s.away){wideButton('Sail to Mossjaw Cay',()=>{route('mossjaw');panel='';},true);}
    if(s.away){ui.heading('Longboat away');wideButton('Watch the shore party',()=>{targetZoom=1;deck=0;panel='';});ui.progress(Math.max(0,Math.min(1,1-(s.away.returnAt-state.time)/(s.away.returnAt-s.away.departAt))),dialogWidth);ui.label('Returning in '+Math.max(0,Math.ceil(s.away.returnAt-state.time))+' seconds.');
     if(s.away.encounter){const e=s.away.encounter;ui.heading(e.title,{size:19});ui.paragraph(e.text,dialogWidth,{size:12});ui.paragraph('A '+e.skill.toLowerCase()+' helps with this encounter. Current party success chance: '+Math.round((s.away.successChance||.62)*100)+'%. Bonds help; fatigue and injuries make it harder. Failure can injure a sailor.',dialogWidth,{size:11});if(!s.away.choice){if(state.time>=s.away.encounterAt){wideButton(e.safe,()=>command({type:'expedition-choice',choice:'safe'}),true);wideButton(e.risk,()=>command({type:'expedition-choice',choice:'risk'}));}else ui.label('Reaching the shore in '+Math.ceil(s.away.encounterAt-state.time)+' seconds.',{size:11});ui.paragraph('If you leave it to the crew, they take the safe haul and return on schedule.',dialogWidth,{size:11});}else ui.label(s.away.choice==='risk'?'Risky approach chosen · return delayed 8s':'Safe approach chosen',{color:C.gold,size:12});}
    }
-   else{job=ui.select('Expedition',job,['Chop timber · 25–45 wood','Seek treasure · 75 safe, up to 200 risky','Salvage wreck · shot and timber']);for(const c of s.crew.filter((c:any)=>c.rank>0)){const checked=ui.checkbox(c.name+' · '+c.role+(c.injury>0?' · injured '+Math.ceil(c.injury)+'%':''),party.includes(c.id));if(checked&&!party.includes(c.id))party.push(c.id);if(!checked&&party.includes(c.id))party=party.filter(id=>id!==c.id);}if(p?.kind==='wreck')ui.paragraph('Wrecks support salvage. Choose an island for timber or treasure.',dialogWidth,{size:11});ui.label(party.length+' / 2 selected',{color:party.length===2?C.green:C.red,size:11});button('Lower the longboat',()=>{command({type:'away',job:['timber','treasure','salvage'][job],crewIds:party});targetZoom=1;deck=0;},true,party.length!==2||!p||party.some(id=>s.crew.find((c:any)=>c.id===id)?.injury>40)||job===2&&p.kind!=='wreck'||job!==2&&p.kind==='wreck');}
+   else{const jobs:string[]=p?.jobs||['timber'];job=Math.min(job,jobs.length-1);job=ui.select('Expedition',job,jobs.map(j=>JOB_TEXT[j]));for(const c of s.crew.filter((c:any)=>c.rank>0)){const checked=ui.checkbox(c.name+' · '+c.role+(c.injury>0?' · injured '+Math.ceil(c.injury)+'%':''),party.includes(c.id));if(checked&&!party.includes(c.id))party.push(c.id);if(!checked&&party.includes(c.id))party=party.filter(id=>id!==c.id);}if(p?.kind==='wreck')ui.paragraph('Wrecks support salvage. Islands offer timber, treasure, hunting, herbs, saltpetre and ruins.',dialogWidth,{size:11});ui.label(party.length+' / 2 selected',{color:party.length===2?C.green:C.red,size:11});button('Lower the longboat',()=>{command({type:'away',job:jobs[job],crewIds:party});targetZoom=1;deck=0;},true,party.length!==2||!p||party.some(id=>s.crew.find((c:any)=>c.id===id)?.injury>40));}
   }
   if(panel==='trade'){
    const p=portNear(s),ready=!!p&&s.anchored,prices=state.prices?.find((x:any)=>x.id===p?.id)?.goods;

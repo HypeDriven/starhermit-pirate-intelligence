@@ -3,14 +3,14 @@
 var TASKS = ['helm','lookout','guns','repair','cook','forage','rest'];
 var PLACES = [
  {id:'saltwick',name:'Saltwick',kind:'port',x:-22,z:8,tag:'A respectable den of thieves',buy:8,sell:15},
- {id:'mossjaw',name:'Mossjaw Cay',kind:'island',x:12,z:17,tag:'Timber, treasure & terrible mosquitoes'},
+ {id:'mossjaw',name:'Mossjaw Cay',kind:'island',x:12,z:17,tag:'Timber, treasure & terrible mosquitoes',jobs:['timber','treasure','forage','herbs']},
  {id:'gallows',name:'Gallows Reach',kind:'port',x:25,z:-19,tag:'Rum dear. Manners optional.',buy:13,sell:23},
- {id:'rattle',name:'Rattlebone Isle',kind:'island',x:-22,z:-23,tag:'Something shiny under something dead'},
- {id:'wreck',name:'The Crooked Wreck',kind:'wreck',x:32,z:23,tag:'Salvage for the morally flexible'},
+ {id:'rattle',name:'Rattlebone Isle',kind:'island',x:-22,z:-23,tag:'Something shiny under something dead',jobs:['timber','treasure','ruins']},
+ {id:'wreck',name:'The Crooked Wreck',kind:'wreck',x:32,z:23,tag:'Salvage for the morally flexible',jobs:['salvage']},
  {id:'brasshaven',name:'Brasshaven',kind:'port',x:-44,z:36,tag:'Canvas, foundries and ambitious invoices',buy:14,sell:10},
  {id:'winterwake',name:'Winterwake',kind:'port',x:38,z:-45,tag:'Cold water. Warm purses.',buy:24,sell:19},
- {id:'cinder',name:'Cinder Shoal',kind:'island',x:48,z:-2,tag:'Black sand and a sailor’s buried wages'},
- {id:'whisper',name:'Whispering Key',kind:'island',x:-45,z:-38,tag:'A grove that remembers every visitor'}
+ {id:'cinder',name:'Cinder Shoal',kind:'island',x:48,z:-2,tag:'Black sand and a sailor’s buried wages',jobs:['treasure','powder','forage']},
+ {id:'whisper',name:'Whispering Key',kind:'island',x:-45,z:-38,tag:'A grove that remembers every visitor',jobs:['timber','herbs','ruins']}
 ];
 
 var GOODS = {
@@ -95,11 +95,22 @@ function progress(w,s){
  if(s.stats.expeditions>=3)badge(s,w.time,'shore','Three expeditions returned with stories and all their boots.');
  if(s.gold>=1000)badge(s,w.time,'fortune','A thousand gold in the strongbox. Try not to tell everyone.');
 }
-function encounter(a){
- if(a.job==='timber')return {title:'The old grove',text:'Easy driftwood lies on the beach. An old grove inland promises more, but the ground is treacherous.',safe:'Take the driftwood · guaranteed timber',risk:'Enter the grove · extra timber, possible injury',skill:'Carpenter'};
- if(a.job==='treasure')return {title:'A chest below the tide',text:'A marked chest is wedged in a flooded cave. Loose coins glint safely on the ledge.',safe:'Take the loose coins · no injury risk',risk:'Dive for the chest · richer reward, possible injury',skill:'Navigator'};
- return {title:'The wreck’s powder room',text:'A sealed locker rattles below a damaged beam. Deck salvage is within easy reach.',safe:'Strip the deck · guaranteed supplies',risk:'Open the locker · extra shot, possible injury',skill:'Gunner'};
-}
+// Fish shoals drift slowly around fixed grounds. Foragers fishing over one land
+// three times the catch. Everyone sees the same shoals: the client draws them
+// from the view.
+var SHOAL_GROUNDS=[{x:4,z:9},{x:-31,z:-6},{x:40,z:13},{x:-12,z:-33},{x:18,z:-31},{x:-36,z:22},{x:30,z:-8}];
+function shoals(time){return SHOAL_GROUNDS.map(function(g,i){var a=time/70+i*1.7;return {x:Math.round((g.x+Math.sin(a)*3.5)*100)/100,z:Math.round((g.z+Math.cos(a*.8)*3)*100)/100,r:3};});}
+function nearShoal(w,s){var list=shoals(w.time);for(var i=0;i<list.length;i++)if(distance(s,list[i])<list[i].r+4)return true;return false;}
+var JOBS={
+ timber:{label:'Chop timber',title:'The old grove',text:'Easy driftwood lies on the beach. An old grove inland promises more, but the ground is treacherous.',safe:'Take the driftwood · guaranteed timber',risk:'Enter the grove · extra timber, possible injury',skill:'Carpenter'},
+ treasure:{label:'Seek treasure',title:'A chest below the tide',text:'A marked chest is wedged in a flooded cave. Loose coins glint safely on the ledge.',safe:'Take the loose coins · no injury risk',risk:'Dive for the chest · richer reward, possible injury',skill:'Navigator'},
+ salvage:{label:'Salvage wreck',title:'The wreck’s powder room',text:'A sealed locker rattles below a damaged beam. Deck salvage is within easy reach.',safe:'Strip the deck · guaranteed supplies',risk:'Open the locker · extra shot, possible injury',skill:'Gunner'},
+ forage:{label:'Hunt & gather',title:'Boar country',text:'Fruit hangs heavy on the shore trees. Fresh boar tracks lead into the scrub.',safe:'Pick fruit and crabs · guaranteed provisions',risk:'Hunt the boar · a feast for the crew, possible injury',skill:'First mate'},
+ herbs:{label:'Gather herbs',title:'The healer’s garden',text:'Common herbs grow by the stream. Rarer ones cling to a cliff above the falls.',safe:'Cut the stream herbs · a little medicine',risk:'Climb for the rare ones · a full crate, possible fall',skill:'Cook'},
+ powder:{label:'Dig saltpetre',title:'The smoking vent',text:'Crusted saltpetre rings a cooled lava pool. The thick seams sit right beside a vent that still hisses.',safe:'Scrape the crust · enough for some shot',risk:'Mine beside the vent · plenty of powder, possible burns',skill:'Gunner'},
+ ruins:{label:'Explore ruins',title:'The drowned temple',text:'Old stones lean over a dark stair. Offerings lie on the steps; something gleams further down.',safe:'Sketch the carvings · renown and spirit',risk:'Descend the stair · relics and gold, possible injury',skill:'Navigator'}
+};
+function encounter(a){var j=JOBS[a.job]||JOBS.salvage;return {title:j.title,text:j.text,safe:j.safe,risk:j.risk,skill:j.skill};}
 function expeditionChance(s,ids,job){var party=s.crew.filter(function(c){return ids.indexOf(c.id)>=0;}),skill=encounter({job:job}).skill,trained=party.some(function(c){return c.role===skill;}),bond=((party[0].bonds[party[1].id]||50)+(party[1].bonds[party[0].id]||50))/2;return clamp((trained?.88:.62)+(bond>=65?.05:0)-(party.some(function(c){return c.fatigue>75;})?.15:0)-(party.some(function(c){return c.injury>20;})?.10:0),.2,.95);}
 function bondParty(s,party,amount,text){party.forEach(function(c){party.forEach(function(other){if(c.id!==other.id)c.bonds[other.id]=clamp((c.bonds[other.id]||50)+amount,0,100);});c.stories.push(text);if(c.stories.length>5)c.stories.shift();});}
 function finishAway(w,s,random){
@@ -107,6 +118,10 @@ function finishAway(w,s,random){
  s.away=null;party.forEach(function(c){c.away=false;c.fatigue=clamp(c.fatigue+8,0,100);cxp(c,18);});
  if(a.job==='timber'){var wood=25+(risk&&success?20:0);s.timber+=wood;log(s,w.time,'Peg',wood+' timber aboard. '+(risk?'That grove had opinions.':'Driftwood never argues.'),'reward');}
  else if(a.job==='treasure'){var gold=risk?(success?200:35):75;s.gold+=gold;s.completed.push('treasure');log(s,w.time,'Brisk',gold+' gold recovered. '+(risk?'The cave kept its dignity.':'A dry pair of boots is its own treasure.'),'reward');}
+ else if(a.job==='forage'){var food=risk&&success?55:30;s.food=Math.min(100,s.food+food);s.morale=clamp(s.morale+(risk&&success?8:3),0,100);log(s,w.time,'Tallow',risk&&success?'Roast boar tonight. Nobody ask how Brisk caught it.':'Fruit, crabs and one very offended parrot. Provisions up.','reward');}
+ else if(a.job==='herbs'){var want=risk&&success?7:3,room=Math.max(0,holdSize(s)-usedHold(s)),got=Math.min(want,room);s.goods.medicine+=got;if(got<want)s.gold+=(want-got)*8;s.crew.forEach(function(c){c.injury=Math.max(0,c.injury-(risk&&success?15:6));});log(s,w.time,'Tallow',got+' crates of medicine from the herbs'+(got<want?', and the rest brewed and sold on the spot':'')+'. Bruises are already improving.','reward');}
+ else if(a.job==='powder'){s.ammo+=risk&&success?30:14;log(s,w.time,'Fuse',(risk&&success?30:14)+' rounds of shot packed with fresh powder. My eyebrows will grow back.','reward');}
+ else if(a.job==='ruins'){var renown=risk&&success?15:6,coin=risk?(success?90:0):20;s.reputation+=renown;s.gold+=coin;s.morale=clamp(s.morale+6,0,100);xp(s,risk&&success?40:15);log(s,w.time,'Pip','The temple carvings are on the chart now'+(coin?'. '+coin+' gold in old coins, too.':'.'),'reward');}
  else{s.ammo+=12+(risk&&success?14:0);s.timber+=10+(risk&&success?8:0);log(s,w.time,'Pip','Salvage aboard: shot, timber and a suspicious smell.','reward');}
  if(risk&&!success){var hurt=party[0];hurt.injury=clamp(hurt.injury+35,0,100);hurt.fatigue=clamp(hurt.fatigue+20,0,100);log(s,w.time,hurt.name.split(' ')[0],'Back aboard with a sprain. Rest or a port doctor will help.','danger');}
  bondParty(s,party,success?5:-2,(success?'Returned together from ':'Kept one another afloat at ')+(place(a.place)||{name:'the shore'}).name+'.');party.forEach(function(c){c.trust=clamp(c.trust+(success?1:0),0,100);});s.stats.expeditions++;s.reputation+=risk&&success?8:3;xp(s,35);
@@ -142,7 +157,7 @@ function choose(w,s,c,counts){
   if(t==='guns')v+=(s.directive==='hunt'?6:0)+(w.raiders.some(function(e){return e.hull>0&&distance(s,e)<18;})?9:0);
   if(t==='repair')v+=(s.hull<s.maxHull*s.standing.repairAt/100?(s.directive==='survive'?12:9):0)+(s.fire+s.leak>0?20:0);
   if(t==='cook')v+=s.food<65?8:0;
-  if(t==='forage')v+=s.anchored&&s.directive==='prosper'?3:0;
+  if(t==='forage')v+=(s.anchored&&s.directive==='prosper'?3:0)+(s.fishing&&s.food<90?3:0);
   if(c.injury>20&&t==='rest')v+=20;
   if(c.preferred===t)v+=3;
   v+=(c.preferences[t]||0)+(habits[t]||0);if(v>score){score=v;best=t;}
@@ -151,7 +166,7 @@ function choose(w,s,c,counts){
  return best;
 }
 function windKnots(w){return Math.round(12+3*Math.sin(w.time/90)+(w.weather!=='Fair winds'?8:0));}
-function view(w,id){var own=w.ships[id];if(own){own.inHarbour=harbourSafe(own);own.emergency=emergency(w,own);}return {type:'state',schema:1,featureVersion:2,time:w.time,day:Math.floor(w.time/240)+1,weather:w.weather,wind:Math.sin(w.time/240),windKnots:windKnots(w),places:PLACES,ships:Object.keys(w.ships).map(function(k){var s=w.ships[k];return {id:s.id,name:s.name,ownerName:s.ownerName,x:s.x,z:s.z,hull:s.hull,maxHull:s.maxHull,heading:s.heading,level:s.level,anchored:s.anchored,fire:s.fire||0,leak:s.leak||0,lastShot:s.lastShot,lastTarget:s.lastTarget||'',vx:s.vx||0,vz:s.vz||0,look:lookOf(s)};}),raiders:w.raiders,shots:w.shots,fx:w.fx,loot:w.loot,myShip:own||null,goods:GOODS,fittings:FITTINGS,workshop:{kinds:MOD_KINDS,palette:MOD_PALETTE,emblems:MOD_EMBLEMS},contracts:BOOK,markets:w.markets,prices:PLACES.filter(function(p){return p.kind==='port';}).map(function(p){var prices={};Object.keys(GOODS).forEach(function(g){prices[g]=portPrice(w,p,g);});return {id:p.id,goods:prices};})};}
+function view(w,id){var own=w.ships[id];if(own){own.inHarbour=harbourSafe(own);own.emergency=emergency(w,own);}return {type:'state',schema:1,featureVersion:2,time:w.time,day:Math.floor(w.time/240)+1,weather:w.weather,wind:Math.sin(w.time/240),windKnots:windKnots(w),places:PLACES,jobs:JOBS,shoals:shoals(w.time),ships:Object.keys(w.ships).map(function(k){var s=w.ships[k];return {id:s.id,name:s.name,ownerName:s.ownerName,x:s.x,z:s.z,hull:s.hull,maxHull:s.maxHull,heading:s.heading,level:s.level,anchored:s.anchored,fire:s.fire||0,leak:s.leak||0,lastShot:s.lastShot,lastTarget:s.lastTarget||'',vx:s.vx||0,vz:s.vz||0,look:lookOf(s)};}),raiders:w.raiders,shots:w.shots,fx:w.fx,loot:w.loot,myShip:own||null,goods:GOODS,fittings:FITTINGS,workshop:{kinds:MOD_KINDS,palette:MOD_PALETTE,emblems:MOD_EMBLEMS},contracts:BOOK,markets:w.markets,prices:PLACES.filter(function(p){return p.kind==='port';}).map(function(p){var prices={};Object.keys(GOODS).forEach(function(g){prices[g]=portPrice(w,p,g);});return {id:p.id,goods:prices};})};}
 function result(ctx,w){var b=[];for(var i=0;i<ctx.players.length;i++)b.push({to:[ctx.players[i].id],data:view(w,ctx.players[i].id)});var keys=Object.keys(w.ships);for(var j=0;j<keys.length;j++){var s=w.ships[keys[j]];if(s.delegate&&ctx.players.some(function(p){return p.id===s.delegate;}))b.push({to:[s.delegate],data:{type:'brain_context',ownerId:s.id,time:w.time,ship:s,emergency:emergency(w,s),nearbyEnemies:w.raiders.filter(function(r){return r.hull>0&&distance(s,r)<17;}).map(function(r){return {name:r.name,hull:r.hull};})}});}return {ok:true,sessionState:w,broadcast:b};}
 function near(s,kind){var best=null,d=999;for(var i=0;i<PLACES.length;i++){var p=PLACES[i],n=distance(s,p);if((!kind||p.kind===kind)&&n<d){d=n;best=p;}}return d<7?best:null;}
 function mission(w,s){var m=s.mission;if(!m)return;var port=near(s,'port'),done=
@@ -542,7 +557,8 @@ function tick(w,dt,random){
   if(s.standing.avoidStorm&&s.destination){if(w.weather!=='Fair winds'&&!s.anchored){s.anchored=true;s.sheltered=true;log(s,w.time,'Pip','Holding position until the squall passes.');}else if(w.weather==='Fair winds'&&s.sheltered){s.anchored=false;s.sheltered=false;}}
   if(s.destination&&!s.anchored){var p=place(s.destination);if(!p){var targetId=s.destination.slice(5);p=w.ships[targetId]||w.raiders.filter(function(e){return e.id===targetId&&e.hull>0;})[0];}if(!p){s.destination=null;s.anchored=true;continue;}var d=distance(s,p),helm=s.crew.some(function(c){return c.task==='helm'&&!c.away;});var speed=(s.directive==='explore'?2.1:1.7)*(1+s.level*.03)*(1+s.upgrades.sails*.10)*(1-Math.min(.4,s.leak/200))*(1-s.rigDamage/120),step=helm?Math.min(Math.max(0,d-6.5),dt*speed):0;s.heading=Math.atan2(p.x-s.x,p.z-s.z);if(d>6.5){s.x+=(p.x-s.x)/d*step;s.z+=(p.z-s.z)/d*step;}if(d<=6.65){s.anchored=true;s.destination=null;log(s,w.time,'Pip','Anchor down at '+p.name+'. Mostly on purpose.','travel');if(s.visited.indexOf(p.id)<0){s.visited.push(p.id);s.reputation+=3;xp(s,15);}}}
   s.food=Math.max(0,s.food-dt*.025);s.morale=clamp(s.morale+(s.food>0?.008:-.1)*dt,0,100);
-  for(var j=0;j<s.crew.length;j++){var c=s.crew[j];if(c.away)continue;c.fatigue=clamp(c.fatigue+(c.task==='rest'?-.4*(1+s.upgrades.berths*.25):.028)*dt,0,100);if(c.task==='repair'&&s.timber>=.04*dt&&s.hull<s.maxHull){s.hull=Math.min(s.maxHull,s.hull+dt*.3*(1+c.level*.1)*crewEffect(c));s.timber-=dt*.04;}if(c.task==='cook'&&s.food<85)s.food=Math.min(85,s.food+dt*.035*crewEffect(c));if(c.task==='rest'&&c.injury>0)c.injury=Math.max(0,c.injury-dt*.08*(1+s.upgrades.berths*.4));cxp(c,dt*.07);
+  s.fishing=nearShoal(w,s);
+  for(var j=0;j<s.crew.length;j++){var c=s.crew[j];if(c.away)continue;c.fatigue=clamp(c.fatigue+(c.task==='rest'?-.4*(1+s.upgrades.berths*.25):.028)*dt,0,100);if(c.task==='repair'&&s.timber>=.04*dt&&s.hull<s.maxHull){s.hull=Math.min(s.maxHull,s.hull+dt*.3*(1+c.level*.1)*crewEffect(c));s.timber-=dt*.04;}if(c.task==='cook'&&s.food<85)s.food=Math.min(85,s.food+dt*.035*crewEffect(c));if(c.task==='forage'&&s.food<100)s.food=Math.min(100,s.food+dt*(s.fishing?.09:.025)*crewEffect(c));if(c.task==='rest'&&c.injury>0)c.injury=Math.max(0,c.injury-dt*.08*(1+s.upgrades.berths*.4));cxp(c,dt*.07);
   }
   var repairers=stationCount(s,'repair','');
   if(repairers&&s.timber>0){s.fire=Math.max(0,s.fire-dt*repairers*1.5);s.leak=Math.max(0,s.leak-dt*repairers*(1+s.upgrades.pump*.5));s.rigDamage=Math.max(0,s.rigDamage-dt*repairers*.4);}
@@ -611,10 +627,9 @@ globalThis.game={
   else if(m.type==='away'){
    var p=near(s);if(!s.anchored||!p||p.kind==='port')error='Anchor within 70 m of an island or wreck.';
    else if(s.away||s.boarding)error='The longboat or boarding party is already away.';
-   else if(['timber','treasure','salvage'].indexOf(m.job)<0)error='Unknown away job.';
-   else if(p.kind!=='wreck'&&m.job==='salvage')error='Salvage is available at the Crooked Wreck.';
-   else if(p.kind==='wreck'&&m.job!=='salvage')error='Only salvage can be gathered from this wreck.';
-   else{var ids=Array.isArray(m.crewIds)?m.crewIds:[],party=s.crew.filter(function(c){return ids.indexOf(c.id)>=0&&!c.away&&c.rank>0;});if(party.length!==2||ids.length!==2)error='Choose two different crew, keeping the captain aboard.';else{if(party.some(function(c){return c.injury>40;}))return {ok:false,error:'An injured sailor needs rest or a port doctor before another expedition.'};party.forEach(function(c){c.away=true;});s.away={job:m.job,place:p.id,departAt:w.time,returnAt:w.time+22,choice:null,successChance:expeditionChance(s,ids,m.job),encounterAt:w.time+6,encounter:encounter({job:m.job}),crewIds:party.map(function(c){return c.id;})};log(s,w.time,'Brisk','Longboat away for '+m.job+'. Back in 22 seconds.','travel');}}
+   else if(!Object.prototype.hasOwnProperty.call(JOBS,m.job))error='Unknown away job.';
+   else if((p.jobs||[]).indexOf(m.job)<0)error=p.kind==='wreck'?'Only salvage can be gathered from this wreck.':m.job==='salvage'?'Salvage is available at the Crooked Wreck.':JOBS[m.job].label+' is not possible on '+p.name+'.';
+   else{var ids=Array.isArray(m.crewIds)?m.crewIds:[],party=s.crew.filter(function(c){return ids.indexOf(c.id)>=0&&!c.away&&c.rank>0;});if(party.length!==2||ids.length!==2)error='Choose two different crew, keeping the captain aboard.';else{if(party.some(function(c){return c.injury>40;}))return {ok:false,error:'An injured sailor needs rest or a port doctor before another expedition.'};party.forEach(function(c){c.away=true;});s.away={job:m.job,place:p.id,departAt:w.time,returnAt:w.time+22,choice:null,successChance:expeditionChance(s,ids,m.job),encounterAt:w.time+6,encounter:encounter({job:m.job}),crewIds:party.map(function(c){return c.id;})};log(s,w.time,'Brisk','Longboat away: '+JOBS[m.job].label.toLowerCase()+'. Back in 22 seconds.','travel');}}
   }
   else if(m.type==='expedition-choice'){
    if(!s.away)error='No expedition is underway.';

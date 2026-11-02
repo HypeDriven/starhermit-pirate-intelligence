@@ -6,28 +6,28 @@ import {Cloth} from './cloth.js';
 const cube=new BoxGeometry(1,1,1),ball=new SphereGeometry(1,12,9),pole=new CylinderGeometry(1,1,1,8),torus=new TorusGeometry(1,.10,5,20);
 const palette:any={};
 export function mat(color:string,roughness=.82){if(!palette[color])palette[color]=new MeshStandardMaterial({color,roughness,metalness:['#bda262','#ccad67','#b99b57'].includes(color)?.58:.02});return palette[color];}
-function mesh(g:any,geometry:any,material:any,x=0,y=0,z=0){const m=new Mesh(geometry,material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;}
+export function mesh(g:any,geometry:any,material:any,x=0,y=0,z=0){const m=new Mesh(geometry,material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;}
 export function box(g:any,x:number,y:number,z:number,w:number,h:number,d:number,color:string){const m=mesh(g,cube,mat(color),x,y,z);m.scale.set(w,h,d);return m;}
 export function sphere(g:any,x:number,y:number,z:number,r:number,color:string){const m=mesh(g,ball,mat(color),x,y,z);m.scale.set(r,r,r);return m;}
 const cylinders:any={};
 export function cylinder(g:any,x:number,y:number,z:number,rt:number,rb:number,h:number,color:string,n=10){const ratio=rt/Math.max(.0001,rb),key=ratio.toFixed(3)+':'+n;if(!cylinders[key])cylinders[key]=new CylinderGeometry(ratio,1,1,n);const m=mesh(g,cylinders[key],mat(color),x,y,z);m.scale.set(rb,h,rb);return m;}
-function beam(g:any,a:number[],b:number[],r:number,color:string){const dir=new Vector3(b[0]-a[0],b[1]-a[1],b[2]-a[2]),m=mesh(g,pole,mat(color),(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2);m.scale.set(r,dir.length(),r);m.quaternion.setFromUnitVectors(new Vector3(0,1,0),dir.normalize());return m;}
-function ring(g:any,x:number,y:number,z:number,r:number,color:string){const m=mesh(g,torus,mat(color),x,y,z);m.scale.set(r,r,r);return m;}
-function geometry(vertices:number[],indices:number[],uv?:number[]){const geo=new BufferGeometry();geo.setAttribute('position',new Float32BufferAttribute(vertices,3));geo.setIndex(indices);if(uv)geo.setAttribute('uv',new Float32BufferAttribute(uv,2));geo.computeVertexNormals();return geo;}
+export function beam(g:any,a:number[],b:number[],r:number,color:string){const dir=new Vector3(b[0]-a[0],b[1]-a[1],b[2]-a[2]),m=mesh(g,pole,mat(color),(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2);m.scale.set(r,dir.length(),r);m.quaternion.setFromUnitVectors(new Vector3(0,1,0),dir.normalize());return m;}
+export function ring(g:any,x:number,y:number,z:number,r:number,color:string){const m=mesh(g,torus,mat(color),x,y,z);m.scale.set(r,r,r);return m;}
+export function geometry(vertices:number[],indices:number[],uv?:number[]){const geo=new BufferGeometry();geo.setAttribute('position',new Float32BufferAttribute(vertices,3));geo.setIndex(indices);if(uv)geo.setAttribute('uv',new Float32BufferAttribute(uv,2));geo.computeVertexNormals();return geo;}
 export function batchStatic(g:any){
  g.updateMatrixWorld(true);const inverse=new Matrix4().copy(g.matrixWorld).invert(),batches:any[]=[];
  g.traverse((child:any)=>{if(!(child instanceof Mesh)||child instanceof InstancedMesh||child.userData.animated)return;let b=batches.find(b=>b.geo===child.geometry&&b.mat===child.material);if(!b){b={geo:child.geometry,mat:child.material,items:[]};batches.push(b);}b.items.push(child);});
  for(const b of batches){if(b.items.length<2)continue;const inst=new InstancedMesh(b.geo,b.mat,b.items.length);inst.castShadow=true;inst.receiveShadow=true;for(let i=0;i<b.items.length;i++){inst.setMatrixAt(i,new Matrix4().multiplyMatrices(inverse,b.items[i].matrixWorld));b.items[i].parent.remove(b.items[i]);}inst.instanceMatrix.needsUpdate=true;g.add(inst);}
 }
-function barrel(g:any,x:number,y:number,z:number,r=.29){cylinder(g,x,y+.32,z,r*.85,r,.64,'#86603c');cylinder(g,x,y+.32,z,r,r*.85,.34,'#a97b48');for(const dy of [.08,.52]){const band=ring(g,x,y+dy,z,r*.98,'#354442');band.rotation.x=Math.PI/2;}cylinder(g,x,y+.65,z,r*.85,r*.85,.025,'#bd955e');box(g,x,y+.67,z,r*1.4,.015,.025,'#715337');}
-function crate(g:any,x:number,y:number,z:number,size=.6){box(g,x,y+size/2,z,size,size,size,'#b48b55');for(const dx of [-.25,.25])box(g,x+dx*size/.6,y+size/2,z+size*.51,.07,size+.04,.025,'#ddba78');for(const dy of [.08,size-.08])box(g,x,y+dy,z+size*.52,size+.02,.07,.03,'#ddba78');const brace=box(g,x,y+size/2,z+size*.54,.065,size*1.2,.03,'#e4c68c');brace.rotation.z=.65;}
-function lantern(g:any,x:number,y:number,z:number){box(g,x,y,z,.15,.26,.15,'#233e40');const glow=mesh(g,ball,new MeshStandardMaterial({color:'#ffd595',emissive:'#ffc36e',emissiveIntensity:1.8}),x,y,z);glow.scale.set(.066,.10,.066);for(const dy of [-.15,.15])box(g,x,y+dy,z,.19,.035,.19,'#bda262');ring(g,x,y+.23,z,.065,'#bda262');}
+export function barrel(g:any,x:number,y:number,z:number,r=.29){cylinder(g,x,y+.32,z,r*.85,r,.64,'#86603c');cylinder(g,x,y+.32,z,r,r*.85,.34,'#a97b48');for(const dy of [.08,.52]){const band=ring(g,x,y+dy,z,r*.98,'#354442');band.rotation.x=Math.PI/2;}cylinder(g,x,y+.65,z,r*.85,r*.85,.025,'#bd955e');box(g,x,y+.67,z,r*1.4,.015,.025,'#715337');}
+export function crate(g:any,x:number,y:number,z:number,size=.6){box(g,x,y+size/2,z,size,size,size,'#b48b55');for(const dx of [-.25,.25])box(g,x+dx*size/.6,y+size/2,z+size*.51,.07,size+.04,.025,'#ddba78');for(const dy of [.08,size-.08])box(g,x,y+dy,z+size*.52,size+.02,.07,.03,'#ddba78');const brace=box(g,x,y+size/2,z+size*.54,.065,size*1.2,.03,'#e4c68c');brace.rotation.z=.65;}
+export function lantern(g:any,x:number,y:number,z:number){box(g,x,y,z,.15,.26,.15,'#233e40');const glow=mesh(g,ball,new MeshStandardMaterial({color:'#ffd595',emissive:'#ffc36e',emissiveIntensity:1.8}),x,y,z);glow.scale.set(.066,.10,.066);for(const dy of [-.15,.15])box(g,x,y+dy,z,.19,.035,.19,'#bda262');ring(g,x,y+.23,z,.065,'#bda262');}
 function cannon(g:any,x:number,y:number,z:number,side:number){box(g,x,y+.08,z,.4,.16,.47,'#a86d46');for(const dz of [-.16,.16])for(const dx of [-.18,.18]){const wheel=cylinder(g,x+dx,y,z+dz,.075,.075,.055,'#382f27');wheel.rotation.z=Math.PI/2;}
  const barrel=cylinder(g,x+side*.15,y+.23,z,.09,.14,.7,'#263b3b',12);barrel.rotation.z=-side*Math.PI/2;const mouth=cylinder(g,x+side*.52,y+.23,z,.067,.067,.012,'#111f24');mouth.rotation.z=Math.PI/2;ring(g,x-side*.22,y+.23,z,.10,'#b99b57').rotation.y=Math.PI/2;
 }
 const widths=[[-4.05,.66],[-3.6,1.12],[-2.7,1.53],[-1.5,1.64],[0,1.65],[1.6,1.5],[2.8,1.12],[3.8,.48],[4.35,.025]];
 function widthAt(z:number){for(let i=1;i<widths.length;i++)if(z<=widths[i][0]){const a=widths[i-1],b=widths[i],t=(z-a[0])/(b[0]-a[0]);return a[1]+(b[1]-a[1])*t;}return .025;}
-function boatHull(g:any,enemy=false){const belts:any[]=[];
+export function boatHull(g:any,enemy=false){const belts:any[]=[];
  const colors=enemy?['#272e30','#42352d','#775039','#9b6d43','#493f31']:['#203f3d','#315450','#6e4a31','#9f7248','#4b382a'];
  for(let belt=0;belt<5;belt++){
   const v:number[]=[],ind:number[]=[];
@@ -70,7 +70,7 @@ const ACCENT=`let accent=vec3f(uniforms.ar,uniforms.ag,uniforms.ab); let mm=modM
 function canvas(g:any,w:number,h:number,z:number,y:number,color:string){const v:number[]=[],ind:number[]=[],uv:number[]=[];const nx=9,ny=6;
  for(let j=0;j<=ny;j++)for(let i=0;i<=nx;i++){const u=i/nx,t=j/ny,edge=Math.sin(t*Math.PI);v.push((u-.5)*w*(1-.13*t),y-t*h+.12*Math.cos(u*Math.PI*2)*t,z+Math.sin(u*Math.PI)*edge*.42);uv.push(u,t);}
  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const a=j*(nx+1)+i;ind.push(a,a+nx+1,a+1,a+1,a+nx+1,a+nx+2);}
- const material=new MeshStandardMaterial({color,roughness:.94,side:DoubleSide,hooks:{uniforms:{furl:{value:1},top:{value:y},...modUniforms()},vertex:`fn vertex(v: Vertex) -> Vertex {var o=v;o.position.y=uniforms.top-(uniforms.top-v.position.y)*uniforms.furl;o.position.z=v.position.z*uniforms.furl;return o;}`,surface:PATTERN_WGSL+`
+ const material=new MeshStandardMaterial({color,roughness:.94,side:DoubleSide,hooks:{uniforms:{furl:{value:1},top:{value:y},mast:{value:z},...modUniforms()},vertex:`fn vertex(v: Vertex) -> Vertex {var o=v;let f=uniforms.furl;o.position.y=uniforms.top-(uniforms.top-v.position.y)*f;o.position.z=uniforms.mast+(v.position.z-uniforms.mast)*f;o.position.x=v.position.x*(0.86+0.14*f);return o;}`,surface:PATTERN_WGSL+`
 fn surface(s: Surface) -> Surface { var o=s; ${ACCENT} let seam=1.0-smoothstep(0.018,0.034,abs(fract(s.uv.x*7.0)-0.5)); let weave=sin(s.uv.x*420.0)*sin(s.uv.y*350.0)*0.025; o.base_color=vec4f(mix(s.base_color.rgb,accent,mm)*(0.94+weave-seam*0.12),s.base_color.a); return o; }`}});
  const cloth=mesh(g,geometry(v,ind,uv),material);cloth.userData.animated=true;cloth.castShadow=false;
  // Head lashed to the yard, both clews sheeted home; the rest is free canvas.
@@ -143,49 +143,42 @@ export function makeLongboat(){
 const leafV:number[]=[],leafI:number[]=[];
 for(let i=0;i<=8;i++){const t=i/8,w=Math.sin(t*Math.PI)*.22;leafV.push(-w,-t*t*.24,t,w,-t*t*.24,t);if(i<8){const a=i*2;leafI.push(a,a+2,a+1,a+1,a+2,a+3);}}
 const leafGeo=geometry(leafV,leafI);
-function palm(g:any,x:number,z:number,h:number,seed:number){const p=new Group();p.position.set(x,.84,z);g.add(p);const bend=Math.sin(seed)*.4;for(let i=0;i<5;i++){const t=i/5;beam(p,[bend*t*t,h*t,0],[bend*(t+.2)*(t+.2),h*(t+.2),0],.10-t*.035,i%2?'#aa8b59':'#927443');}for(let i=0;i<7;i++){const f=mesh(p,leafGeo,new MeshStandardMaterial({color:i%2?'#527e4c':'#6c9854',roughness:1,side:DoubleSide}),bend,h,0);f.scale.set(1.8,1.7,1.9);f.rotation.y=i*Math.PI*2/7+seed;f.rotation.x=-.10+(i%3)*.12;}for(let i=0;i<3;i++)sphere(p,bend+Math.sin(i)*.12,h-.10,Math.cos(i)*.12,.11,'#72563a');}
-function pine(g:any,x:number,z:number,h:number){cylinder(g,x,h*.4,z,.12,.17,h*.8,'#876744');for(let i=0;i<4;i++){const cone=cylinder(g,x,h*(.45+i*.16),z,0,(.95-i*.16)*h/3,h*.6,i%2?'#477060':'#365c53',8);cone.rotation.y=i*.5;}}
-function house(g:any,x:number,z:number,w:number,roofColor:string,wallColor:string){
+export function palm(g:any,x:number,z:number,h:number,seed:number){const p=new Group();p.position.set(x,.84,z);g.add(p);const bend=Math.sin(seed)*.4;for(let i=0;i<5;i++){const t=i/5;beam(p,[bend*t*t,h*t,0],[bend*(t+.2)*(t+.2),h*(t+.2),0],.10-t*.035,i%2?'#aa8b59':'#927443');}for(let i=0;i<7;i++){const f=mesh(p,leafGeo,new MeshStandardMaterial({color:i%2?'#527e4c':'#6c9854',roughness:1,side:DoubleSide}),bend,h,0);f.scale.set(1.8,1.7,1.9);f.rotation.y=i*Math.PI*2/7+seed;f.rotation.x=-.10+(i%3)*.12;}for(let i=0;i<3;i++)sphere(p,bend+Math.sin(i)*.12,h-.10,Math.cos(i)*.12,.11,'#72563a');}
+export function pine(g:any,x:number,z:number,h:number){cylinder(g,x,h*.4,z,.12,.17,h*.8,'#876744');for(let i=0;i<4;i++){const cone=cylinder(g,x,h*(.45+i*.16),z,0,(.95-i*.16)*h/3,h*.6,i%2?'#477060':'#365c53',8);cone.rotation.y=i*.5;}}
+export function house(g:any,x:number,z:number,w:number,roofColor:string,wallColor:string){
  const h=1.35;box(g,x,1.0+h/2,z,w,h,1.35,wallColor);for(const side of [-1,1]){const roof=box(g,x+side*w*.28,2.5,z,w*.68,.12,1.65,roofColor);roof.rotation.z=-side*.52;for(let i=0;i<6;i++){const tile=box(g,x+side*w*.28,2.58,z-.72+i*.28,w*.69,.026,.025,'#b97852');tile.rotation.z=-side*.52;}}
  box(g,x,1.5,z+.69,.34,.95,.035,'#4b5142');box(g,x,1.53,z+.72,.02,.87,.02,'#a78b59');for(const dx of [-w*.31,w*.31]){box(g,x+dx,1.94,z+.7,.27,.30,.04,'#294b4a');box(g,x+dx,1.94,z+.73,.025,.32,.02,'#e2c68f');box(g,x+dx,1.94,z+.73,.29,.025,.02,'#e2c68f');}box(g,x,.93,z+.9,w*.7,.12,.45,'#baae86');
  const awning=box(g,x,2.11,z+1,.8,.06,.6,'#c4b78c');awning.rotation.x=.15;for(const side of [-1,1])beam(g,[x+side*.42,.95,z+1.25],[x+side*.42,2.05,z+1.25],.025,'#8b7351');
 }
-function islandTerrain(g:any,index:number){
- const rings=[[0,.92],[1.7,1.04],[3.5,.91],[4.25,.60],[4.85,.18],[5.35,-.65]],n=32;
- for(let j=1;j<rings.length;j++){
-  const v:number[]=[],ind:number[]=[],color=j<3?(index===6?'#a4b5a1':index===7?'#7b8060':'#83a36b'):j===3?'#c9bb82':j===4?'#e0ce98':'#b4b68b';
-  for(let i=0;i<=n;i++){const a=i/n*Math.PI*2,wiggle=1+Math.sin(a*3+index*2)*.07+Math.cos(a*5-index)*.04;for(const ring of [rings[j-1],rings[j]])v.push(Math.cos(a)*ring[0]*wiggle,ring[1]+(j<3?Math.sin(a*4+index)*.06:0),Math.sin(a)*ring[0]*wiggle*.88);}
-  for(let i=0;i<n;i++){const a=i*2;ind.push(a,a+1,a+2,a+1,a+3,a+2);}mesh(g,geometry(v,ind),new MeshStandardMaterial({color,roughness:1,side:DoubleSide}));
- }
-}
-const islandGroups:any[]=[];
-export function buildIslands(places:any[]){
- for(let i=0;i<places.length;i++){
-  const p=places[i],g=new Group();g.position.set(p.x*METRES,0,p.z*METRES);g.scale.set(3,3,3);scene.add(g);islandGroups.push(g);
-  if(p.kind==='wreck'){const wreck=new Group();wreck.rotation.z=.24;wreck.scale.set(.9,.9,.9);boatHull(wreck,true);beam(wreck,[0,1,0],[.4,3.1,0],.09,'#705338');for(let k=0;k<6;k++)box(wreck,Math.sin(k*3)*1.8,-.12,Math.cos(k*4)*2.6,.6,.1,1,'#aa8557');g.add(wreck);batchStatic(g);continue;}
-  islandTerrain(g,i);
-  for(let k=0;k<6;k++){const a=k*2.39+i;const rock=sphere(g,Math.sin(a)*3.8,.65,Math.cos(a)*3.2,.45+(k%2)*.25,i===7?'#686b61':'#929d87');rock.scale.y=.65;}
-  if(p.kind==='port'){
-   const roofs=i===6?['#6a7c78','#536f70']:i===5?['#8b5a43','#93674b']:['#a7684b','#b87955'];house(g,-1.45,.2,1.65,roofs[0],'#e5d5ae');house(g,1.2,-1.0,1.75,roofs[1],'#d0bd95');house(g,-1.2,-2.2,1.35,roofs[0],'#c8b18c');
-   for(let j=0;j<18;j++)box(g,0,.45,3.5+j*.24,1.5,.11,.22,j%3?'#a08255':'#bb9864');for(const side of [-1,1])for(const z of [3.5,5,7.45]){cylinder(g,side*.66,-.05,z,.08,.10,1.7,'#695b43');cylinder(g,side*.66,.64,z,.10,.10,.12,'#ae9364');}for(const x of [-.5,.5])beam(g,[x,.26,3.4],[x,.26,7.7],.08,'#79633e');
-   crate(g,.25,.52,5.3,.35);barrel(g,-.3,.5,6.3,.18);lantern(g,.68,1.2,7.2);
-   const lx=2.5,lz=-2.2;cylinder(g,lx,2.8,lz,.44,.72,4.0,'#e6dcc0',14);cylinder(g,lx,4.9,lz,.72,.72,.18,'#96754a',14);cylinder(g,lx,5.23,lz,.49,.49,.54,'#405d58',10);cylinder(g,lx,5.65,lz,0,.75,.45,'#866048',10);sphere(g,lx,5.23,lz,.25,'#ffd18c');
-   if(i===5){beam(g,[-2.8,1,-.6],[-2.8,4,-.6],.10,'#775c3b');beam(g,[-2.8,4,-.6],[-.5,3.8,-.6],.08,'#775c3b');beam(g,[-.5,3.8,-.6],[-.5,1.7,-.6],.015,'#a89d75');}
-   if(i===6){pine(g,-3,1,3);pine(g,-2.5,-2,2.8);}else palm(g,-3,1.6,2.8,i);
-  }else{
-   for(let k=0;k<6;k++){const a=k*2.4+i,r=1.1+(k%3)*.6;if(i===3&&k<3)pine(g,Math.sin(a)*r,Math.cos(a)*r,2.7+(k%2)*.5);else palm(g,Math.sin(a)*r,Math.cos(a)*r,2.5+(k%3)*.4,k+i);}
-   for(let k=0;k<8;k++){const bush=sphere(g,Math.sin(k*5+i)*2.8,1.0,Math.cos(k*4+i)*2.3,.35,k%2?'#668853':'#a1b46a');bush.scale.y=.55;}
-   if(i===3){const skull=sphere(g,.1,1.4,-.8,.85,'#d7d0af');skull.scale.z=.65;for(const x of [-.3,.3])sphere(g,x,1.55,-.24,.17,'#465b52');box(g,.1,1.05,-.17,.6,.25,.12,'#d5c9a7');}else{crate(g,1.7,.95,1.3,.5);barrel(g,1.0,.95,1.5,.19);}
-  }
-  batchStatic(g);
- }
-}
 let oceanMaterial:any=null;const birds:any[]=[];const particles:any[]=[];
+const SHOALS:any[]=Array.from({length:8},()=>new Vector4(0,0,0,0));
+/** Fishing grounds from the authority (units): a dark boil of fish on the surface. */
+export function setShoals(list:{x:number,z:number,r:number}[]){for(let k=0;k<8;k++){const q=list?.[k];SHOALS[k].set(q?q.x*METRES:0,q?q.z*METRES:0,q?q.r*METRES:0,0);}if(oceanMaterial)oceanMaterial.hooks.uniforms.shoals.value=SHOALS;}
 const WAKES:any[]=Array.from({length:8},()=>new Vector4(0,0,0,0));
-/** Up to eight wakes: world metres x/z, heading, and way as 0..1. */
-export function setWakes(list:{x:number,z:number,heading:number,way:number}[]){for(let k=0;k<8;k++){const w=list[k];WAKES[k].set(w?w.x:0,w?w.z:0,w?w.heading:0,w?Math.max(0,Math.min(1,w.way)):0);}if(oceanMaterial)oceanMaterial.hooks.uniforms.wakes.value=WAKES;}
+// Wake trails are simulated, not drawn from the ship's current heading: the
+// stern drops a crumb into the water every few metres, and each crumb ages
+// where it fell. The shader joins consecutive crumbs into segments, widens the
+// turbulent centre with age and pushes the Kelvin arms outward at about
+// 19.5° of the distance run, so a turn leaves a curved wake that slowly fades.
+const CRUMBS=96,CRUMB:any[]=Array.from({length:CRUMBS},()=>new Vector4(0,0,0,0)),TRAIL_LIFE=8,CRUMB_GAP=7,STERN=11;
+const trails=new Map<string,{id:string,pts:{x:number,z:number,t:number,way:number}[],seen:number}>();
+/** ships: up to eight moving hulls, world metres, heading and way 0..1, nearest first. */
+export function setWakes(list:{id:string,x:number,z:number,heading:number,way:number}[],time:number){
+ for(let k=0;k<8;k++){const w=list[k];WAKES[k].set(w?w.x:0,w?w.z:0,w?w.heading:0,w?Math.max(0,Math.min(1,w.way)):0);}
+ for(const w of list){const sx=w.x-Math.sin(w.heading)*STERN,sz=w.z-Math.cos(w.heading)*STERN,way=Math.max(0,Math.min(1,w.way));
+  let tr=trails.get(w.id);if(!tr){tr={id:w.id,pts:[],seen:time};trails.set(w.id,tr);}tr.seen=time;
+  const head={x:sx,z:sz,t:time,way};const last=tr.pts[1];
+  if(tr.pts.length<2||Math.hypot(sx-last.x,sz-last.z)>CRUMB_GAP){if(tr.pts.length&&Math.hypot(sx-tr.pts[0].x,sz-tr.pts[0].z)>CRUMB_GAP*4)tr.pts.length=0;tr.pts.unshift(head);}
+  tr.pts[0]=head;}
+ // Crumbs keep ageing after a ship stops or leaves view; old ones sink away.
+ const order:any[]=[];for(const [id,tr] of trails){while(tr.pts.length&&time-tr.pts[tr.pts.length-1].t>TRAIL_LIFE)tr.pts.pop();if(!tr.pts.length){trails.delete(id);continue;}if(time-tr.seen>0)tr.pts[0].way*=.9;order.push(tr);}
+ const rank=new Map(list.map((w,i)=>[w.id,i]));order.sort((a,b)=>(rank.get(a.id)??99)-(rank.get(b.id)??99));
+ let n=0;for(const tr of order){if(n>=CRUMBS-2)break;for(const p of tr.pts){if(n>=CRUMBS-1)break;CRUMB[n++].set(p.x,p.z,time-p.t,Math.max(.001,p.way));}CRUMB[n++].set(0,0,0,0);}
+ for(;n<CRUMBS;n++)CRUMB[n].set(0,0,0,0);
+ if(oceanMaterial){oceanMaterial.hooks.uniforms.wakes.value=WAKES;oceanMaterial.hooks.uniforms.crumbs.value=CRUMB;}
+}
 export function createOcean(places:any[]){
- oceanMaterial=new MeshStandardMaterial({color:'#187d8e',roughness:.28,metalness:.13,hooks:{uniforms:{time:{value:0},islands:{value:places.map(p=>new Vector4(p.x*METRES,p.z*METRES,p.kind==='wreck'?6:16,0))},wakes:{value:WAKES}},vertex:`fn vertex(v: Vertex) -> Vertex { var o=v; let t=uniforms.time; let x=v.position.x; let y=v.position.y; o.position.z=sin(x*0.035+t*0.7)*0.32+sin(y*0.042-t*0.55)*0.22; o.normal=normalize(vec3f(-cos(x*0.035+t*0.7)*0.0112,-cos(y*0.042-t*0.55)*0.00924,1.0)); return o; }`,surface:`fn surface(s: Surface) -> Surface { var o=s; var d=10000.0; for(var i=0;i<9;i++){ d=min(d,length(s.world.xz-uniforms.islands[i].xy)-uniforms.islands[i].z); } let shoal=1.0-smoothstep(0.0,30.0,d); let wave=sin(s.world.x*0.23+s.world.z*0.17+uniforms.time*0.8+sin(s.world.z*0.08)*2.0); let lace=pow(max(0.0,wave),28.0)*(0.5+0.5*sin(s.world.x*0.061-s.world.z*0.047)); let shore=(1.0-smoothstep(0.0,4.5,abs(d-2.0)))*(0.35+0.65*max(0.0,sin(d*1.8-uniforms.time*1.4))); let base=mix(vec3f(0.019,0.16,0.22),vec3f(0.08,0.48,0.43),shoal); var foam=0.0; for(var k=0;k<8;k++){ let w=uniforms.wakes[k]; if(w.w<0.01){continue;} let rel=s.world.xz-w.xy; let fw=vec2f(sin(w.z),cos(w.z)); let side=vec2f(cos(w.z),-sin(w.z)); let along=dot(rel,fw); let across=abs(dot(rel,side)); let behind=-along-11.0; let n=0.55+0.45*sin(s.world.x*0.9+uniforms.time*3.0)*sin(s.world.z*0.8-uniforms.time*2.3); let trail=(1.0-smoothstep(2.5+behind*0.07,5.0+behind*0.12,across))*step(0.0,behind)*(1.0-smoothstep(10.0,40.0+80.0*w.w,behind)); let arm=(1.0-smoothstep(0.0,1.6+behind*0.03,abs(across-(4.0+behind*0.36))))*step(0.0,behind)*(1.0-smoothstep(15.0,30.0+60.0*w.w,behind)); let bow=(1.0-smoothstep(4.2,6.5,across))*smoothstep(-13.0,-6.0,-abs(along))*step(-13.0,along)*(1.0-smoothstep(0.0,3.0,max(0.0,across-4.5))); foam=max(foam,w.w*(trail*0.85+arm*0.55+bow*0.5)*n); } o.base_color=vec4f(mix(base,vec3f(0.64,0.82,0.73),min(0.85,shore*0.65+lace*0.045+foam*0.8)),1.0); o.roughness=0.28+shoal*0.3; return o; }`}});
+ oceanMaterial=new MeshStandardMaterial({color:'#187d8e',roughness:.28,metalness:.13,hooks:{uniforms:{time:{value:0},islands:{value:places.map(p=>new Vector4(p.x*METRES,p.z*METRES,p.kind==='wreck'?6:p.kind==='island'?32:16,0))},wakes:{value:WAKES},crumbs:{value:CRUMB},shoals:{value:SHOALS}},vertex:`fn vertex(v: Vertex) -> Vertex { var o=v; let t=uniforms.time; let x=v.position.x; let y=v.position.y; o.position.z=sin(x*0.035+t*0.7)*0.32+sin(y*0.042-t*0.55)*0.22; o.normal=normalize(vec3f(-cos(x*0.035+t*0.7)*0.0112,-cos(y*0.042-t*0.55)*0.00924,1.0)); return o; }`,surface:`fn surface(s: Surface) -> Surface { var o=s; var d=10000.0; for(var i=0;i<9;i++){ d=min(d,length(s.world.xz-uniforms.islands[i].xy)-uniforms.islands[i].z); } let shoal=1.0-smoothstep(0.0,30.0,d); let wave=sin(s.world.x*0.23+s.world.z*0.17+uniforms.time*0.8+sin(s.world.z*0.08)*2.0); let lace=pow(max(0.0,wave),28.0)*(0.5+0.5*sin(s.world.x*0.061-s.world.z*0.047)); let shore=(1.0-smoothstep(0.0,4.5,abs(d-2.0)))*(0.35+0.65*max(0.0,sin(d*1.8-uniforms.time*1.4))); var base=mix(vec3f(0.019,0.16,0.22),vec3f(0.08,0.48,0.43),shoal); var glint=0.0; for(var q=0;q<8;q++){ let f=uniforms.shoals[q]; if(f.z<=0.0){continue;} let fd=length(s.world.xz-f.xy); if(fd>f.z*1.3){continue;} let k=1.0-smoothstep(f.z*0.35,f.z*1.3,fd); let swirl=sin(s.world.x*0.7+uniforms.time*4.0+sin(s.world.z*0.5+uniforms.time*2.0)*2.0)*sin(s.world.z*0.9-uniforms.time*3.3); base=mix(base,base*0.62+vec3f(0.0,0.03,0.04),k*0.6); glint=max(glint,k*pow(max(0.0,swirl),24.0)*0.6); } var foam=0.0; let n=0.55+0.45*sin(s.world.x*0.9+uniforms.time*3.0)*sin(s.world.z*0.8-uniforms.time*2.3); for(var k=0;k<8;k++){ let w=uniforms.wakes[k]; if(w.w<0.01){continue;} let rel=s.world.xz-w.xy; let fw=vec2f(sin(w.z),cos(w.z)); let side=vec2f(cos(w.z),-sin(w.z)); let along=dot(rel,fw); let across=abs(dot(rel,side)); let bow=(1.0-smoothstep(4.2,6.5,across))*smoothstep(-13.0,-6.0,-abs(along))*step(-13.0,along)*(1.0-smoothstep(0.0,3.0,max(0.0,across-4.5))); foam=max(foam,w.w*bow*0.5*n); } for(var k=0;k<95;k++){ let a=uniforms.crumbs[k]; let b=uniforms.crumbs[k+1]; if(a.w<=0.0&&b.w<=0.0){break;} if(a.w<=0.0||b.w<=0.0){continue;} let ba=b.xy-a.xy; let pa=s.world.xz-a.xy; let reach=4.0+6.5*max(a.w,b.w)*b.z+3.0; if(dot(pa,pa)>(length(ba)+reach)*(length(ba)+reach)){continue;} let hr=dot(pa,ba)/max(dot(ba,ba),0.0001); let h=clamp(hr,0.0,1.0); let dist=length(pa-ba*h); let age=mix(a.z,b.z,h); let way=mix(a.w,b.w,h); let core=2.2+age*0.55; let trail=(1.0-smoothstep(core*0.35,core,dist))*(1.0-smoothstep(1.0,7.5,age))*(0.7+0.3*n); let spread=3.4+4.2*way*age; let flank=smoothstep(-0.08,0.02,hr)*(1.0-smoothstep(0.98,1.08,hr)); let arm=(1.0-smoothstep(0.0,0.55+age*0.12,abs(dist-spread)))*(1.0-smoothstep(0.8,4.5,age))*smoothstep(0.1,0.6,age)*flank; foam=max(foam,way*(trail*0.6+arm*0.38)*n); } o.base_color=vec4f(mix(base,vec3f(0.64,0.82,0.73),min(0.85,shore*0.65+lace*0.045+foam*0.8+glint*0.7)),1.0); o.roughness=0.28+shoal*0.3; return o; }`}});
  const sea=mesh(scene,new PlaneGeometry(2400,2400,96,96),oceanMaterial,0,-2.1,0);sea.rotation.x=-Math.PI/2;sea.castShadow=false;sea.receiveShadow=true;
  const wingGeo=geometry([0,0,0,.6,.10,.06,1.1,-.08,-.09, .65,-.01,.15],[0,1,3,1,2,3]);
  for(let i=0;i<9;i++){const b=new Group();for(const side of [-1,1]){const wing=mesh(b,wingGeo,new MeshStandardMaterial({color:'#e9e5d0',side:DoubleSide}));wing.scale.x=side;}b.position.set(0,0,0);b.scale.set(1.3,1.3,1.3);scene.add(b);birds.push(b);}
@@ -206,7 +199,7 @@ export function animateShip(obj:any,time:number,moving:boolean,mine:boolean,ligh
  // Apparent wind in the ship's frame: true wind minus the ship's own way.
  const a=(env.wind||0)-(env.heading||0),k=(env.knots||12)/12,speed=env.speed||0;
  const wx=Math.sin(a)*k*3.2,wz=Math.cos(a)*k*3.2-speed*1.6,gust=env.storm?1:.55;
- if(!env.furled)for(const s of obj.sails)s.userData.cloth.step(env.dt||1/60,time,wx*.6,wz*.9+.9,gust);
+ if((obj.furl??1)>.85)for(const s of obj.sails)s.userData.cloth.step(env.dt||1/60,time,wx*.6,wz*.9+.9,gust);
  for(const f of obj.flags)f.userData.cloth.step(env.dt||1/60,time,wx*2.2,wz*2.2,gust);
 }
 

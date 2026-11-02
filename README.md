@@ -4,7 +4,7 @@ A playable pirate crew simulation, built on the **actual StarHermit engine 1.30.
 
 ## Play
 
-The hosted game opens in local practice. Sign in to create or join a persistent sea. Select an island or port and **Set course**. **E / Q** or the wheel switches between ship and sea views. **C** opens crew orders. **F** fires at the selected target. **H** takes or leaves the manual helm; hold **W/A/D** or arrow keys to sail and steer. The left rail becomes a three-deck selector aboard ship. Touch controls are available through the on-screen buttons; landscape is recommended.
+The hosted game opens in local practice. Sign in to create or join a persistent sea. Select an island or port and **Set course**. **E / Q** or the wheel switches between ship and sea views; drag with the middle mouse button to look around the ship (middle click recentres). **C** opens crew orders. **F** fires at the selected target. **H** takes or leaves the manual helm; hold **W/A/D** or arrow keys to sail and steer. The left rail becomes a three-deck selector aboard ship. Touch controls are available through the on-screen buttons; landscape is recommended.
 
 An easy first voyage:
 
@@ -24,7 +24,8 @@ Practice state is saved on the device every ten seconds. Refresh resumes the sam
 - Nine destinations, four shared port markets, three cargo classes, stock replenishment, scarcity prices, one-time contracts and daily deliveries. Harbour guns protect anchored port ships.
 - Manual helm with wind, touch/keyboard controls and reef stops. Battles with flying cannonballs you can dodge, separate port (Z) and starboard (X) batteries, raking fire, shot racks the gunners stock, raiders that manoeuvre and telegraph their volleys, floating loot, three ammunition types and risky boarding of weakened raiders.
 - Fire, flooding, damaged rigging, expedition injuries, rest and medical care; six three-level ship fittings.
-- Safe/risky island and wreck encounters with party skill and bond bonuses; automatic safe return when no choice is made.
+- Bigger islands with their own work ashore (timber, treasure, hunting, herbs, saltpetre, ruins) and safe/risky encounters with party skill and bond bonuses; automatic safe return when no choice is made.
+- Whales, dolphin pods that ride your bow, and drifting fish shoals where foragers catch triple provisions.
 - A welcome guide, sea atlas, captain’s log, exploration milestones, renown, authored crew barks, optional sea ambience and procedural combat/reward sounds.
 - Persistent StarHermit rooms, device practice saves, migration of older snapshots, private crew views, shared authority rules and a scene using instanced repeated geometry.
 
@@ -133,7 +134,7 @@ Pirate Intelligence’s first-party game code, assets, companion and documentati
 
 The exact, unmodified `LICENSE-engine` text from the official StarHermit 1.20.0 release is included as [`LICENSE`](LICENSE), preserving its required notice and additional permission. It is included in both the source download and packaged game. Third-party dependencies and externally downloaded model weights retain their respective licenses.
 
-At an island, wait for the anchor, open **Longboat** (or **Go ashore · timber**), leave **Chop timber** and Peg/Pip selected, then **Lower the longboat**. The party rows ashore and returns with timber automatically; the encounter offers an optional risky haul. **Watch the shore party** follows their work. Wrecks offer salvage instead.
+At an island, wait for the anchor, open **Longboat** (or **Go ashore · timber**), pick one of that island's jobs and two sailors (the right specialist helps), then **Lower the longboat**. The party rows ashore, works at the labelled site and returns with the haul automatically; the encounter offers an optional risky haul. **Watch the shore party** follows their work. Wrecks offer salvage instead.
 
 **Options → StarHermit engine options** opens runtime graphics and frame-rate settings; **F1** opens it directly. Sound and browser brain CPU controls are also in Options, with **Low load** selected by default. The clock, wind, compass and minimap stay visible during sailing. Aboard ship, select a deck in the left rail, or cycle the deck button on phones.
 
