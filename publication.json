@@ -22,7 +22,7 @@
       "pinnedCommitSha": null,
       "deployedCommitSha": null,
       "deployError": null,
-      "deployedAt": "2026-11-01T16:39:04.460414+00:00",
+      "deployedAt": "2026-11-02T09:22:14.522416+00:00",
       "externalLaunchUrl": null,
       "engineVersion": "1.32.0",
       "deployWarning": null
@@ -42,12 +42,12 @@
     "links": [],
     "isDisabled": false
   },
-  "publishedAt": "2026-11-01T16:39:04.460414+00:00",
-  "sourceCommit": "c0be64c315743da57aae2657bcc220183339d6a2",
-  "bytesReceived": 11745279,
-  "archiveSha256": "ab203761e1186420a3ce095f66d3ca4ee03128ab6c703d66cc417e8a9f783da6",
+  "publishedAt": "2026-11-02T09:22:14.522416+00:00",
+  "sourceCommit": "b94dc18b46867bac74241819a04a7c2fc065138d",
+  "bytesReceived": 11899290,
+  "archiveSha256": "96984e9c90a59579eb3137099abc2608f2b94c3a4f7dd4144b8b0b6ec83a8e6d",
   "result": {
-    "bytesReceived": 11745279,
+    "bytesReceived": 11899290,
     "clientPublished": true,
     "deployWarning": null,
     "engineVersion": "1.32.0",
