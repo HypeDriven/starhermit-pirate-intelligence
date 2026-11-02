@@ -1,7 +1,7 @@
 import {context,loadClip,play,stream} from 'starhermit:audio';
 import {musicMood,SCORE_TITLES} from './audio-events.js';
 
-const EVENTS=['cannon-fire','hull-impact','anchor-chain','sail-hoist','rowing','timber-chop','coins','ship-bell','repair-hammer','cutlass','ocean','storm','gulls','creaking-deck'];
+const EVENTS=['cannon-fire','hull-impact','anchor-chain','sail-hoist','rowing','timber-chop','coins','ship-bell','repair-hammer','cutlass','ocean','storm','gulls','creaking-deck','shot-splash','shot-whistle','guns-run-out','ship-sinking'];
 const clips:any={},cooldowns:any={};let started=false,enabled=true,ambience=false,musicOn=true,musicGain=.35,effectsGain=.65,time=0,voices=0,music:any=null,track='',pending='',ocean:any=null,lastMoodChange=-999,workClock=0,airClock=0;
 const retiring:any[]=[];
 export function initAudio(){if(started)return;started=true;for(const id of EVENTS)loadClip('sfx/'+id+'.ogg').then(clip=>{clips[id]=clip;}).catch(()=>{});}
@@ -11,7 +11,7 @@ export function soundSettings(effects:boolean,sea:boolean,musicEnabled=true,musi
 }
 export function cue(event:string,gain=1){
  if(!enabled||voices>=6||context.state!=='running')return;const id=event==='reward'?'coins':event==='danger'?'ship-bell':event==='combat'?'cannon-fire':event,clip=clips[id];
- if(!clip||time<(cooldowns[id]||0))return;cooldowns[id]=time+(id==='cannon-fire'?.25:id==='coins'?.7:1.2);
+ if(!clip||time<(cooldowns[id]||0))return;cooldowns[id]=time+(id==='cannon-fire'||id==='shot-splash'?.25:id==='hull-impact'?.35:id==='coins'?.7:1.2);
  const sound=play(clip,{gain:effectsGain*gain*(id==='storm'?.45:1),bus:'effects'});voices++;sound.onEnded(()=>{voices--;});
 }
 function retire(){if(!music)return;music.fade(0,2);retiring.push({source:music,stopAt:time+2.1});music=null;while(retiring.length>1)retiring.shift().source.stop();}

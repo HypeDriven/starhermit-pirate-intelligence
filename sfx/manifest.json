@@ -169,6 +169,54 @@
       "usage": "Occasional optional underway deck ambience.",
       "duration": 5.0,
       "sha256": "a6df1fbfc8ea261219f49ce8115b526312f5959165586abf53f8252bc0a37c1a"
+    },
+    {
+      "event": "shot-splash",
+      "prompt": "A single heavy iron cannonball plunging into open sea water, sharp deep splash with spray falling back onto the waves, outdoors, no music, no voices",
+      "seconds": 3,
+      "seed": 741,
+      "steps": 80,
+      "model": "MOSS-SoundEffect v2",
+      "file": "sfx/shot-splash.ogg",
+      "usage": "A cannonball misses and lands in the sea nearby.",
+      "duration": 2.880229,
+      "sha256": "17b67719eb820d68cce09b34e98069f8df42ae4ad55090fa5b319f0067c07644"
+    },
+    {
+      "event": "shot-whistle",
+      "prompt": "A cannonball flying fast past overhead, a short rushing whistle of air that rises and falls, outdoors over the sea, no music, no voices",
+      "seconds": 2,
+      "seed": 744,
+      "steps": 80,
+      "model": "MOSS-SoundEffect v2",
+      "file": "sfx/shot-whistle.ogg",
+      "usage": "An enemy cannonball passes close to the player ship.",
+      "duration": 2.0,
+      "sha256": "0ec24e59ae7d1204396551fc305c3e2cbbe9af5dab8b46a05c44f4c06f09255a"
+    },
+    {
+      "event": "guns-run-out",
+      "prompt": "Heavy wooden cannon carriages rumbling forward across a ship deck on small wooden wheels, gunport lids banging open, ropes creaking, close, no music, no voices",
+      "seconds": 3,
+      "seed": 744,
+      "steps": 80,
+      "model": "MOSS-SoundEffect v2",
+      "file": "sfx/guns-run-out.ogg",
+      "usage": "A raider runs out its guns at the player ship.",
+      "duration": 3.0,
+      "sha256": "0e32cc6b20073567ae0c5fb80c9cfebbeb854e8e14b8a99f98ae4588849835b4"
+    },
+    {
+      "event": "ship-sinking",
+      "prompt": "A large wooden sailing ship sinking at a distance, deep groaning and cracking timbers, masts splintering, rushing bubbling water, outdoors, no music, no voices",
+      "seconds": 6,
+      "seed": 745,
+      "steps": 80,
+      "model": "MOSS-SoundEffect v2",
+      "file": "sfx/ship-sinking.ogg",
+      "usage": "A ship goes down in battle.",
+      "duration": 6.0,
+      "sha256": "39bc235e8054597e24776f8db65517cb556f6373f212b9b18b02450d9d7eb1e1"
     }
   ]
 }

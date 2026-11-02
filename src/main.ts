@@ -12,7 +12,11 @@ import {describeDesign} from './brain/policy.js';
 import {cue,soundSettings,initAudio,audioUpdate,audioStatus,audioSuspend,audioResume} from './sound.js';
 import {audioEvents} from './audio-events.js';
 import {seaChart} from './charts.js';
-import {applyLook,box,sphere,mat,crewDoll,makeLongboat,shipModel,buildIslands,createOcean,animateEnvironment,animateShip,burst} from './visuals.js';
+import {combatUpdate,combatLabels,cameraShake,inBattle} from './combat.js';
+import {animateCrew} from './crew.js';
+// Other captains' crews are private; their decks show a plausible watch.
+const PEER_CREW={crew:[{task:'helm'},{task:'lookout'},{task:'guns'}]},NPC_CREW={crew:[{task:'helm'},{task:'lookout'},{task:'guns'}]};
+import {applyLook,box,sphere,mat,crewDoll,makeLongboat,shipModel,buildIslands,createOcean,animateEnvironment,animateShip,burst,setWakes} from './visuals.js';
 import { BrowserBrain } from './brain/browser.js';
 import { LOADS, loadSetting } from './brain/policy.js';
 import { METRES, bearing, compass, clock, daylight, windSpeed, smoothPose, boatProgress } from './navigation.js';
@@ -59,13 +63,12 @@ const places:any[]=[
 ];
 buildIslands(places);const {sea}=createOcean(places);
 const ships:any={},shots:any[]=[];let sceneSky='';
-function cannonShot(from:any,to:any){if(!from||!to||shots.length>=24)return;burst(from.x,from.z);cue('cannon-fire',Math.max(.15,1-Math.hypot(from.x-(state?.myShip?.x||0),from.z-(state?.myShip?.z||0))/60));const mesh=sphere(scene,from.x*METRES,5.4,from.z*METRES,.3,'#34423e');shots.push({mesh,from:{x:from.x*METRES,z:from.z*METRES},to:{x:to.x*METRES,z:to.z*METRES},age:0});}
-let longboat:any=null,shoreParty:any=null;let snapshotAt=0,frameDt=1/60,cameraYaw=Math.atan2(30,39),cameraRange=1;const poses:any={};
+let longboat:any=null,shoreParty:any=null,battleFrame=0;const battleAim={x:0,z:0};let snapshotAt=0,frameDt=1/60,cameraYaw=Math.atan2(30,39),cameraRange=1;const poses:any={};
 function buildShip(id:string,enemy=false){const obj=shipModel(enemy);scene.add(obj.g);ships[id]=obj;return obj;}
 const taskPos:any={helm:[0,-2.4],lookout:[.8,2.3],guns:[-1.0,0],repair:[.9,-.7],cook:[-.7,-1.7],forage:[.8,1.3],rest:[-.7,-2.4]};
 function flash(text:string){notice=text;noticeTime=7;}
 function command(c:any){if(!channel||!channel.sendCommand(c))flash('The channel is busy. Try again in a moment.');}
-function got(data:any){if(!data)return;if(data.type==='snapshot'&&!online){lastSnapshot=data.world;storage.setJson('practice-world',lastSnapshot);return;}if(data.type!=='state')return;const oldDelegate=state?.myShip?.delegate;if(state){const previous=state.ships.concat(state.raiders),current=data.ships.concat(data.raiders);for(const ship of current){const old=previous.find((x:any)=>x.id===ship.id);if(old&&ship.lastShot>old.lastShot)cannonShot(ship,current.find((x:any)=>x.id===ship.lastTarget));}}for(const event of audioEvents(state,data))cue(event);if(!state&&data.myShip)console.info('Authoritative ship ready: '+data.myShip.crew.length+' crew.');state=data;snapshotAt=elapsed;if(state.myShip&&oldDelegate!==state.myShip.delegate)delegate=state.myShip.delegate||'';}
+function got(data:any){if(!data)return;if(data.type==='snapshot'&&!online){lastSnapshot=data.world;storage.setJson('practice-world',lastSnapshot);return;}if(data.type!=='state')return;const oldDelegate=state?.myShip?.delegate;for(const event of audioEvents(state,data))cue(event);if(!state&&data.myShip)console.info('Authoritative ship ready: '+data.myShip.crew.length+' crew.');state=data;snapshotAt=elapsed;if(state.myShip&&oldDelegate!==state.myShip.delegate)delegate=state.myShip.delegate||'';}
 function watch(c:any){c.on('game',got);c.on('error',(e:any)=>flash(String(e)));c.on('open',()=>c.sendCommand({type:'sync'}));c.on('stopped',(e:any)=>{network='Disconnected · '+e;flash('Connection ended: '+e+'. Open World to reconnect.');});}
 function local(){if(roomSocket){roomSocket.close();roomSocket=null;}room=null;if(channel)channel.close();state=null;shipNameDraft='';online=false;me='captain-local';const saved:any=storage.getJson('practice-world');channel=authority('server.js',{context:{sessionId:'brine-local',players:[{id:me,name:'Captain'}],sessionState:saved||null},rate:4});watch(channel);network='Local practice · saved on device';}
 function connect(id:string){activeSession=id;if(channel)channel.close();state=null;shipNameDraft='';me=platform.player()?.userId||'';online=true;channel=platform.connectGame(id);watch(channel);network='StarHermit · connecting';channel.on('open',()=>{network='StarHermit · persistent world';});channel.on('disconnected',()=>{network='Reconnecting to StarHermit…';});}
@@ -162,10 +165,10 @@ onStart(()=>{files.fetch('assets/fonts/CormorantGaramond.ttf').then(()=>{fonts.a
  });
  local();if(!storage.getJson('captain-welcomed')){panel='help';storage.setJson('captain-welcomed',true);}const launched=platform.launchContext();if(launched?.sessionId)connect(launched.sessionId);
 });
-onAction(e=>{if(!e.pressed||ui.capturingKeys())return;if(e.action==='zoomin')targetZoom=1;if(e.action==='zoomout'||e.action==='map')targetZoom=0;if(e.action==='takehelm')command({type:'helm-mode',mode:state?.myShip?.controlMode==='manual'?'course':'manual'});if(e.action==='anchor')command({type:'anchor'});if(e.action==='fire')command({type:'fire',target:selectedEnemy,ammunition:['round','chain','grape'][ammoType]});if(e.action==='crew')openCrew(selectedCrew);});
+onAction(e=>{if(!e.pressed||ui.capturingKeys())return;if(e.action==='zoomin')targetZoom=1;if(e.action==='zoomout'||e.action==='map')targetZoom=0;if(e.action==='takehelm')command({type:'helm-mode',mode:state?.myShip?.controlMode==='manual'?'course':'manual'});if(e.action==='anchor')command({type:'anchor'});if(e.action==='fire')command({type:'fire',target:selectedEnemy,ammunition:['round','chain','grape'][ammoType]});if(e.action==='fireport')broadside('port');if(e.action==='firestarboard')broadside('starboard');if(e.action==='crew')openCrew(selectedCrew);});
 onWheel((_,dy)=>{if(!ui.pointerOver())targetZoom=Math.max(0,Math.min(1,targetZoom-dy*.15));});
 onPointerButton(e=>{if(e.pressed||e.button!==0||ui.pointerOver())return;for(const l of labelHits)if(e.x>=l.x&&e.x<=l.x+l.w&&e.y>=l.y&&e.y<=l.y+l.h){if(l.crew)openCrew(l.id);else selectedPlace=l.id;return;}});
-onUpdate(dt=>{frameDt=Math.min(dt,.1);for(let i=shots.length-1;i>=0;i--){const shot=shots[i];shot.age+=dt;const t=Math.min(1,shot.age/.6);shot.mesh.position.set(shot.from.x+(shot.to.x-shot.from.x)*t,5.4+Math.sin(t*Math.PI)*2.4,shot.from.z+(shot.to.z-shot.from.z)*t);if(t>=1){burst(shot.to.x/METRES,shot.to.z/METRES,true);scene.remove(shot.mesh);shots.splice(i,1);}}elapsed+=dt;audioUpdate(dt,state,zoom>.65);noticeTime=Math.max(0,noticeTime-dt);zoom+=(targetZoom-zoom)*Math.min(1,dt*5);saveClock+=dt;if(saveClock>10&&state&&!online){saveClock=0;command({type:'snapshot'});}steer(dt);browserBrain.tick(state,brainConfigs,command,channel);});
+onUpdate(dt=>{frameDt=Math.min(dt,.1);elapsed+=dt;audioUpdate(dt,state,zoom>.65);noticeTime=Math.max(0,noticeTime-dt);zoom+=(targetZoom-zoom)*Math.min(1,dt*5);saveClock+=dt;if(saveClock>10&&state&&!online){saveClock=0;command({type:'snapshot'});}steer(dt);browserBrain.tick(state,brainConfigs,command,channel);});
 onSuspend(()=>{touchTurn=0;touchThrottle=0;manualSending=false;audioSuspend();browserBrain.suspend();});onResume(()=>{audioResume();browserBrain.resume();});
 onQuit(()=>{if(state&&!online&&lastSnapshot)storage.setJson('practice-world',lastSnapshot);});
 let lastSnapshot:any=null,helmClock=0,touchTurn=0,touchThrottle=0,ammoType=0,manualSending=false;
@@ -186,35 +189,36 @@ function renderScene(){
  for(const ship of allShips)poses[ship.id]=smoothPose(poses[ship.id],ship,frameDt);
  const shipPose=s?poses[s.id]||s:{x:0,z:0},focus={x:shipPose.x,z:shipPose.z};
  if(s?.away){const p=places.find(p=>p.id===s.away.place)!,dx=shipPose.x-p.x,dz=shipPose.z-p.z,d=Math.max(.1,Math.hypot(dx,dz)),move=boatProgress(state.time+Math.min(.3,elapsed-snapshotAt),s.away);focus.x+=(p.x+dx/d*1.2-shipPose.x)*move;focus.z+=(p.z+dz/d*1.2-shipPose.z)*move;}
+ const foe=s&&!s.away&&inBattle(state,me)?battleTarget(s):null,foePose=foe&&(poses[foe.id]||foe),foeGap=foe?Math.hypot(foePose.x-shipPose.x,foePose.z-shipPose.z):0;battleFrame+=((foe?1:0)-battleFrame)*(1-Math.exp(-frameDt*1.5));if(foe){battleAim.x=foePose.x-shipPose.x;battleAim.z=foePose.z-shipPose.z;}focus.x+=battleAim.x*.45*battleFrame;focus.z+=battleAim.z*.45*battleFrame;
  const cx=focus.x*zoom*METRES,cz=focus.z*zoom*METRES,dist=1-zoom;
- const narrow=f.width/ui.preferences().scale<600;cameraRange+=((narrow?1.2:1)*(s?.away?1.15:1)-cameraRange)*(1-Math.exp(-frameDt*5));const p=s?.away&&places.find(p=>p.id===s.away.place),yaw=p?Math.atan2(shipPose.x-p.x,shipPose.z-p.z):Math.atan2(30,39);cameraYaw+=Math.atan2(Math.sin(yaw-cameraYaw),Math.cos(yaw-cameraYaw))*(1-Math.exp(-frameDt*4));
- camera.position.set(cx+340*dist+Math.sin(cameraYaw)*49.2*zoom*cameraRange,660*dist+39*zoom*cameraRange,cz+540*dist+Math.cos(cameraYaw)*49.2*zoom*cameraRange);camera.lookAt(cx,zoom*4.8,cz);camera.updateMatrixWorld();
+ const narrow=f.width/ui.preferences().scale<600;cameraRange+=((narrow?1.2:1)*(s?.away?1.15:1)*(1+battleFrame*(Math.min(3.4,Math.max(1.3,foeGap*.24))-1))-cameraRange)*(1-Math.exp(-frameDt*(foe?2:5)));const p=s?.away&&places.find(p=>p.id===s.away.place),yaw=p?Math.atan2(shipPose.x-p.x,shipPose.z-p.z):Math.atan2(30,39);cameraYaw+=Math.atan2(Math.sin(yaw-cameraYaw),Math.cos(yaw-cameraYaw))*(1-Math.exp(-frameDt*4));
+ const quake=cameraShake()*zoom,qx=Math.sin(elapsed*53)*quake*.6,qy=Math.sin(elapsed*71)*quake*.4;camera.position.set(qx+cx+340*dist+Math.sin(cameraYaw)*49.2*zoom*cameraRange,qy+660*dist+39*zoom*cameraRange,cz+540*dist+Math.cos(cameraYaw)*49.2*zoom*cameraRange);camera.lookAt(cx,zoom*4.8,cz);camera.updateMatrixWorld();
  sea.visible=!(zoom>.6&&deck>0);
  animateEnvironment(elapsed,frameDt,focus);
  if(!state)return;
  const storm=state.weather!=='Fair winds',light=daylight(state.time),sky=storm?'#697f82':light>.12?'#a7cfcb':'#203e50';
  if(sceneSky!==sky){sceneSky=sky;scene.background=new Color(sky);scene.fog=new Fog(sky,storm?500:850,storm?1100:1650);}sun.intensity=(.38+light*1.2)*Math.PI;ambient.intensity=(.38+light*.18)*Math.PI;sun.color.set(light>.15?'#ffe6b3':'#b4d0e0');sun.position.set(cx-40,70,cz+35);sun.target.position.set(cx,0,cz);const shadowCamera=sun.shadow.camera as any;shadowCamera.left=-55;shadowCamera.right=55;shadowCamera.top=55;shadowCamera.bottom=-55;shadowCamera.near=.5;shadowCamera.far=220;shadowCamera.updateProjectionMatrix();renderer.shadowMap.enabled=zoom>.35;
- const all=state.ships.concat(state.raiders);const visible:any={};
+ const all=state.ships.concat(state.raiders);const visible:any={};let clothBudget=2;
  for(const ss of all){visible[ss.id]=true;let obj=ships[ss.id];if(!obj)obj=buildShip(ss.id,!!ss.npc);obj.g.visible=ss.hull>0;if(!obj.g.visible)continue;const mine=ss.id===me;const pose=poses[ss.id]||ss;obj.g.position.set(pose.x*METRES,Math.sin(elapsed*1.3+ss.x)*.12,pose.z*METRES);obj.g.rotation.y=pose.heading||0;obj.g.rotation.z=Math.sin(elapsed+ss.x)*.012;
   const fire=mine?s.fire:ss.fire||0;for(let i=0;i<obj.flames.length;i++){const flame=obj.flames[i];flame.visible=fire>0;if(fire>0){flame.scale.y=(.35+Math.sin(elapsed*8+i)*.10)*Math.min(2,1+fire/60);flame.position.y=1.6+i*.12+Math.sin(elapsed*5+i)*.12;}}
-  const cut=mine&&zoom>.6&&deck>0;animateShip(obj,elapsed,!ss.anchored&&!cut,mine,light);if(!ss.npc)applyLook(obj,mine?previewLook(ss.look):ss.look,state.workshop?.palette);
+  const cut=mine&&zoom>.6&&deck>0,near=Math.hypot(pose.x*METRES-camera.position.x,pose.z*METRES-camera.position.z)<(zoom>.5?520:260);animateShip(obj,elapsed,!ss.anchored&&!cut,mine,light,{simulate:near&&clothBudget-->0,dt:frameDt,wind:state.wind||0,knots:state.windKnots||12,heading:pose.heading||0,speed:ss.anchored?0:Math.hypot(ss.vx||0,ss.vz||0)||(ss.npc?1.2:1.6),storm,furled:mine&&zoom>.6});if(!ss.npc)applyLook(obj,mine?previewLook(ss.look):ss.look,state.workshop?.palette);
   obj.rig.visible=!cut;for(const sail of obj.sails){sail.visible=true;sail.material.hooks.uniforms.furl.value=mine&&zoom>.6?.16:1;}obj.hull.visible=!cut;obj.guns.visible=cut&&deck===1;obj.hold.visible=cut;obj.section.visible=cut;
-  for(let i=0;i<obj.dolls.length;i++){const d=obj.dolls[i],c=mine?s.crew[i]:null;d.visible=(mine?(!c||!c.away):i<3)&&(!cut||(deck===1?['guns','repair'].includes(c?.task):['cook','forage','rest'].includes(c?.task)));if(c){const p=taskPos[c.task]||[0,0],slot=s.crew.slice(0,i).filter((other:any)=>!other.away&&other.task===c.task).length,watch=(elapsed+i*2)%18,walking=watch<4&&c.task!=='rest',stride=walking?Math.sin(elapsed*8+i):Math.sin(elapsed*4+i)*.3;
-   d.position.set((cut?(i%2?.2:-.2):p[0])+(walking?Math.sin(watch/4*Math.PI)*.7:0),cut?(deck===1?.28:-.72):1.34,p[1]+slot*.4);d.rotation.y=walking?Math.PI/2:Math.sin(elapsed*.8+i)*.18;d.rotation.z=c.task==='rest'?Math.PI/2:0;
-   d.userData.tool.visible=['repair','forage','cook'].includes(c.task);d.userData.tool.rotation.x=walking?0:Math.sin(elapsed*4+i)*.6;for(let j=0;j<d.userData.limbs.length;j++)d.userData.limbs[j].rotation.x=stride*(j%2?1:-1)*(walking?.8:1.8);
-  }}
+  for(let i=0;i<obj.dolls.length;i++){const d=obj.dolls[i],c=mine?s.crew[i]:null;d.visible=(mine?(!c||!c.away):i<3)&&(!cut||(deck===1?['guns','repair'].includes(c?.task):['cook','forage','rest'].includes(c?.task)));}
+  animateCrew(obj,mine?s:ss.npc?NPC_CREW:PEER_CREW,elapsed+(mine?0:[...ss.id].reduce((a:number,ch:string)=>a+ch.charCodeAt(0),0)*1.7),frameDt,cut,deck);
 
  }
  for(const id of Object.keys(ships))if(!visible[id])ships[id].g.visible=false;
+ setWakes(all.filter((ss:any)=>ss.hull>0&&!ss.anchored||ss.npc&&ss.hull>0).map((ss:any)=>{const p=poses[ss.id]||ss,v=Math.hypot(ss.vx||0,ss.vz||0);return {x:p.x*METRES,z:p.z*METRES,heading:p.heading||0,way:ss.npc?v/1.6:(ss.vx===undefined?.8:v/1.8),d:Math.hypot(p.x*METRES-camera.position.x,p.z*METRES-camera.position.z)};}).filter((w:any)=>w.way>.05).sort((a:any,b:any)=>a.d-b.d).slice(0,8));
+ combatUpdate(state,me,serverNow(),frameDt,poses,ships);
  if(s?.away){if(!longboat)longboat=makeLongboat();longboat.visible=true;const p=places.find(p=>p.id===s.away.place)!,time=state.time+Math.min(.3,elapsed-snapshotAt),move=boatProgress(time,s.away),pose=poses[s.id]||s,dx=pose.x-p.x,dz=pose.z-p.z,d=Math.max(.1,Math.hypot(dx,dz)),shore={x:p.x+dx/d*1.7,z:p.z+dz/d*1.7};
   longboat.position.set((pose.x+(shore.x-pose.x)*move)*METRES,-1.9,(pose.z+(shore.z-pose.z)*move)*METRES);longboat.rotation.y=Math.atan2(shore.x-pose.x,shore.z-pose.z)+(s.away.returnAt-time<5?Math.PI:0);
-  for(const oar of longboat.userData.oars)oar.rotation.y=move<1?Math.sin(elapsed*5)*.5:0;
+  for(const oar of longboat.userData.oars)oar.rotation.y=move<1?Math.sign(oar.position.x)*Math.sin(elapsed*5)*.5:0;
   if(!shoreParty){shoreParty=new Group();for(let i=0;i<2;i++){const doll=crewDoll(i?'#8aadaf':'#77a891',i+2);doll.scale.set(1.8,1.8,1.8);doll.position.set(i?1.4:-1.4,0,0);box(doll,.35,.6,0,.06,.8,.06,'#b69863');box(doll,.35,1,0,.35,.2,.1,'#788983');shoreParty.add(doll);}scene.add(shoreParty);}
   shoreParty.visible=move>=1;shoreParty.position.set(p.x*METRES+dx/d*11,2.85,p.z*METRES+dz/d*11);for(let i=0;i<2;i++){const doll=shoreParty.children[i];doll.rotation.z=Math.sin(elapsed*5+i)*.16;doll.userData.limbs[3].rotation.x=Math.sin(elapsed*5+i);}
-  let rower=0;for(const child of longboat.children)if(child instanceof Group&&child.userData.uniform){child.visible=move<1;const c=s.crew.find((c:any)=>c.id===s.away.crewIds[rower++]);for(const part of child.userData.uniform as any[])part.material=mat(c?.color||'#77a891');for(const arm of child.userData.limbs as any[])arm.rotation.x=Math.sin(elapsed*5)*.7;}for(let i=0;i<2;i++){const c=s.crew.find((c:any)=>c.id===s.away.crewIds[i]);for(const part of shoreParty.children[i].userData.uniform)part.material=mat(c?.color||'#77a891');}
+  let rower=0;for(const child of longboat.children)if(child instanceof Group&&child.userData.uniform){child.visible=move<1;const c=s.crew.find((c:any)=>c.id===s.away.crewIds[rower++]);for(const part of child.userData.uniform as any[])part.material=mat(c?.color||'#77a891');const [legL,armL,legR,armR]=child.userData.limbs as any[];legL.rotation.x=legR.rotation.x=-1.3;armL.rotation.x=armR.rotation.x=-1.1+Math.sin(elapsed*5)*.55;}for(let i=0;i<2;i++){const c=s.crew.find((c:any)=>c.id===s.away.crewIds[i]);for(const part of shoreParty.children[i].userData.uniform)part.material=mat(c?.color||'#77a891');}
  }else{if(longboat)longboat.visible=false;if(shoreParty)shoreParty.visible=false;}
 
- labelHits=[];if(s?.away&&zoom>.65&&shoreParty?.visible){labelAt(s.away.crewIds.map((id:string)=>s.crew.find((c:any)=>c.id===id)?.name.split(' ')[0]).join(' & ')+' · '+(s.away.job==='timber'?'Chopping timber':s.away.job==='salvage'?'Gathering salvage':'Seeking treasure'),shoreParty.position.x,6.5,shoreParty.position.z,C.gold);}
+ labelHits=[];combatLabels((text,x,y,z,color)=>labelAt(text,x,y,z,color));if(zoom>=.65)for(const e of state.raiders)if(e.hull>0&&s&&Math.hypot(e.x-s.x,e.z-s.z)<30){const p=poses[e.id]||e;labelAt(e.name+' · '+(e.ai==='flee'?'fleeing':e.temper||'raider')+' · '+Math.round(e.hull/e.maxHull*100)+'%',p.x*METRES,26,p.z*METRES,e.aim?.target===me?C.red:C.cream,'');}if(s?.away&&zoom>.65&&shoreParty?.visible){labelAt(s.away.crewIds.map((id:string)=>s.crew.find((c:any)=>c.id===id)?.name.split(' ')[0]).join(' & ')+' · '+(s.away.job==='timber'?'Chopping timber':s.away.job==='salvage'?'Gathering salvage':'Seeking treasure'),shoreParty.position.x,6.5,shoreParty.position.z,C.gold);}
  if(zoom>=.35&&zoom<.65){for(const p of places)labelAt((p.kind==='port'?'⚓ ':'')+p.name,p.x*METRES,20,p.z*METRES,selectedPlace===p.id?C.gold:C.cream,p.id);for(const ss of state.raiders)if(ss.hull>0)labelAt(ss.name,(poses[ss.id]?.x||ss.x)*METRES,24,(poses[ss.id]?.z||ss.z)*METRES,C.red);}
  else if(s&&zoom>=.65){labelAt(s.name,shipPose.x*METRES,20,shipPose.z*METRES,C.gold);const l=s.log[s.log.length-1];if(l&&state.time-l.at<8)labelAt(l.name+': '+(l.text.length>54?l.text.slice(0,l.text.lastIndexOf(' ',53)>20?l.text.lastIndexOf(' ',53):53)+'…':l.text),shipPose.x*METRES,14,shipPose.z*METRES+6,C.cream);}
 }
@@ -301,6 +305,41 @@ function bottom(w:number,h:number,scale:number,mobile:boolean){
    ui.label(s.away?'Longboat · '+(!s.away.choice&&state.time>=s.away.encounterAt?'encounter ready · ':'')+'returns in '+Math.max(0,Math.ceil(s.away.returnAt-state.time))+'s':s.destination?'Sailing to '+destination?.name+' · '+Math.round(distanceTo(s,destination)*METRES)+' m':s.mission?'CONTRACT: '+s.mission.title:'No contract. The sea is full of bad opportunities.',{size:10,color:C.muted});
   },{spacing:10});}
  },{spacing:24,width:width-40}));
+}
+function serverNow(){return state?state.time+Math.min(.5,elapsed-snapshotAt):0;}
+function batteryFacing(s:any,t:any){const dx=t.x-s.x,dz=t.z-s.z;return dx*Math.cos(s.heading)-dz*Math.sin(s.heading)>=0?'port':'starboard';}
+function battleTarget(s:any){
+ const all=state.raiders.concat(state.ships.filter((t:any)=>t.id!==me&&!t.inHarbour));let t=all.find((t:any)=>t.id===selectedEnemy&&t.hull>0&&distanceTo(s,t)<26);
+ if(!t){t=state.raiders.filter((e:any)=>e.hull>0).sort((a:any,b:any)=>distanceTo(s,a)-distanceTo(s,b))[0];if(t&&distanceTo(s,t)<26)selectedEnemy=t.id;else t=null;}
+ return t;
+}
+function broadside(side:'port'|'starboard'){
+ const s=state?.myShip;if(!s)return;const t=battleTarget(s);
+ const aimed=t&&batteryFacing(s,t)===side&&distanceTo(s,t)<17;
+ command({type:'fire',side,target:aimed?t.id:'',ammunition:['round','chain','grape'][ammoType]});
+}
+function battleStrip(w:number,h:number,scale:number,mobile:boolean){
+ const s=state?.myShip;if(!s||s.away||!inBattle(state,me))return;
+ const lw=w/scale,width=Math.min(560,lw-24),x=(lw-width)/2,y=h/scale-(mobile?156:167)-(mobile?92:78);
+ draw.box(x*scale,y*scale,width*scale,(mobile?86:72)*scale,'instrument');
+ const t=battleTarget(s),now=serverNow(),threat=state.raiders.find((e:any)=>e.hull>0&&e.aim?.target===me);
+ const battery=(side:'port'|'starboard')=>{const left=Math.max(0,(s.reload?.[side]||0)-now),racks=s.racks?.[side]||0,facing=t&&batteryFacing(s,t)===side;
+  ui.column('battery-'+side,()=>{
+   if(ui.style(left>0?'soft':facing?'gold':'soft').button((side==='port'?'◀ Port':'Starboard ▶')+(mobile?'':side==='port'?'  [Z]':'  [X]'),{disabled:left>0}))broadside(side);
+   ui.label(left>0?'Reloading '+left.toFixed(1)+'s':'Loaded'+(facing?' · on target':''),{size:10,color:left>0?C.muted:facing?C.gold:C.cream});
+   ui.label('Racks '+'●'.repeat(racks)+'○'.repeat(Math.max(0,3-racks)),{size:10,color:racks?C.cream:C.red});
+  },{spacing:2,width:mobile?110:130});};
+ ui.area({x:(x+10)*scale,y:(y+7)*scale,width:(width-20)*scale,height:(mobile?76:62)*scale},()=>ui.row('Battle',()=>{
+  battery('port');
+  ui.column('battle-target',()=>{
+   if(threat){ui.label('⚠ '+threat.name.replace(/^The /,'')+' has guns run out — turn!',{size:11,color:C.red,weight:'bold'});}
+   else if(t){ui.label(t.name+' · '+Math.round(distanceTo(s,t)*METRES)+' m'+(t.temper?' · '+t.temper:''),{size:11,color:C.cream,weight:'bold'});}
+   else ui.label('No target in range',{size:11,color:C.muted});
+   if(t)ui.style({parts:{fill:{background:t.hull<t.maxHull*.45?C.red:C.gold},track:{background:'#3a2716'}},height:5}).progress(t.hull/t.maxHull,mobile?lw-300:250);
+   ui.label((s.combo>1&&now-(s.comboAt||0)<6?'Hit streak ×'+s.combo+' · ':'')+(t&&t.hull<=t.maxHull*.45&&!t.ships?'Weak enough to board · ':'')+['Round','Chain','Grape'][ammoType]+' shot · '+s.ammo+' aboard',{size:10,color:C.muted});
+  },{spacing:3,width:mobile?lw-280:260});
+  battery('starboard');
+ },{width:width-20,spacing:8,align:'center'}));
 }
 function landing(s:any){return s.anchored?places.find(p=>p.kind!=='port'&&distanceTo(s,p)<7):null;}
 function openLongboat(){const p=state?.myShip&&landing(state.myShip);if(!state?.myShip?.away)job=p?.kind==='wreck'?2:0;panel='away';}
@@ -437,7 +476,7 @@ function dialogs(){
    ui.paragraph('Spice and medicine sell well at Gallows Reach. Sailcloth makes a useful return cargo to Saltwick. Port services tend injuries, refill stores, or extinguish fires and dry the bilge.',dialogWidth,{size:12});
   }
   if(panel==='combat'){
-   ui.paragraph('Round shot breaks hulls. Chain shot slows a ship. Grape shot improves boarding odds. Every salvo costs 2 shot and takes 7 seconds to reload.',dialogWidth,{size:12});
+   ui.paragraph('Each broadside fires three balls from one side: Z for port, X for starboard, F for whichever side faces your target. Balls take a moment to fly, so a ship that turns or changes speed can dodge them. Firing along a ship’s length rakes her for extra damage. Each side reloads on its own; gunners stock the racks from the hold, and an empty rack slows the reload. When a raider runs out her guns, a red arc shows where they are laid: turn out of it. Sunk ships leave loot afloat for the first ship through.',dialogWidth,{size:12});ui.paragraph('Round shot breaks hulls. Chain shot slows a ship. Grape shot hurts crews and improves boarding odds. Every broadside costs 2 shot.',dialogWidth,{size:12});
    ui.label('Helm: '+(s.controlMode==='manual'?'manual':'charted courses')+' · Wind '+compass(bearing((state.wind||0)+Math.PI))+' '+(state.windKnots||windSpeed(state.time,state.weather!=='Fair winds'))+' kn',{size:12,color:C.gold});
    button(s.controlMode==='manual'?'Return to charted courses':'Take the manual helm · H',()=>command({type:'helm-mode',mode:s.controlMode==='manual'?'course':'manual'}));
    if(s.controlMode==='manual'){ui.paragraph('Hold W / Up to make way; A / Left and D / Right steer while moving. The touch controls work while held. Turn your flank toward a target before firing; the bow and stern cannot fire broadsides.',dialogWidth,{size:12});helmControls();}
@@ -485,7 +524,7 @@ onRender(()=>{
   if(mobile){ui.area({x:12*scale,y:137*scale,width:(lw-24)*scale,height:(lw<420?85:48)*scale},()=>ui.grid('Mobile actions',()=>{button('Course',()=>panel='atlas');button('Crew',()=>openCrew(selectedCrew));button('Longboat',openLongboat);button('Trade',()=>panel='trade');button('More',()=>panel='more');if(targetZoom>.5)button(['Weather deck','Gun deck','Cargo hold'][deck],()=>{deck=(deck+1)%3;});},{columns:lw<420?3:6,width:lw-24,gap:5}));}
 
  }
- instruments(w,h,scale,mobile);bottom(w,h,scale,mobile);
+ instruments(w,h,scale,mobile);bottom(w,h,scale,mobile);if(!panel)battleStrip(w,h,scale,mobile);
  dialogs();
  if(noticeTime>0){const width=Math.min(520,lw-24),x=(w-width*scale)/2,y=h-84*scale;draw.box(x,y,width*scale,72*scale,'toast');ui.area({x:x+12*scale,y:y+10*scale,width:(width-24)*scale,height:55*scale},()=>ui.style({text:{color:C.ink}}).paragraph(notice,width-24,{size:12}));}
  // Model providers never receive platform tokens or authority handles.

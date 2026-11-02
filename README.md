@@ -22,7 +22,7 @@ Practice state is saved on the device every ten seconds. Refresh resumes the sam
 - Standing repair/rest thresholds, storm shelter and automatic hunting fire. Direct orders and emergency warrants stay above model suggestions.
 - Low-load browser CPU brains with individual context and optional external OpenAI-compatible models.
 - Nine destinations, four shared port markets, three cargo classes, stock replenishment, scarcity prices, one-time contracts and daily deliveries. Harbour guns protect anchored port ships.
-- Manual helm with wind, touch/keyboard controls, reef stops, broadside arcs, three ammunition types and risky boarding of weakened raiders.
+- Manual helm with wind, touch/keyboard controls and reef stops. Battles with flying cannonballs you can dodge, separate port (Z) and starboard (X) batteries, raking fire, shot racks the gunners stock, raiders that manoeuvre and telegraph their volleys, floating loot, three ammunition types and risky boarding of weakened raiders.
 - Fire, flooding, damaged rigging, expedition injuries, rest and medical care; six three-level ship fittings.
 - Safe/risky island and wreck encounters with party skill and bond bonuses; automatic safe return when no choice is made.
 - A welcome guide, sea atlas, captain’s log, exploration milestones, renown, authored crew barks, optional sea ambience and procedural combat/reward sounds.
@@ -30,7 +30,7 @@ Practice state is saved on the device every ten seconds. Refresh resumes the sam
 
 ## Crew workshop and Plucks
 
-The crew sketch cosmetic mods (sails, hull paint, colours, clothing, weapons) as validated data. The authority makes the candidates and the crew's model picks one. Commissioning a sketch creates a StarHermit Pluck order, which the player approves on the dashboard (`https://dashboard.starhermit.com/plucks/orders/{id}`). The authority applies a design only from the platform's paid-order feed (`ctx.pluckOrders`). Owned designs persist in `playerStates`. Register the catalog once with the owner's account token:
+The crew sketch cosmetic mods (sails, hull paint, colours, clothing, weapons, makeovers) as validated data. The authority makes the candidates and the crew's model picks one. Commissioning a sketch creates a StarHermit Pluck order, which the player approves on the dashboard (`https://dashboard.starhermit.com/plucks/orders/{id}`). The authority applies a design only from the platform's paid-order feed (`ctx.pluckOrders`). Owned designs persist in `playerStates`. Register the catalog once with the owner's account token:
 
 ```bash
 STARHERMIT_TOKEN=<owner token> scripts/register-pluck-items.sh

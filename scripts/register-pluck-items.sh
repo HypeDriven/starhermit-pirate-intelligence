@@ -16,4 +16,5 @@ mod.hull|Crew-designed hull paint|10
 mod.flag|Crew-designed colours|5
 mod.clothing|Crew-designed clothing|4
 mod.weapon|Crew-designed weapon|6
+mod.look|Crew makeover|5
 ITEMS

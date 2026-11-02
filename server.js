@@ -39,6 +39,7 @@ function migrate(w){
  PLACES.filter(function(p){return p.kind==='port';}).forEach(function(p){if(!w.markets[p.id])w.markets[p.id]={spice:40,cloth:40,medicine:25};});
  if(!w.raiders.some(function(e){return e.id==='lantern';})){w.raiders.push({id:'lantern',name:'The Taxman’s Lantern',npc:true,x:-32,z:26,homeX:-32,homeZ:26,hull:120,maxHull:120,heading:1,lastShot:w.time,respawn:0},{id:'frostbite',name:'The Frostbite',npc:true,x:34,z:-35,homeX:34,homeZ:-35,hull:150,maxHull:150,heading:2,lastShot:w.time,respawn:0});}
  if(w.marketWatch===undefined)w.marketWatch=Math.floor(w.time/60);
+ migrateCombat(w);
  Object.keys(w.ships).forEach(function(id){var s=w.ships[id];
   s.clock=w.time;if(!s.upgrades)s.upgrades={hull:0,sails:0,guns:0,hold:0,berths:0,pump:0};
   if(!s.goods)s.goods={cloth:0,medicine:0};
@@ -127,7 +128,7 @@ function log(s,t,name,text,kind){s.log.push({at:Math.round(t),name:name,text:Str
 function xp(s,n){s.xp+=n;while(s.xp>=s.level*100){s.xp-=s.level*100;s.level++;s.maxHull+=10;s.hull=Math.min(s.maxHull,s.hull+15);log(s,s.clock||0,'Shipwright','Ship level '+s.level+'! More hull. More swagger.','reward');}}
 function cxp(c,n){c.xp+=n;while(c.xp>=c.level*35){c.xp-=c.level*35;c.level++;}}
 function harbourSafe(s){return !!(s.anchored&&near(s,'port'));}
-function emergency(w,s){var enemy=false;for(var i=0;i<w.raiders.length;i++)if(!harbourSafe(s)&&w.raiders[i].hull>0&&distance(s,w.raiders[i])<15)enemy=true;var attacked=!harbourSafe(s)&&Object.keys(w.ships).some(function(id){var other=w.ships[id];return id!==s.id&&other.lastTarget===s.id&&w.time-other.lastShot<18&&distance(s,other)<17;});return s.hull<s.maxHull*.45||s.food<12||s.fire>15||s.leak>15||enemy||attacked;}
+function emergency(w,s){var enemy=false;for(var i=0;i<w.raiders.length;i++){var r=w.raiders[i],d=distance(s,r);if(!harbourSafe(s)&&r.hull>0&&(d<8||d<15&&r.ai&&r.ai!=='patrol'))enemy=true;}var attacked=!harbourSafe(s)&&Object.keys(w.ships).some(function(id){var other=w.ships[id];return id!==s.id&&other.lastTarget===s.id&&w.time-other.lastShot<18&&distance(s,other)<17;});return s.hull<s.maxHull*.45||s.food<12||s.fire>15||s.leak>15||enemy||attacked;}
 function canTask(w,s,c,task,issuer,override){if(TASKS.indexOf(task)<0||c.away)return false;if(c.ordinary.indexOf(task)>=0)return true;return (issuer==='morrow'||issuer==='brisk')&&!!override&&emergency(w,s);}
 function crewSays(c,task){var lines={morrow:{helm:'My ship. My course. Brisk, try to look reassured.',rest:'The captain is thinking. With her eyes closed.'},brisk:{repair:'One patch now saves a very embarrassing swim.',lookout:'One eye on the horizon. The other on this lot.'},fuse:{guns:'A tiny fuse. A very big argument.',rest:'Wake me if anything explodes. Or before.'},peg:{repair:'I can fix this. Your manners remain beyond me.',forage:'Wood first. Conversation absolutely last.'},tallow:{cook:'Soup is ready. I decline to name the ingredients.',rest:'Stir the pot while I put my feet up.'},pip:{helm:'I know this route. I am still allowed to be nervous.',lookout:'I see land! Preferably the kind that stays still.'}};return lines[c.id]&&lines[c.id][task]||speak(task);}
 function speak(task){return {helm:'Aye! Pointy end toward the profit.',lookout:'Eyes up, you magnificent scoundrels!',guns:'Permission to make a bloody great noise?',repair:'This hole was not in the original design.',cook:'Soup’s on! Best not ask what’s in it.',forage:'Back with wood. Or a new curse.',rest:'Wake me for treasure. Or a decent mutiny.'}[task];}
@@ -150,7 +151,7 @@ function choose(w,s,c,counts){
  return best;
 }
 function windKnots(w){return Math.round(12+3*Math.sin(w.time/90)+(w.weather!=='Fair winds'?8:0));}
-function view(w,id){var own=w.ships[id];if(own){own.inHarbour=harbourSafe(own);own.emergency=emergency(w,own);}return {type:'state',schema:1,featureVersion:2,time:w.time,day:Math.floor(w.time/240)+1,weather:w.weather,wind:Math.sin(w.time/240),windKnots:windKnots(w),places:PLACES,ships:Object.keys(w.ships).map(function(k){var s=w.ships[k];return {id:s.id,name:s.name,ownerName:s.ownerName,x:s.x,z:s.z,hull:s.hull,maxHull:s.maxHull,heading:s.heading,level:s.level,anchored:s.anchored,fire:s.fire||0,leak:s.leak||0,lastShot:s.lastShot,lastTarget:s.lastTarget||'',look:lookOf(s)};}),raiders:w.raiders,myShip:own||null,goods:GOODS,fittings:FITTINGS,workshop:{kinds:MOD_KINDS,palette:MOD_PALETTE,emblems:MOD_EMBLEMS},contracts:BOOK,markets:w.markets,prices:PLACES.filter(function(p){return p.kind==='port';}).map(function(p){var prices={};Object.keys(GOODS).forEach(function(g){prices[g]=portPrice(w,p,g);});return {id:p.id,goods:prices};})};}
+function view(w,id){var own=w.ships[id];if(own){own.inHarbour=harbourSafe(own);own.emergency=emergency(w,own);}return {type:'state',schema:1,featureVersion:2,time:w.time,day:Math.floor(w.time/240)+1,weather:w.weather,wind:Math.sin(w.time/240),windKnots:windKnots(w),places:PLACES,ships:Object.keys(w.ships).map(function(k){var s=w.ships[k];return {id:s.id,name:s.name,ownerName:s.ownerName,x:s.x,z:s.z,hull:s.hull,maxHull:s.maxHull,heading:s.heading,level:s.level,anchored:s.anchored,fire:s.fire||0,leak:s.leak||0,lastShot:s.lastShot,lastTarget:s.lastTarget||'',vx:s.vx||0,vz:s.vz||0,look:lookOf(s)};}),raiders:w.raiders,shots:w.shots,fx:w.fx,loot:w.loot,myShip:own||null,goods:GOODS,fittings:FITTINGS,workshop:{kinds:MOD_KINDS,palette:MOD_PALETTE,emblems:MOD_EMBLEMS},contracts:BOOK,markets:w.markets,prices:PLACES.filter(function(p){return p.kind==='port';}).map(function(p){var prices={};Object.keys(GOODS).forEach(function(g){prices[g]=portPrice(w,p,g);});return {id:p.id,goods:prices};})};}
 function result(ctx,w){var b=[];for(var i=0;i<ctx.players.length;i++)b.push({to:[ctx.players[i].id],data:view(w,ctx.players[i].id)});var keys=Object.keys(w.ships);for(var j=0;j<keys.length;j++){var s=w.ships[keys[j]];if(s.delegate&&ctx.players.some(function(p){return p.id===s.delegate;}))b.push({to:[s.delegate],data:{type:'brain_context',ownerId:s.id,time:w.time,ship:s,emergency:emergency(w,s),nearbyEnemies:w.raiders.filter(function(r){return r.hull>0&&distance(s,r)<17;}).map(function(r){return {name:r.name,hull:r.hull};})}});}return {ok:true,sessionState:w,broadcast:b};}
 function near(s,kind){var best=null,d=999;for(var i=0;i<PLACES.length;i++){var p=PLACES[i],n=distance(s,p);if((!kind||p.kind===kind)&&n<d){d=n;best=p;}}return d<7?best:null;}
 function mission(w,s){var m=s.mission;if(!m)return;var port=near(s,'port'),done=
@@ -178,18 +179,181 @@ function recoverShip(w,s){
  s.away=null;s.boarding=null;s.gold=Math.floor(s.gold*.75);s.hull=s.maxHull*.65;s.fire=0;s.leak=0;s.rigDamage=0;s.x=-24;s.z=8;s.anchored=true;s.destination=null;s.steerThrottle=0;s.steerTurn=0;s.steerUntil=w.time;
  log(s,w.time,'Harbourmaster','Crew recovered and towed home. Lost 25% gold. Try floating next time.','combat');
 }
-function fire(w,s,target,ammunition){
- var e=null;for(var i=0;i<w.raiders.length;i++)if(w.raiders[i].id===target)e=w.raiders[i];
- if(!e)e=Object.prototype.hasOwnProperty.call(w.ships,target)?w.ships[target]:null;if(!e||e.id===s.id||e.hull<=0)return 'No target afloat.';
- if(harbourSafe(s)||(!e.npc&&harbourSafe(e)))return 'Harbour guns protect anchored ships. Leave port before fighting.';
- if(['round','chain','grape'].indexOf(ammunition||'round')<0)return 'Unknown ammunition.';if(s.boarding)return 'Wait for the boarding party.';
- if(s.controlMode==='manual'&&Math.abs(Math.sin(Math.atan2(e.x-s.x,e.z-s.z)-s.heading))<.45)return 'Target outside the broadside arc. Turn your flank toward it.';
- if(distance(s,e)>17)return 'Out of range. Close to 170 m.';if(w.time-s.lastShot<7)return 'Cannons reloading.';if(s.ammo<2)return 'Out of shot. Resupply in port.';
- var g=s.crew.filter(function(c){return !c.away&&c.task==='guns';}).length;
- if(!g)return 'Put someone on the guns first.';
- s.lastShot=w.time;s.lastTarget=e.id;s.ammo-=2;var damage=14+g*5*taskEffect(s,'guns')+s.level*2+(s.upgrades.guns||0)*4;if(ammunition==='chain'){damage*=.5;e.rigDamage=Math.min(70,(e.rigDamage||0)+25);}if(ammunition==='grape'){damage*=.4;e.shock=Math.min(60,(e.shock||0)+20);}e.hull=Math.max(0,e.hull-damage);log(s,w.time,'Little Fuse','BOOM! '+e.name+' has fewer opinions now.','combat');
- if(e.hull<=0){s.kills++;s.reputation+=12;s.gold+=120;xp(s,65);log(s,w.time,'Mara','Send a boat for the spoils. +120 gold.','reward');if(e.npc)e.respawn=w.time+100;else recoverShip(w,e);}
+/* ---- Gunnery: cannonballs that fly, land and can be dodged ----
+   A broadside launches three balls from one battery (port or starboard). Each
+   ball aims where the target is predicted to be when it lands and is resolved
+   only when it lands, against wherever every ship actually is by then. Turning
+   bow-on, stopping or speeding up therefore dodges. Shots along a ship's length
+   rake it. Each battery reloads on its own; gunners stock the shot racks, and
+   an empty rack makes the next reload slower. Raiders use the same rules and
+   run out their guns before firing, so a quick turn can spoil their aim. */
+var BALL_SPEED=12,HULL_HALF=1.25,BEAM_HALF=.55,RANGE=17;
+var TEMPERS={
+ brawler:{range:7,speed:1.55,turn:.55,reload:8,ball:5,ammo:'grape',flee:.25,label:'closes to board you'},
+ gunner:{range:12,speed:1.35,turn:.45,reload:9,ball:6,ammo:'round',flee:.3,label:'keeps range and pounds your hull'},
+ runner:{range:14,speed:1.95,turn:.6,reload:10,ball:5,ammo:'chain',flee:.5,label:'fast, shy and full of loot'}
+};
+var RAIDER_TEMPERS={redwake:'brawler',taxman:'gunner',lantern:'runner',frostbite:'gunner'};
+/* The model's +x side is port: heading 0 sails south (+z), and a sailor facing
+   south has west (-x) on the starboard hand. */
+function batterySide(s,t){var dx=t.x-s.x,dz=t.z-s.z;return dx*Math.cos(s.heading)-dz*Math.sin(s.heading)>=0?'port':'starboard';}
+function abeam(s,t){return Math.abs(Math.sin(Math.atan2(t.x-s.x,t.z-s.z)-s.heading));}
+function velocityOf(o){return {x:o.vx||0,z:o.vz||0};}
+function gunCrew(s){return s.crew.filter(function(c){return !c.away&&c.task==='guns';});}
+function reloadTime(s,stocked){var g=gunCrew(s).length;return Math.max(3.5,(g>=3?5.5:g===2?6.5:8)*(1-.06*(s.upgrades.guns||0)))+(stocked?0:4);}
+function combatant(w,id){if(Object.prototype.hasOwnProperty.call(w.ships,id))return w.ships[id];for(var i=0;i<w.raiders.length;i++)if(w.raiders[i].id===id)return w.raiders[i];return null;}
+function shootable(w,o){return !!o&&o.hull>0&&!(o.npc?false:harbourSafe(o));}
+function addFx(w,fx){fx.id=++w.fxSeq;fx.at=w.time;w.fx.push(fx);if(w.fx.length>60)w.fx.shift();}
+function launch(w,from,side,aim,ammo,ballDamage,spread,rand){
+ /* Three balls from the battery's three ports along the hull. */
+ var f={x:Math.sin(from.heading),z:Math.cos(from.heading)},r={x:Math.cos(from.heading),z:-Math.sin(from.heading)},sign=side==='port'?1:-1;
+ for(var i=-1;i<=1;i++){
+  var ox=from.x+f.x*i*.7+r.x*sign*.5,oz=from.z+f.z*i*.7+r.z*sign*.5,a=rand()*Math.PI*2,d=Math.sqrt(rand())*spread;
+  var tx=aim.x+f.x*i*.35+Math.cos(a)*d,tz=aim.z+f.z*i*.35+Math.sin(a)*d,dist=Math.sqrt((tx-ox)*(tx-ox)+(tz-oz)*(tz-oz));
+  w.shots.push({id:++w.fxSeq,by:from.id,side:side,ammo:ammo,x:ox,z:oz,tx:tx,tz:tz,fired:w.time,lands:w.time+.35+dist/BALL_SPEED,damage:ballDamage});
+ }
+ addFx(w,{kind:'volley',by:from.id,side:side,x:from.x,z:from.z});
+}
+function aimPoint(from,target,lead){
+ var d=distance(from,target),flight=.35+d/BALL_SPEED,v=velocityOf(target);
+ return {x:target.x+v.x*flight*lead,z:target.z+v.z*flight*lead};
+}
+function fire(w,s,target,ammunition,side){
+ var e=target?combatant(w,target):null;ammunition=ammunition||'round';
+ if(['round','chain','grape'].indexOf(ammunition)<0)return 'Unknown ammunition.';
+ if(side!==undefined&&side!=='port'&&side!=='starboard')return 'Unknown battery.';
+ if(target&&(!e||e.id===s.id||e.hull<=0))return 'No target afloat.';
+ if(!e&&!side)return 'Choose a target or a battery.';
+ if(harbourSafe(s)||(e&&!e.npc&&harbourSafe(e)))return 'Harbour guns protect anchored ships. Leave port before fighting.';
+ if(s.boarding)return 'Wait for the boarding party.';
+ if(e&&distance(s,e)>RANGE)return 'Out of range. Close to 170 m.';
+ if(e&&side&&batterySide(s,e)!==side)return 'The target is off the '+batterySide(s,e)+' side.';
+ if(e&&!side)side=batterySide(s,e);
+ if(e&&s.controlMode==='manual'&&(abeam(s,e)<.45||batterySide(s,e)!==side))return 'Target outside the '+side+' arc. Turn your flank toward it.';
+ if(w.time<s.reload[side])return 'The '+side+' battery is reloading.';
+ if(s.ammo<2)return 'Out of shot. Resupply in port.';
+ var gunners=gunCrew(s);if(!gunners.length)return 'Put someone on the guns first.';
+ var skill=taskEffect(s,'guns'),stocked=s.racks[side]>0,rand=rng(w.shotSeed=(w.shotSeed||0)+1,s.x*13+s.z*7+w.time);
+ if(stocked)s.racks[side]--;
+ s.ammo-=2;s.reload[side]=w.time+reloadTime(s,stocked);s.lastShot=w.time;s.lastTarget=e?e.id:'';
+ var ballDamage=(5+gunners.length*1.6*skill+s.level*.7+(s.upgrades.guns||0)*1.4);
+ var aim=e?aimPoint(s,e,.85+.15*Math.min(1,skill)):null;
+ if(!aim){var sign=side==='port'?1:-1;aim={x:s.x+Math.cos(s.heading)*sign*12,z:s.z-Math.sin(s.heading)*sign*12};}
+ var range=e?distance(s,e):12,spread=(.35+range*.055)*(s.controlMode==='manual'?1:1.3)/Math.max(.6,skill);
+ launch(w,s,side,aim,ammunition,ballDamage,spread,rand);
+ if(!stocked)log(s,w.time,'Little Fuse','Racks empty on the '+side+' side! Hauling shot up from the hold.','combat');
  return null;
+}
+function hitTest(t,x,z){
+ var dx=x-t.x,dz=z-t.z,along=dx*Math.sin(t.heading)+dz*Math.cos(t.heading),across=dx*Math.cos(t.heading)-dz*Math.sin(t.heading);
+ return Math.abs(along)<HULL_HALF&&Math.abs(across)<BEAM_HALF;
+}
+function landShot(w,shot,random){
+ var from=combatant(w,shot.by),victims=w.raiders.concat(Object.keys(w.ships).map(function(k){return w.ships[k];})),hit=null;
+ for(var i=0;i<victims.length;i++){var v=victims[i];if(v.id!==shot.by&&shootable(w,v)&&hitTest(v,shot.tx,shot.tz)){hit=v;break;}}
+ if(!hit){addFx(w,{kind:'splash',by:shot.by,x:shot.tx,z:shot.tz});return;}
+ if(from&&from.npc&&hit.npc){addFx(w,{kind:'splash',by:shot.by,x:shot.tx,z:shot.tz});return;}
+ var dirX=shot.tx-shot.x,dirZ=shot.tz-shot.z,len=Math.sqrt(dirX*dirX+dirZ*dirZ)||1,along=Math.abs((dirX*Math.sin(hit.heading)+dirZ*Math.cos(hit.heading))/len);
+ var raked=along>.85,damage=shot.damage*(raked?1.7:1);
+ if(shot.ammo==='chain'){damage*=.5;hit.rigDamage=Math.min(70,(hit.rigDamage||0)+9);}
+ if(shot.ammo==='grape'){damage*=.4;hit.shock=Math.min(60,(hit.shock||0)+7);if(!hit.npc){var hurt=hit.crew.filter(function(c){return !c.away;});if(hurt.length){var hc=hurt[Math.floor(random*hurt.length)%hurt.length];hc.injury=clamp(hc.injury+4,0,100);}}}
+ if(shot.ammo==='round'&&!hit.npc&&random<.12)hit.fire=Math.min(100,(hit.fire||0)+8);
+ if(!hit.npc)hit.leak=Math.min(100,(hit.leak||0)+1);
+ if(raked){if(hit.reload){hit.reload.port=Math.max(hit.reload.port,w.time+3);hit.reload.starboard=Math.max(hit.reload.starboard,w.time+3);}}
+ hit.hull=Math.max(0,hit.hull-damage);if(hit.npc&&from&&!from.npc){hit.provokedBy=from.id;hit.provokedAt=w.time;}
+ addFx(w,{kind:raked?'rake':'hit',by:shot.by,target:hit.id,x:shot.tx,z:shot.tz,amount:Math.round(damage)});
+ if(from&&!from.npc){from.combo=w.time-(from.comboAt||-99)<6?(from.combo||0)+1:1;from.comboAt=w.time;if(raked&&w.time-(from.lastRakeLog||-99)>6){from.lastRakeLog=w.time;log(from,w.time,'Little Fuse','Raked her end to end! Her guns are in a muddle.','combat');}}
+ if(!hit.npc&&from&&from.npc&&w.time-(hit.lastHitLog||-99)>5){hit.lastHitLog=w.time;log(hit,w.time,'Little Fuse',['Incoming! They’ve scratched the bloody paint!','Hit below the rail! Pumps, please!','That one went through the galley. Lunch is cancelled.'][Math.floor(random*3)%3],'combat');}
+ if(hit.hull<=0)sunk(w,from,hit,random);
+}
+function sunk(w,by,v,random){
+ addFx(w,{kind:'sink',by:by?by.id:'',target:v.id,x:v.x,z:v.z});
+ if(v.npc){v.respawn=w.time+100;v.ai='patrol';v.aim=null;spawnLoot(w,v,random);}
+ if(by&&!by.npc){
+  by.kills++;by.reputation+=12;xp(by,65);
+  by.streak=w.time-(by.streakAt||-999)<150?Math.min(4,(by.streak||0)+1):1;by.streakAt=w.time;
+  var bounty=Math.round(60*(1+.25*(by.streak-1)));by.gold+=bounty;
+  log(by,w.time,'Mara',(by.streak>1?'Bounty streak ×'+by.streak+'! ':'')+v.name+' is going down. +'+bounty+' gold, and her cargo is floating free.','reward');
+ }
+ if(!v.npc)recoverShip(w,v);
+}
+var LOOT=[{kind:'gold',amount:45,text:'a strongbox'},{kind:'ammo',amount:8,text:'a keg of shot'},{kind:'timber',amount:10,text:'good timber'},{kind:'cargo',amount:4,text:'a bale of spice'},{kind:'gold',amount:30,text:'a captain’s purse'}];
+function spawnLoot(w,v,random){
+ var n=3+(v.temper==='runner'?2:0);
+ for(var i=0;i<n;i++){var l=LOOT[(i+Math.floor(random*5))%LOOT.length],a=i/n*Math.PI*2+random;
+  w.loot.push({id:++w.fxSeq,kind:l.kind,amount:l.amount*(v.temper==='runner'?1.5:1)|0,text:l.text,x:v.x+Math.sin(a)*1.4,z:v.z+Math.cos(a)*1.4,until:w.time+90});}
+ if(w.loot.length>30)w.loot.splice(0,w.loot.length-30);
+}
+function collectLoot(w,s){
+ for(var i=w.loot.length-1;i>=0;i--){var l=w.loot[i];if(w.time>l.until){w.loot.splice(i,1);continue;}
+  if(s.away||distance(s,l)>1.7)continue;
+  if(l.kind==='cargo'&&usedHold(s)+l.amount>holdSize(s))continue;
+  s[l.kind]=(s[l.kind]||0)+l.amount;w.loot.splice(i,1);addFx(w,{kind:'loot',by:s.id,x:l.x,z:l.z,amount:l.amount,item:l.kind});
+  log(s,w.time,'Pip','Fished up '+l.text+'! +'+l.amount+' '+(l.kind==='ammo'?'shot':l.kind==='cargo'?'spice':l.kind)+'.','reward');}
+}
+function stockRacks(w,s,dt){
+ /* Gunners carry shot from the hold to the racks: one volley's worth each
+    four seconds per gunner, to the emptier side, never more than is aboard. */
+ var g=gunCrew(s).length;if(!g){s.stocking=0;return;}
+ s.stocking=(s.stocking||0)+dt*g/4;
+ while(s.stocking>=1){s.stocking-=1;var side=s.racks.port<=s.racks.starboard?'port':'starboard';if(s.racks[side]>=3||(s.racks.port+s.racks.starboard+1)*2>s.ammo){s.stocking=0;break;}s.racks[side]++;}
+}
+function steerTowards(e,desired,turn,dt){var diff=Math.atan2(Math.sin(desired-e.heading),Math.cos(desired-e.heading));e.heading+=clamp(diff,-turn*dt,turn*dt);return Math.abs(diff);}
+function raiderTick(w,e,r,dt,random){
+ var t=TEMPERS[e.temper]||TEMPERS.gunner,oldX=e.x,oldZ=e.z;
+ if(e.hull<=0){if(w.time>=e.respawn){e.hull=e.maxHull;e.rigDamage=0;e.shock=0;e.boardedBy='';e.x=e.homeX;e.z=e.homeZ;e.ai='patrol';e.aim=null;}e.vx=0;e.vz=0;return;}
+ if(e.boardedBy){e.vx=0;e.vz=0;e.aim=null;return;}
+ /* Raiders prey on ships under way within 15 (anchored ships only within 9;
+    runners only fight back), keep after a chosen prey to 22, and always answer
+    a captain who shot at them in the last minute, from up to 30. */
+ var keys=Object.keys(w.ships),prey=null,best=99;
+ for(var k=0;k<keys.length;k++){var s=w.ships[keys[k]],d=distance(s,e),provoked=e.provokedBy===s.id&&w.time-(e.provokedAt||-999)<60;
+  if(harbourSafe(s)||s.hull<=0||d>=best)continue;if(provoked?d<30:(e.ai==='engage'||e.ai==='flee')&&e.lastPrey===s.id?d<22:(e.temper!=='runner'&&d<(s.anchored?9:15))){best=d;prey=s;}}
+ if(prey)e.lastPrey=prey.id;
+ if(e.ai!=='flee'&&e.hull<e.maxHull*t.flee&&prey){e.ai='flee';var victim=prey;if(w.time-(e.lastFleeLog||-99)>30){e.lastFleeLog=w.time;log(victim,w.time,'Pip',e.name+' is running! Chase her down or let her limp off.','combat');}}
+ if(e.ai==='flee'&&(!prey||best>22)){e.ai='patrol';}
+ if(e.ai!=='flee')e.ai=prey?'engage':'patrol';
+ var desired=e.heading,speed=t.speed*(1-(e.rigDamage||0)/100),throttle=1;
+ if(e.ai==='patrol'){desired=Math.atan2(e.homeX+Math.sin(w.time*.05+r)*2.5-e.x,e.homeZ+Math.cos(w.time*.04+r)*2.5-e.z);throttle=Math.hypot(e.homeX-e.x,e.homeZ-e.z)>4?.8:.4;}
+ else{
+  var b=Math.atan2(prey.x-e.x,prey.z-e.z);
+  if(e.ai==='flee'){desired=b+Math.PI;throttle=1.15;if(e.hull<e.maxHull*.6)e.hull=Math.min(e.maxHull*.6,e.hull+dt*.4*(best>18?1:0));}
+  else{
+   var sideSign=Math.sin(b-e.heading)>=0?1:-1;
+   if(best>t.range+2)desired=b-sideSign*.45;
+   else if(best<t.range-2)desired=b-sideSign*(Math.PI/2+.55);
+   else{desired=b-sideSign*Math.PI/2;throttle=.75;}
+  }
+ }
+ var shore=near(e);if(shore&&distance(e,shore)<5.5)desired=Math.atan2(e.x-shore.x,e.z-shore.z);
+ if(Math.abs(e.x)>60||Math.abs(e.z)>60)desired=Math.atan2(-e.x,-e.z);
+ steerTowards(e,desired,t.turn*(e.ai==='patrol'?.6:1),dt);
+ e.x=clamp(e.x+Math.sin(e.heading)*speed*throttle*dt,-65,65);e.z=clamp(e.z+Math.cos(e.heading)*speed*throttle*dt,-65,65);
+ e.vx=(e.x-oldX)/Math.max(.001,dt);e.vz=(e.z-oldZ)/Math.max(.001,dt);
+ /* Run out the guns, then fire if the target is still in the arc. */
+ if(e.ai!=='engage'||!prey){e.aim=null;return;}
+ if(e.aim){
+  var target=w.ships[e.aim.target];
+  if(w.time<e.aim.until)return;
+  if(target&&shootable(w,target)&&distance(e,target)<RANGE&&abeam(e,target)>.35&&batterySide(e,target)===e.aim.side){
+   var ammo=e.temper==='brawler'&&distance(e,target)<9?'grape':t.ammo;
+   launch(w,e,e.aim.side,{x:e.aim.x,z:e.aim.z},ammo,t.ball*(1+(e.maxHull-90)/300),.45+distance(e,target)*.05,rng(random,w.time*17+r));
+   e.reload[e.aim.side]=w.time+t.reload;e.lastShot=w.time;e.lastTarget=target.id;
+  }else if(target&&w.time-(target.lastDodgeLog||-99)>12){target.lastDodgeLog=w.time;log(target,w.time,'Brisk','Ha! '+e.name+' lost her angle. Keep turning!','combat');}
+  e.aim=null;return;
+ }
+ if(best<16&&abeam(e,prey)>.5){var side=batterySide(e,prey);if(w.time>=e.reload[side]){var lay=aimPoint(e,prey,1),v=velocityOf(prey);e.aim={side:side,target:prey.id,until:w.time+1.6,x:lay.x+v.x*1.6,z:lay.z+v.z*1.6};addFx(w,{kind:'runout',by:e.id,side:side,target:prey.id,x:e.x,z:e.z});}}
+}
+function combatTick(w,dt,random){
+ Object.keys(w.ships).forEach(function(id){var s=w.ships[id];s.vx=s.px===undefined||dt<=0?0:(s.x-s.px)/dt;s.vz=s.pz===undefined||dt<=0?0:(s.z-s.pz)/dt;s.px=s.x;s.pz=s.z;stockRacks(w,s,dt);collectLoot(w,s);});
+ for(var i=w.shots.length-1;i>=0;i--){if(w.time>=w.shots[i].lands){var shot=w.shots.splice(i,1)[0];landShot(w,shot,rng(random,shot.id)());}}
+ for(var r=0;r<w.raiders.length;r++)raiderTick(w,w.raiders[r],r,dt,random);
+ while(w.fx.length&&w.time-w.fx[0].at>6)w.fx.shift();
+}
+function migrateCombat(w){
+ if(!w.shots)w.shots=[];if(!w.fx)w.fx=[];if(!w.loot)w.loot=[];if(!w.fxSeq)w.fxSeq=0;
+ w.raiders.forEach(function(e){if(!e.temper)e.temper=RAIDER_TEMPERS[e.id]||'gunner';if(!e.reload)e.reload={port:0,starboard:0};if(!e.ai)e.ai='patrol';if(e.aim===undefined)e.aim=null;});
+ Object.keys(w.ships).forEach(function(id){var s=w.ships[id];if(!s.reload)s.reload={port:0,starboard:0};if(!s.racks)s.racks={port:1,starboard:1};});
 }
 /* ---- Shipwright's workshop: crew-designed runtime mods paid in Plucks ----
    Designs are data, never code: every field is an index into the authored tables
@@ -203,7 +367,10 @@ var MOD_KINDS={
  hull:{item:'mod.hull',price:10,label:'Hull paint',slot:'ship',patterns:['plain','band','chequer','gilded'],noun:['Livery','Paint','Strakes','Trim']},
  flag:{item:'mod.flag',price:5,label:'Colours',slot:'ship',patterns:['plain','split','border'],noun:['Colours','Jack','Pennant','Ensign']},
  clothing:{item:'mod.clothing',price:4,label:'Crew clothing',slot:'crew',patterns:['coat','sash','bandana','tricorn','waistcoat'],noun:['Coat','Sash','Bandana','Tricorn','Waistcoat']},
- weapon:{item:'mod.weapon',price:6,label:'Crew weapon',slot:'crew',patterns:['cutlass','axe','flintlock','harpoon','pin'],noun:['Cutlass','Boarding axe','Flintlock','Harpoon','Belaying pin']}
+ weapon:{item:'mod.weapon',price:6,label:'Crew weapon',slot:'crew',patterns:['cutlass','axe','flintlock','harpoon','pin'],noun:['Cutlass','Boarding axe','Flintlock','Harpoon','Belaying pin']},
+ /* A makeover: primary is hair colour, pattern the hairstyle, and the emblem slot
+    picks a face feature (same eight-entry range as MOD_EMBLEMS) in the secondary colour. */
+ look:{item:'mod.look',price:5,label:'Crew makeover',slot:'crew',patterns:['crop','braids','topknot','mane','bald pate'],noun:['Crop','Braids','Topknot','Mane','Shine'],features:['clean face','eyepatch','gold earring','duelling scar','full beard','moustache','goggles','tattoo']}
 };
 var MOD_PALETTE=[
  {name:'Crimson',hex:'#a8322d'},{name:'Saffron',hex:'#d9a23a'},{name:'Bone',hex:'#efe2bd'},{name:'Midnight',hex:'#1f2c44'},
@@ -214,11 +381,11 @@ var MOD_EMBLEMS=['none','skull','star','compass','anchor','kraken','sun','moon']
 var MOD_ADJ=['Brazen','Crooked','Lucky','Sullen','Dashing','Thrifty','Ominous','Jolly','Salted','Quarrelsome','Gilded','Ragged'];
 /* Each sailor has authored taste: favourite colours, emblems and the work they volunteer for. */
 var MOD_TASTE={
- morrow:{colors:[0,5,8],emblems:[1,2],kinds:['flag','sail','clothing'],line:'If they must fear us, they may as well admire the tailoring.'},
+ morrow:{colors:[0,5,8],emblems:[1,2],kinds:['flag','sail','clothing','look'],line:'If they must fear us, they may as well admire the tailoring.'},
  brisk:{colors:[3,8,2],emblems:[4,3],kinds:['sail','hull'],line:'Proper canvas. Regulation stitches. Mostly.'},
- fuse:{colors:[0,1,11],emblems:[6,1],kinds:['weapon','flag'],line:'What if it was louder? And red? And louder?'},
+ fuse:{colors:[0,1,11],emblems:[6,1],kinds:['weapon','flag','look'],line:'What if it was louder? And red? And louder?'},
  peg:{colors:[6,10,5],emblems:[4,0],kinds:['hull','weapon'],line:'Good paint keeps the worm out. Pretty paint keeps the captain quiet.'},
- tallow:{colors:[7,11,2],emblems:[7,6],kinds:['clothing','flag'],line:'A sailor in a decent coat eats slower. Less soup gets spilled.'},
+ tallow:{colors:[7,11,2],emblems:[7,6],kinds:['clothing','flag','look'],line:'A sailor in a decent coat eats slower. Less soup gets spilled.'},
  pip:{colors:[4,3,9],emblems:[3,2],kinds:['sail','flag','clothing'],line:'I drew it on the chart first. To scale.'}
 };
 var MOD_LIMITS={designs:12,briefWait:20,cooldown:45,volunteerEvery:240,orderWindow:960,ordersHeld:12};
@@ -242,6 +409,7 @@ function modSpec(kind,spec){
 function modName(kind,spec){var K=MOD_KINDS[kind];return 'The '+MOD_ADJ[spec.adj]+' '+MOD_PALETTE[spec.primary].name+' '+K.noun[spec.noun];}
 function modDescribe(kind,spec){
  var K=MOD_KINDS[kind],e=MOD_EMBLEMS[spec.emblem];
+ if(K.features)return MOD_PALETTE[spec.primary].name.toLowerCase()+' '+K.patterns[spec.pattern]+' and '+(spec.emblem?MOD_PALETTE[spec.secondary].name.toLowerCase()+' '+K.features[spec.emblem]:'a clean face');
  return MOD_PALETTE[spec.primary].name.toLowerCase()+' '+K.patterns[spec.pattern]+' with '+MOD_PALETTE[spec.secondary].name.toLowerCase()+(e==='none'?' trim':' '+e);
 }
 /* Deterministic per-call generator from the authority's random draw. */
@@ -367,7 +535,7 @@ function tick(w,dt,random){
   var s=w.ships[keys[k]];s.clock=w.time;workshopTick(w,s,rng(random,w.time+k));if(s.controlMode==='manual'&&w.time>=(s.steerUntil||0)&&s.steerThrottle){s.steerThrottle=0;s.anchored=true;}
   if(s.boarding&&w.time>=s.boarding.finishAt)finishBoarding(w,s,random);
   if(s.controlMode==='manual'&&!s.boarding&&!s.away&&w.time<(s.steerUntil||0)&&!s.anchored){
-   s.heading+=(s.steerTurn||0)*dt*.6;var oldX=s.x,oldZ=s.z,wind=Math.sin(w.time/240),tail=.75+.25*Math.cos(s.heading-wind),speed=1.7*(1+s.upgrades.sails*.1)*(1-s.rigDamage/120)*tail*(.85+.15*windKnots(w)/12);
+   s.heading-=(s.steerTurn||0)*dt*.6;var oldX=s.x,oldZ=s.z,wind=Math.sin(w.time/240),tail=.75+.25*Math.cos(s.heading-wind),speed=1.7*(1+s.upgrades.sails*.1)*(1-s.rigDamage/120)*tail*(.85+.15*windKnots(w)/12);
    s.x=clamp(s.x+Math.sin(s.heading)*speed*dt*(s.steerThrottle||0),-65,65);s.z=clamp(s.z+Math.cos(s.heading)*speed*dt*(s.steerThrottle||0),-65,65);
    var shore=near(s);if(shore&&shore.kind!=='wreck'&&distance(s,shore)<4.8){s.x=oldX;s.z=oldZ;s.steerThrottle=0;s.anchored=true;if(w.time-(s.lastGrounding===undefined?-999:s.lastGrounding)>10){s.lastGrounding=w.time;s.hull=Math.max(1,s.hull-1);log(s,w.time,'Pip','Mind the reef! Anchor down before we become scenery.','danger');}}if(shore&&distance(s,shore)<6.65&&s.visited.indexOf(shore.id)<0){s.visited.push(shore.id);s.reputation+=3;xp(s,15);log(s,w.time,'Pip','Charted '+shore.name+' from the helm.','travel');}
   }
@@ -381,11 +549,11 @@ function tick(w,dt,random){
   if(s.fire>0||s.leak>0)s.hull=Math.max(1,s.hull-dt*(s.fire*.002+s.leak*.001/(1+s.upgrades.pump)));
   if(Math.floor(w.time/8)!==Math.floor((w.time-dt)/8))coordinate(w,s);
   if(s.away&&w.time>=s.away.returnAt)finishAway(w,s,random);
-  if(s.standing.autoFire&&s.directive==='hunt'&&Math.floor(w.time/9)!==Math.floor((w.time-dt)/9)){for(var r=0;r<w.raiders.length;r++)if(w.raiders[r].hull>0&&distance(s,w.raiders[r])<17){fire(w,s,w.raiders[r].id);break;}}
+  if(s.standing.autoFire&&s.directive==='hunt'&&Math.floor(w.time/3)!==Math.floor((w.time-dt)/3)){for(var r=0;r<w.raiders.length;r++)if(w.raiders[r].hull>0&&distance(s,w.raiders[r])<17){fire(w,s,w.raiders[r].id);break;}}
   if(w.weather!=='Fair winds'&&!s.anchored)s.hull=Math.max(1,s.hull-.06*dt);
   mission(w,s);progress(w,s);
  }
- for(var r=0;r<w.raiders.length;r++){var e=w.raiders[r];if(e.hull<=0){if(w.time>=e.respawn){e.hull=e.maxHull;e.rigDamage=0;e.shock=0;e.boardedBy='';e.x=e.homeX;e.z=e.homeZ;}continue;}e.x+=Math.sin(w.time*.02+r)*dt*.12*(1-(e.rigDamage||0)/100);e.z+=Math.cos(w.time*.025+r)*dt*.12;for(var k=0;k<keys.length;k++){var s=w.ships[keys[k]];if(!harbourSafe(s)&&distance(s,e)<14&&w.time-e.lastShot>12){s.hull=Math.max(0,s.hull-5);s.leak=Math.min(100,s.leak+2);if(random<.2)s.fire=Math.min(100,s.fire+8);e.lastShot=w.time;e.lastTarget=s.id;log(s,w.time,'Little Fuse','Incoming! They’ve scratched the bloody paint!','combat');if(s.hull<=0)recoverShip(w,s);}}}
+ combatTick(w,dt,random);
 }
 globalThis.game={
  persistent:true,tickRateHz:4,replays:true,queues:[{key:'free-sea',teams:1,teamSize:8}],
@@ -439,7 +607,7 @@ globalThis.game={
    else if(ids.length!==2||party.length!==2)error='Choose two fit sailors and keep the captain aboard.';
    else{var chance=clamp(.60+(party.some(function(c){return c.id==='brisk'||c.id==='fuse';})?.15:0)+(e.shock||0)/300-(party.some(function(c){return c.fatigue>75;})?.15:0),.2,.95);party.forEach(function(c){c.away=true;});e.boardedBy=s.id;s.boarding={target:e.id,crewIds:ids,chance:chance,finishAt:w.time+12};s.anchored=true;s.destination=null;log(s,w.time,'Brisk','Grapples away. The boarding party returns in 12 seconds.','combat');}
   }
-  else if(m.type==='fire')error=fire(w,s,m.target,m.ammunition);
+  else if(m.type==='fire')error=fire(w,s,typeof m.target==='string'&&m.target?m.target:'',m.ammunition,m.side);
   else if(m.type==='away'){
    var p=near(s);if(!s.anchored||!p||p.kind==='port')error='Anchor within 70 m of an island or wreck.';
    else if(s.away||s.boarding)error='The longboat or boarding party is already away.';

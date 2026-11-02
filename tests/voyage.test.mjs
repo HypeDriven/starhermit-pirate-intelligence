@@ -11,7 +11,8 @@ function voyage(saved){
  command(data,from='captain'){const input=JSON.parse(JSON.stringify(ctx));input.message={from,data};const result=game.onPlayerMessage(input);if(result.ok&&result.sessionState)ctx.sessionState=result.sessionState;return result;},
  tick(n=1){for(let i=0;i<n;i++){ctx.now+=1000;ctx.sessionState=game.onTick(JSON.parse(JSON.stringify(ctx))).sessionState;}},
  port(id='saltwick'){const p=scope.PLACES.find(p=>p.id===id);this.ship.x=p.x;this.ship.z=p.z;this.ship.anchored=true;this.ship.destination=null;},
- snapshot(){return JSON.parse(JSON.stringify(ctx.sessionState));}
+ snapshot(){return JSON.parse(JSON.stringify(ctx.sessionState));},
+ scope
  };
 }
 test('old snapshots migrate without losing cargo, money, orders or crew memories',()=>{
@@ -101,14 +102,17 @@ test('the expanded sea has nine destinations, four ports and a persistent raider
 });
 test('manual helm uses bounded inputs, wind, dead-man timeout and world bounds',()=>{
  const f=voyage();assert.equal(f.command({type:'helm-input',turn:0,throttle:1}).ok,false);assert.equal(f.command({type:'helm-mode',mode:'manual'}).ok,true);
- assert.equal(f.command({type:'helm-input',turn:999,throttle:1}).ok,false);const z=f.ship.z;f.command({type:'helm-input',turn:0,throttle:1});f.tick();assert.ok(f.ship.z>z);f.tick(2);const stopped=f.ship.z;f.tick(5);assert.equal(f.ship.z,stopped);assert.equal(f.ship.anchored,true);
+ assert.equal(f.command({type:'helm-input',turn:999,throttle:1}).ok,false);const z=f.ship.z;f.command({type:'helm-input',turn:0,throttle:1});f.tick();assert.ok(f.ship.z>z);
+ {const h=f.ship.heading;f.command({type:'helm-input',turn:1,throttle:1});f.tick();assert.ok(f.ship.heading<h,'the starboard key turns clockwise on the compass');}f.tick(2);const stopped=f.ship.z;f.tick(5);assert.equal(f.ship.z,stopped);assert.equal(f.ship.anchored,true);
  f.ship.x=65;f.ship.heading=Math.PI/2;f.command({type:'helm-input',turn:0,throttle:1});f.tick();assert.equal(f.ship.x,65);
  const loaded=voyage(f.snapshot());assert.equal(loaded.ship.steerThrottle,0);assert.equal(loaded.ship.anchored,true);
 });
 test('manual broadside arcs and special ammunition affect real target state',()=>{
  const f=voyage();f.ship.x=8;f.ship.z=-3;f.command({type:'helm-mode',mode:'manual'});
- assert.equal(f.command({type:'fire',target:'redwake'}).ok,false);f.ship.heading=Math.PI/2;assert.equal(f.command({type:'fire',target:'redwake',ammunition:'chain'}).ok,true);assert.equal(f.world.raiders[0].rigDamage,25);
- f.tick(8);assert.equal(f.command({type:'fire',target:'redwake',ammunition:'grape'}).ok,true);assert.equal(f.world.raiders[0].shock,20);
+ const e=f.world.raiders[0];e.boardedBy='hold-still';
+ assert.equal(f.command({type:'fire',target:'redwake'}).ok,false);f.ship.heading=Math.PI/2;assert.equal(f.command({type:'fire',target:'redwake',ammunition:'chain'}).ok,true);
+ assert.equal(f.world.shots.length,3);assert.equal(f.world.raiders[0].rigDamage||0,0);f.tick(2);assert.equal(f.world.shots.length,0);assert.ok(f.world.raiders[0].rigDamage>0);
+ f.tick(8);assert.equal(f.command({type:'fire',target:'redwake',ammunition:'grape'}).ok,true);f.tick(2);assert.ok(f.world.raiders[0].shock>0);
 });
 test('boarding locks a weakened raider, returns crew and awards one prize',()=>{
  const f=voyage();f.ctx.random=.1;const target=f.world.raiders[0];f.ship.x=target.x;f.ship.z=target.z+3;
@@ -150,7 +154,7 @@ test('scarcity changes cannot create same-port buy/sell arbitrage',()=>{
 test('sinking recalls away crew and clears damage and stale helm input',()=>{
  const f=voyage();const victim=f.world.ships.stranger;victim.x=f.ship.x+2;victim.z=f.ship.z;victim.hull=1;victim.fire=30;victim.leak=20;victim.rigDamage=40;victim.controlMode='manual';victim.steerThrottle=1;victim.steerUntil=100;
  victim.away={crewIds:['peg','pip'],returnAt:100,job:'timber',place:'mossjaw'};victim.crew[3].away=true;victim.crew[5].away=true;
- assert.equal(f.command({type:'fire',target:'stranger'}).ok,true);const recovered=f.world.ships.stranger;assert.equal(recovered.away,null);assert.equal(recovered.fire,0);assert.equal(recovered.leak,0);assert.equal(recovered.rigDamage,0);assert.equal(recovered.steerThrottle,0);assert.ok(recovered.crew.every(c=>!c.away));
+ assert.equal(f.command({type:'fire',target:'stranger'}).ok,true);f.tick(2);const recovered=f.world.ships.stranger;assert.equal(recovered.away,null);assert.equal(recovered.fire,0);assert.equal(recovered.leak,0);assert.equal(recovered.rigDamage,0);assert.equal(recovered.steerThrottle,0);assert.ok(recovered.crew.every(c=>!c.away));
 });
 test('anchored ports protect trading captains from raiders and player fire',()=>{
  const f=voyage();f.port();const enemy=f.world.raiders[0];enemy.x=f.ship.x+2;enemy.z=f.ship.z;enemy.homeX=enemy.x;enemy.homeZ=enemy.z;enemy.lastShot=-999;
@@ -163,4 +167,52 @@ test('recent player fire warrants emergency duties while peaceful neighbours do 
  assert.equal(f.command({type:'fire',target:'captain'},'stranger').ok,true);
  assert.equal(f.command({type:'order',crewId:'tallow',task:'guns',issuer:'brisk',override:true}).ok,true);
  assert.equal(f.command({type:'sync'}).broadcast[0].data.myShip.emergency,true);
+});
+
+function duel(){
+ const f=voyage(),e=f.world.raiders[0];e.boardedBy='hold-still';f.ship.anchored=false;f.ship.x=e.x;f.ship.z=e.z+4;f.ship.heading=Math.PI/2;e.heading=0;
+ return {f,e};
+}
+test('each battery reloads on its own and balls resolve only when they land',()=>{
+ const {f,e}=duel(),hull=e.hull;
+ assert.equal(f.command({type:'fire',target:e.id,side:'starboard'}).ok,false,'target is on the port side');
+ assert.equal(f.command({type:'fire',target:e.id}).ok,true);assert.equal(f.world.shots.length,3);assert.equal(e.hull,hull);
+ assert.match(f.command({type:'fire',target:e.id}).error,/reloading/);
+ f.ship.heading=-Math.PI/2;assert.equal(f.command({type:'fire',target:e.id}).ok,true,'the other battery is loaded');
+ f.tick(2);assert.equal(f.world.shots.length,0);assert.ok(f.world.raiders[0].hull<hull);assert.ok(f.world.fx.some(x=>x.kind==='hit'||x.kind==='rake'));
+});
+test('a target that moves before the balls land is missed',()=>{
+ const {f,e}=duel(),hull=e.hull;
+ assert.equal(f.command({type:'fire',target:e.id}).ok,true);f.world.raiders[0].x+=6;f.tick(2);
+ assert.equal(f.world.raiders[0].hull,hull);assert.equal(f.world.fx.filter(x=>x.kind==='splash').length,3);
+});
+test('raking fire along the length does extra damage and fouls the guns',()=>{
+ const {f,e}=duel(),scope=f.scope,w=f.world,r=w.raiders[0];
+ const broadside={id:900,by:'captain',side:'port',ammo:'round',x:r.x+5,z:r.z,tx:r.x,tz:r.z,fired:0,lands:0,damage:10};
+ const rake={...broadside,id:901,x:r.x,z:r.z-5};
+ scope.landShot(w,broadside,.5);const afterBroadside=r.hull;scope.landShot(w,rake,.5);
+ assert.equal(Math.round(r.maxHull-afterBroadside),10);assert.equal(Math.round(afterBroadside-r.hull),17);assert.ok(r.reload.port>w.time);
+});
+test('raiders run out their guns before firing, and the volley follows the warning',()=>{
+ const f=voyage(),e=f.world.raiders[0];f.ship.anchored=false;f.ship.x=e.x+8;f.ship.z=e.z;e.heading=0;e.reload={port:0,starboard:0};
+ let warned=false;for(let i=0;i<6&&!f.world.shots.length;i++){f.tick(1);if(f.world.fx.some(x=>x.kind==='runout'))warned=true;}
+ assert.ok(warned,'a run-out warning precedes the shot');assert.ok(f.world.shots.length>0||f.world.fx.some(x=>x.kind==='volley'));
+});
+test('a sunk raider leaves floating loot that the first ship through collects',()=>{
+ const {f,e}=duel(),w=f.world,r=w.raiders[0];r.hull=1;
+ f.scope.landShot(w,{id:950,by:'captain',side:'port',ammo:'round',x:r.x+5,z:r.z,tx:r.x,tz:r.z,fired:0,lands:0,damage:10},.3);
+ assert.equal(r.hull,0);assert.ok(w.loot.length>=3);const gold=f.ship.gold,loot=w.loot[0];
+ f.ship.x=loot.x;f.ship.z=loot.z;f.tick(1);assert.ok(f.world.loot.length<w.loot.length);assert.ok(f.ship.gold>=gold);
+});
+test('gunners stock the racks from the hold; an empty rack slows the reload',()=>{
+ const {f,e}=duel();const s=f.ship;s.racks={port:0,starboard:0};
+ assert.equal(f.command({type:'fire',target:e.id}).ok,true);const slow=f.ship.reload.port-f.world.time;
+ f.tick(30);assert.ok(f.ship.racks.port>0&&f.ship.racks.starboard>0);
+ assert.equal(f.command({type:'fire',target:e.id}).ok,true);const quick=f.ship.reload.port-f.world.time;
+ assert.ok(slow>quick+3,'empty racks cost time: '+slow+' vs '+quick);
+});
+
+test('raiders leave a ship at the starting anchorage alone but answer fire',()=>{
+ const f=voyage(),e=f.world.raiders[0];f.tick(20);assert.equal(f.world.raiders[0].ai,'patrol');
+ f.world.raiders[0].provokedBy='captain';f.world.raiders[0].provokedAt=f.world.time;f.tick(1);assert.equal(f.world.raiders[0].ai,'engage');
 });

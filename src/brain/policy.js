@@ -27,7 +27,8 @@ export function nextWorkAt(end,busy,duty){return duty>0?end+busy*(1/duty-1):Infi
 // Workshop sketches: the model only picks one of the authority's candidates.
 export function describeDesign(tables,kind,spec){
  const K=tables?.kinds?.[kind],p=tables?.palette;if(!K||!p)return 'sketch';
- const e=tables.emblems[spec.emblem];
+ const e=K.features?K.features[spec.emblem]:tables.emblems[spec.emblem];
+ if(K.features)return p[spec.primary].name.toLowerCase()+' '+K.patterns[spec.pattern]+', '+(spec.emblem?p[spec.secondary].name.toLowerCase()+' '+e:e);
  return p[spec.primary].name.toLowerCase()+' '+K.patterns[spec.pattern]+', '+p[spec.secondary].name.toLowerCase()+(e==='none'?' trim':' '+e);
 }
 export function designRequest(state,crew,brief){
