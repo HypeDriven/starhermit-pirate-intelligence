@@ -12,7 +12,7 @@
     "metadataSource": "manual",
     "createdAt": "2026-10-28T10:06:59.596865+00:00",
     "coverArtSource": "manifest",
-    "coverArtUpdatedAt": "2026-10-31T12:23:12.513908+00:00",
+    "coverArtUpdatedAt": "2026-11-04T14:37:00.067794+00:00",
     "submittedByUserId": "2712e04e-461b-4d23-81ae-e40b429128a8",
     "submittedByUsername": "starhermit",
     "hosting": {
@@ -22,16 +22,16 @@
       "pinnedCommitSha": null,
       "deployedCommitSha": null,
       "deployError": null,
-      "deployedAt": "2026-11-02T12:47:02.241607+00:00",
+      "deployedAt": "2026-11-04T14:37:00.039506+00:00",
       "externalLaunchUrl": null,
-      "engineVersion": "1.32.0",
+      "engineVersion": "1.36.0",
       "deployWarning": null
     },
     "description": "Six questionable souls. One small ship. Your orders.\n\nYou are the captain of a patched-up sloop on the Quarrelsome Sea. Set a standing directive (make your fortune, hunt raiders, play it safe) and your crew decide how to get there. Every sailor has a role, a temper and habits of their own, and they learn from the orders you give them.\n\n- Chart a course between ports, islands and wrecks, trade spice, resupply and refit your hull.\n- Send two of the crew ashore by longboat for timber, buried treasure or salvage, and manage the ship short-handed while they are gone.\n- Take on contracts, bring rival ships within range and trade broadsides.\n- Keep the chain of command: off-role orders need an officer's warrant and real danger.\n\nPlay local practice straight away, or sign in to create a persistent shared sea and invite other captains to join it with a room code.",
-    "releaseNotesUpdatedAt": "2026-10-30T13:39:53.109497+00:00",
+    "releaseNotesUpdatedAt": "2026-11-02T12:47:02.242053+00:00",
     "serverRuntime": "script",
     "bannerArtSource": "manifest",
-    "bannerArtUpdatedAt": "2026-10-31T12:23:12.513908+00:00",
+    "bannerArtUpdatedAt": "2026-11-04T14:37:00.067794+00:00",
     "tags": [
       "Pirates",
       "Simulation",
@@ -42,19 +42,19 @@
     "links": [],
     "isDisabled": false
   },
-  "publishedAt": "2026-11-02T12:47:02.241607+00:00",
-  "sourceCommit": "107074a6f28ba0d0baab9ce97dee74a85051aefd",
-  "bytesReceived": 11913809,
-  "archiveSha256": "f15f1056b70c6bad188b139740a54f68bf17f7b972748dd16152c7ce2e9c08b4",
+  "publishedAt": "2026-11-04T14:37:00.164Z",
+  "sourceCommit": "8597aab7403ad8e57615140786d99f33d601b674",
+  "bytesReceived": 11091539,
+  "archiveSha256": "e9dd0b5ffcc5c07aee99546b035ab5528a90cd11d7b642f87722d49f453cc37a",
   "result": {
-    "bytesReceived": 11913809,
     "clientPublished": true,
-    "deployWarning": null,
-    "engineVersion": "1.32.0",
-    "filesRemoved": 0,
+    "serverImageLoaded": false,
     "imageDigest": null,
+    "bytesReceived": 11091539,
     "mode": "replace",
-    "serverImageLoaded": false
+    "filesRemoved": 0,
+    "engineVersion": "1.36.0",
+    "deployWarning": null
   },
   "remoteObjects": {
     "baseUrl": "https://546dae33-aa48-4775-bff9-c0c48deb759f.starhermit.com/_remote/",
