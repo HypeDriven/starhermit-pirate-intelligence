@@ -18,7 +18,7 @@ import {buildIslands,animateIslands,jobSite,jobSites,siteLabel} from './islands.
 import {createSeaLife,animateSeaLife} from './sealife.js';
 // Other captains' crews are private; their decks show a plausible watch.
 const PEER_CREW={crew:[{task:'helm'},{task:'lookout'},{task:'guns'}]},NPC_CREW={crew:[{task:'helm'},{task:'lookout'},{task:'guns'}]};
-import {applyLook,box,sphere,mat,crewDoll,makeLongboat,shipModel,createOcean,setShoals,animateEnvironment,animateShip,burst,setWakes} from './visuals.js';
+import {applyLook,box,mat,crewDoll,makeLongboat,shipModel,createOcean,setShoals,animateEnvironment,animateShip,setWakes} from './visuals.js';
 import { BrowserBrain } from './brain/browser.js';
 import { LOADS, loadSetting } from './brain/policy.js';
 import { METRES, bearing, compass, clock, daylight, windSpeed, smoothPose, boatProgress } from './navigation.js';
@@ -65,10 +65,9 @@ const places:any[]=[
 ];
 const JOB_TEXT:any={timber:'Chop timber · 25–45 wood',treasure:'Seek treasure · 75 safe, up to 200 risky',salvage:'Salvage wreck · shot and timber',forage:'Hunt & gather · provisions and spirit',herbs:'Gather herbs · medicine crates, eases injuries',powder:'Dig saltpetre · 14–30 shot',ruins:'Explore ruins · renown, relics and gold'};
 buildIslands(places);const {sea}=createOcean(places);createSeaLife();
-const ships:any={},shots:any[]=[];let sceneSky='';
+const ships:any={};let sceneSky='';
 let longboat:any=null,shoreParty:any=null,battleFrame=0;const battleAim={x:0,z:0};let snapshotAt=0,frameDt=1/60,cameraYaw=Math.atan2(30,39),cameraRange=1,orbitYaw=0,orbitPitch=0,orbiting:{x:number,y:number,moved:number}|null=null;const poses:any={};
 function buildShip(id:string,enemy=false){const obj=shipModel(enemy);scene.add(obj.g);ships[id]=obj;return obj;}
-const taskPos:any={helm:[0,-2.4],lookout:[.8,2.3],guns:[-1.0,0],repair:[.9,-.7],cook:[-.7,-1.7],forage:[.8,1.3],rest:[-.7,-2.4]};
 function flash(text:string){notice=text;noticeTime=7;}
 function command(c:any){if(!channel||!channel.sendCommand(c))flash('The channel is busy. Try again in a moment.');}
 function got(data:any){if(!data)return;if(data.type==='snapshot'&&!online){lastSnapshot=data.world;storage.setJson('practice-world',lastSnapshot);return;}if(data.type!=='state')return;const oldDelegate=state?.myShip?.delegate;for(const event of audioEvents(state,data))cue(event);if(!state&&data.myShip)console.info('Authoritative ship ready: '+data.myShip.crew.length+' crew.');state=data;snapshotAt=elapsed;if(state.myShip&&oldDelegate!==state.myShip.delegate)delegate=state.myShip.delegate||'';}
@@ -96,7 +95,7 @@ function elapsedNow(){return performance.now()/1000;}
 function workshopPanel(s:any){
  const t=state.workshop,k=s.workshop||{designs:[]},names=s.crew.map((c:any)=>c.name.split(' ')[0]);if(!t)return;
  ui.paragraph('Your crew sketch improvements for the ship and each other. Each sailor has their own taste, and their brain picks a favourite sketch. A commission costs Plucks, StarHermit’s currency, and you approve every spend on your StarHermit dashboard. The game can only ask.',dialogWidth,{size:12});
- const note=plucksStatus(online);if(note)ui.paragraph(note,dialogWidth,{size:11,color:C.gold});
+ const note=plucksStatus(online);if(note)ui.style({text:{color:C.gold}}).paragraph(note,dialogWidth,{size:11});
  ui.row('Wallet',()=>{button('Get Plucks on StarHermit',()=>openWallet(),false,!walletReady());},{spacing:6});
  if(k.brief){const c=s.crew.find((x:any)=>x.id===k.brief.crewId);ui.heading((c?.name.split(' ')[0]||'Crew')+' is sketching '+(t.kinds[k.brief.kind]?.label||'').toLowerCase(),{size:16});
   ui.paragraph('Their pick lands in '+Math.max(0,Math.ceil(k.brief.decideBy-state.time))+'s. You may choose for them:',dialogWidth,{size:11});
@@ -114,8 +113,8 @@ function workshopPanel(s:any){
  for(const d of k.designs.slice().reverse()){
   const by=s.crew.find((c:any)=>c.id===d.designer),target=d.targetId?s.crew.find((c:any)=>c.id===d.targetId):null,worn=d.status==='owned'&&(d.targetId?k.outfits?.[d.targetId]?.[d.kind]===d.id:k.look?.[d.kind]===d.id);
   ui.label(d.name+(target?' · for '+target.name.split(' ')[0]:'')+' · '+(worn?'in use':d.status==='owned'?'owned':d.status==='ordered'?'awaiting approval':d.price+' PLK'),{size:13,color:d.status==='owned'?C.green:C.cream});
-  ui.paragraph('By '+(by?.name||'the crew')+': '+d.describe+'.',dialogWidth,{size:11,color:C.muted});
-  const pending=commissions[d.id];if(pending&&d.status!=='owned'&&(d.status==='ordered'||pending.status!=='pending'))ui.paragraph(pending.message,dialogWidth,{size:11,color:C.gold});
+  ui.style({text:{color:C.muted}}).paragraph('By '+(by?.name||'the crew')+': '+d.describe+'.',dialogWidth,{size:11});
+  const pending=commissions[d.id];if(pending&&d.status!=='owned'&&(d.status==='ordered'||pending.status!=='pending'))ui.style({text:{color:C.gold}}).paragraph(pending.message,dialogWidth,{size:11});
   ui.row('Design '+d.id,()=>{
    if(d.status!=='owned')button(preview?.design?.id===d.id&&elapsedNow()<preview.until?'Previewing…':'Preview 30s',()=>{preview={design:d,until:elapsedNow()+30};panel='';});
    if(d.status==='draft'){button('Commission · '+d.price+' PLK',()=>{void commission(d,by?.name.split(' ')[0]||'Crew',command);},true,!plucksReady(online));button('Scrap',()=>command({type:'mod.discard',designId:d.id}));}

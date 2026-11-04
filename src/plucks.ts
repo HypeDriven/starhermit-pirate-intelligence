@@ -45,5 +45,5 @@ function watch(c:Commission,send:(c:any)=>void){
  // The engine pushes status changes; the authority applies the design only
  // when the platform itself hands it the paid order.
  if(typeof api.watch==='function'){let stop:any=null;stop=api.watch(c.orderId,(o:any)=>{if(settle(c,o,send)&&stop)stop();});return;}
- const poll=async()=>{while(c.status==='pending'){await new Promise(r=>setTimeout(r,4000));try{settle(c,await api.getOrder(c.orderId),send);}catch{}}};void poll();
+ const poll=async()=>{while(c.status==='pending'){await new Promise<void>(r=>setTimeout(r,4000));try{settle(c,await api.getOrder(c.orderId),send);}catch{}}};void poll();
 }

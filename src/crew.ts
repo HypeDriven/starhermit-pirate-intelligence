@@ -17,7 +17,7 @@ function cycle(t:number,period:number){return ((t%period)+period)%period;}
 function faceTo(dx:number,dz:number){return Math.atan2(dx,dz);}
 
 /** Where a sailor wants to be right now, from task, time and their slot. */
-function plan(task:string,t:number,i:number,slot:number,deck:number,s:any):Plan{
+function plan(task:string,t:number,i:number,slot:number,deck:number,_s:any):Plan{
  const seed=i*7.3+slot*3.1;
  if(deck===1){ // gun deck cutaway
   if(task==='guns'){const c=cycle(t+seed,9),gun=Math.floor((t+seed)/9)%3,side=slot%2?-1:1;

@@ -49,7 +49,7 @@ function arcMesh(color:string){
 }
 function arcLook(arc:any,color:string,band:number,fill:number){arc.userData.band.material.color.set(color);arc.userData.fill.material.color.set(color);arc.userData.band.material.opacity=band;arc.userData.fill.material.opacity=fill;}
 const ownArcs={port:arcMesh('#a8cea0'),starboard:arcMesh('#a8cea0')};
-ownArcs.starboard.userData.ring.rotation.z=Math.PI;
+(ownArcs.starboard.userData.ring as any).rotation.z=Math.PI;
 const threat:any={};
 
 let lastFx=-1,shake=0;
@@ -61,7 +61,7 @@ export function inBattle(state:any,me:string){
  return state.raiders.some((e:any)=>e.hull>0&&(e.ai==='engage'||e.ai==='flee')&&Math.hypot(e.x-s.x,e.z-s.z)<26)||state.shots?.length>0||state.fx?.some((f:any)=>state.time-f.at<4&&(f.by===me||f.target===me));
 }
 
-export function combatUpdate(state:any,me:string,now:number,dt:number,poses:any,ships:any){
+export function combatUpdate(state:any,me:string,now:number,dt:number,poses:any,_ships:any){
  if(!state)return;const s=state.myShip;
  // Effects: handle each once, and never replay history after a (re)connect.
  const fx=state.fx||[];

@@ -193,7 +193,7 @@ export function animateEnvironment(time:number,dt:number,focus:any){
 }
 /** wind: the direction the wind blows towards (authority convention, like a heading);
     knots: its strength; speed: the ship's way in authority units/s; simulate: near the camera. */
-export function animateShip(obj:any,time:number,moving:boolean,mine:boolean,light:number,env:any={}){
+export function animateShip(obj:any,time:number,_moving:boolean,mine:boolean,light:number,env:any={}){
  obj.light.intensity=mine?(1-light)*9:0;obj.wake.visible=false;
  if(!env.simulate)return;
  // Apparent wind in the ship's frame: true wind minus the ship's own way.
