@@ -1,11 +1,13 @@
 import {scene,Color,Mesh,InstancedMesh,Group,BoxGeometry,CylinderGeometry,SphereGeometry,PlaneGeometry,TorusGeometry,RingGeometry,BufferGeometry,Float32BufferAttribute,MeshStandardMaterial,MeshBasicMaterial,Vector3,Vector4,Matrix4,DoubleSide,PointLight} from 'starhermit:scene';
 import {METRES,SHIP_SCALE} from './navigation.js';
 import {Cloth} from './cloth.js';
+import {cloudUniforms,cloudLighting} from './render/weather.js';
+import {materialKind,maritimeSurface} from './render/materials.js';
 
 // Editable, shared game geometry keeps decks, crew and rigging interactive.
 const cube=new BoxGeometry(1,1,1),ball=new SphereGeometry(1,12,9),pole=new CylinderGeometry(1,1,1,8),torus=new TorusGeometry(1,.10,5,20);
 const palette:any={};
-export function mat(color:string,roughness=.82){if(!palette[color])palette[color]=new MeshStandardMaterial({color,roughness,metalness:['#bda262','#ccad67','#b99b57'].includes(color)?.58:.02});return palette[color];}
+export function mat(color:string,roughness=.82){const key=color+':'+roughness;if(!palette[key]){const kind=materialKind(color);palette[key]=new MeshStandardMaterial({color,roughness:kind===2?.34:roughness,metalness:kind===2?.72:.02,...(kind?{hooks:maritimeSurface(kind)}:{})});}return palette[key];}
 export function mesh(g:any,geometry:any,material:any,x=0,y=0,z=0){const m=new Mesh(geometry,material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;}
 export function box(g:any,x:number,y:number,z:number,w:number,h:number,d:number,color:string){const m=mesh(g,cube,mat(color),x,y,z);m.scale.set(w,h,d);return m;}
 export function sphere(g:any,x:number,y:number,z:number,r:number,color:string){const m=mesh(g,ball,mat(color),x,y,z);m.scale.set(r,r,r);return m;}
@@ -36,7 +38,7 @@ export function boatHull(g:any,enemy=false){const belts:any[]=[];
    for(const [section,t] of [[i,belt/5],[i+1,belt/5],[i+1,(belt+1)/5],[i,(belt+1)/5]]){const [z,w]=widths[section],keel=-1.55+Math.pow(Math.abs(z)/4.4,3)*.7,sheer=1.22+Math.pow(Math.abs(z)/4.4,4)*.28;v.push(side*w*(.30+.70*Math.sin(t*Math.PI/2)),keel+(sheer-keel)*t,z);}
    if(side>0)ind.push(n,n+2,n+1,n,n+3,n+2);else ind.push(n,n+1,n+2,n,n+2,n+3);
   }
-  const beltMat=new MeshStandardMaterial({color:colors[belt],roughness:.78,side:DoubleSide});belts.push(beltMat);mesh(g,geometry(v,ind),beltMat);
+  const beltMat=new MeshStandardMaterial({color:colors[belt],roughness:.78,side:DoubleSide,hooks:maritimeSurface(1)});belts.push(beltMat);mesh(g,geometry(v,ind),beltMat);
  }
  for(let j=0;j<32;j++){const z=-3.83+j*.25,w=widthAt(z)-.1;box(g,0,1.25,z,Math.max(.08,w*2),.10,.238,j%4===0?'#b89562':j%4===1?'#d1ae73':'#c6a16b');if(j%3===0)for(const side of [-1,1])sphere(g,side*Math.max(.02,w-.1),1.307,z,.018,'#70573c');}
  for(const side of [-1,1]){
@@ -70,7 +72,7 @@ const ACCENT=`let accent=vec3f(uniforms.ar,uniforms.ag,uniforms.ab); let mm=modM
 function canvas(g:any,w:number,h:number,z:number,y:number,color:string){const v:number[]=[],ind:number[]=[],uv:number[]=[];const nx=9,ny=6;
  for(let j=0;j<=ny;j++)for(let i=0;i<=nx;i++){const u=i/nx,t=j/ny,edge=Math.sin(t*Math.PI);v.push((u-.5)*w*(1-.13*t),y-t*h+.12*Math.cos(u*Math.PI*2)*t,z+Math.sin(u*Math.PI)*edge*.42);uv.push(u,t);}
  for(let j=0;j<ny;j++)for(let i=0;i<nx;i++){const a=j*(nx+1)+i;ind.push(a,a+nx+1,a+1,a+1,a+nx+1,a+nx+2);}
- const material=new MeshStandardMaterial({color,roughness:.94,side:DoubleSide,hooks:{uniforms:{furl:{value:1},top:{value:y},mast:{value:z},...modUniforms()},vertex:`fn vertex(v: Vertex) -> Vertex {var o=v;let f=uniforms.furl;o.position.y=uniforms.top-(uniforms.top-v.position.y)*f;o.position.z=uniforms.mast+(v.position.z-uniforms.mast)*f;o.position.x=v.position.x*(0.86+0.14*f);return o;}`,surface:PATTERN_WGSL+`
+ const material=new MeshStandardMaterial({color,roughness:.94,side:DoubleSide,hooks:{uniforms:{furl:{value:1},top:{value:y},mast:{value:z},...modUniforms(),...cloudUniforms},light:cloudLighting.replace("return o;","o.indirect=l.indirect+l.base_color.rgb*l.sun_color*pow(max(0.0,dot(-l.normal,l.sun_direction)),1.5)*0.055*transmission;return o;"),vertex:`fn vertex(v: Vertex) -> Vertex {var o=v;let f=uniforms.furl;o.position.y=uniforms.top-(uniforms.top-v.position.y)*f;o.position.z=uniforms.mast+(v.position.z-uniforms.mast)*f;o.position.x=v.position.x*(0.86+0.14*f);return o;}`,surface:PATTERN_WGSL+`
 fn surface(s: Surface) -> Surface { var o=s; ${ACCENT} let seam=1.0-smoothstep(0.018,0.034,abs(fract(s.uv.x*7.0)-0.5)); let weave=sin(s.uv.x*420.0)*sin(s.uv.y*350.0)*0.025; o.base_color=vec4f(mix(s.base_color.rgb,accent,mm)*(0.94+weave-seam*0.12),s.base_color.a); return o; }`}});
  const cloth=mesh(g,geometry(v,ind,uv),material);cloth.userData.animated=true;cloth.castShadow=false;
  // Head lashed to the yard, both clews sheeted home; the rest is free canvas.
@@ -161,6 +163,7 @@ const WAKES:any[]=Array.from({length:8},()=>new Vector4(0,0,0,0));
 // turbulent centre with age and pushes the Kelvin arms outward at about
 // 19.5° of the distance run, so a turn leaves a curved wake that slowly fades.
 const CRUMBS=96,CRUMB:any[]=Array.from({length:CRUMBS},()=>new Vector4(0,0,0,0)),TRAIL_LIFE=8,CRUMB_GAP=7,STERN=11;
+export const oceanWakeData={wakes:WAKES,crumbs:CRUMB,shoals:SHOALS};
 const trails=new Map<string,{id:string,pts:{x:number,z:number,t:number,way:number}[],seen:number}>();
 /** ships: up to eight moving hulls, world metres, heading and way 0..1, nearest first. */
 export function setWakes(list:{id:string,x:number,z:number,heading:number,way:number}[],time:number){

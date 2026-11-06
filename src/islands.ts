@@ -3,6 +3,7 @@
 // their compact footprint so piers reach the anchorage; wild islands are twice
 // as wide and full of things to do. Group scale 3 keeps props at sailor scale.
 import {scene,Group,Color,BufferGeometry,Float32BufferAttribute,MeshStandardMaterial,MeshBasicMaterial} from 'starhermit:scene';
+import {terrainSurface} from './render/materials.js';
 import {METRES} from './navigation.js';
 import {box,sphere,cylinder,beam,mesh,barrel,crate,lantern,boatHull,palm,pine,house,batchStatic} from './visuals.js';
 
@@ -29,6 +30,12 @@ function hillAt(spec:Spec,x:number,z:number){let h=0;for(const q of spec.hills){
 /** Ground height in local units at a local point. */
 function heightAt(spec:Spec,i:number,x:number,z:number){const zz=z/.88,a=Math.atan2(zz,x),rho=Math.hypot(x,zz)/wiggle(a,i)/spec.wide;const inland=Math.max(0,Math.min(1,(8.8-rho)/1.2));return base(rho)+(hillAt(spec,x,z)+Math.sin(x*1.3+i)*Math.sin(z*1.1-i)*.06)*inland;}
 
+/** Detail scatter uses exactly the same ground as terrain and shore jobs. */
+export function islandGround(id:string,index:number,x:number,z:number){
+ const spec=SPECS[id]||PORT,lx=x/SCALE,lz=z/SCALE,a=Math.atan2(lz/.88,lx),rho=Math.hypot(lx,lz/.88)/wiggle(a,index)/spec.wide;
+ return rho<7.8?heightAt(spec,index,lx,lz)*SCALE:null;
+}
+
 function terrain(g:any,spec:Spec,i:number){
  const n=72,radii:number[]=[];for(let k=0;k<=22;k++)radii.push(k<=16?k/16*8.8:8.8+(k-16)/6*2.3);
  const v:number[]=[],c:number[]=[],ind:number[]=[],col=new Color(),grass=new Color(spec.grass),rock=new Color(spec.rock),sand=new Color(spec.sand),wet=new Color(spec.sand).multiplyScalar(.78),deep=new Color('#7f8f7a');
@@ -38,7 +45,7 @@ function terrain(g:any,spec:Spec,i:number){
   c.push(col.r,col.g,col.b);}
  const w=n+1;for(let k=0;k<radii.length-1;k++)for(let j=0;j<n;j++){const a=k*w+j;ind.push(a,a+1,a+w,a+1,a+w+1,a+w);}
  const geo=new BufferGeometry();geo.setAttribute('position',new Float32BufferAttribute(v,3));geo.setAttribute('color',new Float32BufferAttribute(c,3));geo.setIndex(ind);geo.computeVertexNormals();
- const m=mesh(g,geo,new MeshStandardMaterial({color:'#ffffff',vertexColors:true,roughness:1}));m.castShadow=false;
+ const m=mesh(g,geo,new MeshStandardMaterial({color:'#ffffff',vertexColors:true,roughness:1,hooks:terrainSurface}));m.castShadow=true;
 }
 
 const animated:{kind:string,obj:any,x:number,z:number,seed:number,spec?:Spec,i?:number}[]=[];

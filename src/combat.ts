@@ -3,6 +3,7 @@
 import {scene,Group,Mesh,SphereGeometry,BoxGeometry,CylinderGeometry,RingGeometry,TorusGeometry,MeshBasicMaterial,MeshStandardMaterial,DoubleSide} from 'starhermit:scene';
 import {METRES} from './navigation.js';
 import {cue} from './sound.js';
+import {maritimeVolumes} from './render/volumes.js';
 
 const SEA=-2.1,DECK=4.3,HULL_Y=1.6;
 const ballGeo=new SphereGeometry(1,10,8),puffGeo=new SphereGeometry(1,8,6),chipGeo=new BoxGeometry(1,1,1),columnGeo=new CylinderGeometry(.55,1,1,10,1,true);
@@ -114,8 +115,9 @@ function effect(f:any,state:any,me:string){
   const ship=state.ships.concat(state.raiders).find((o:any)=>o.id===f.by)||f,o=sideOffset({heading:ship.heading||0},f.side);
   cue('cannon-fire',near(state,f.x,f.z));
   for(let g=-1;g<=1;g++){const gx=x+(o.fx*g*.7+o.x*.55)*METRES,gz=z+(o.fz*g*.7+o.z*.55)*METRES;
-   emit('#ffd27a',gx+o.x*1.4,DECK,gz+o.z*1.4,{size:.8,life:.12,grow:3,opacity:1});
-   for(let k=0;k<3;k++)emit(k%2?'#cfcabd':'#e8e3d6',gx+o.x*(1.5+k*1.2),DECK+k*.3,gz+o.z*(1.5+k*1.2),{size:.6+k*.2,life:1.6+rand(seed+g+k)*.6,vx:o.x*(5-k)+(rand(seed*3+k)-.5),vy:.9,vz:o.z*(5-k),grow:.9,opacity:.26});}
+   const volume=maritimeVolumes.broadside(gx,DECK,gz,o.x,o.z,seed+g);
+   if(!volume)emit('#ffd27a',gx+o.x*1.4,DECK,gz+o.z*1.4,{size:.8,life:.12,grow:3,opacity:1});
+   if(!volume)for(let k=0;k<3;k++)emit(k%2?'#cfcabd':'#e8e3d6',gx+o.x*(1.5+k*1.2),DECK+k*.3,gz+o.z*(1.5+k*1.2),{size:.6+k*.2,life:1.6+rand(seed+g+k)*.6,vx:o.x*(5-k)+(rand(seed*3+k)-.5),vy:.9,vz:o.z*(5-k),grow:.9,opacity:.26});}
  }
  else if(f.kind==='splash'){
   if(near(state,f.x,f.z)>.45)cue('shot-splash',near(state,f.x,f.z)*.8);
@@ -127,7 +129,7 @@ function effect(f:any,state:any,me:string){
   const mine=f.target===me,rake=f.kind==='rake';cue('hull-impact',near(state,f.x,f.z));if(mine)shake=Math.min(1.2,shake+(rake?.9:.5));
   emit('#ffb050',x,HULL_Y+1,z,{size:1.1,life:.16,grow:3,opacity:1});
   for(let k=0;k<(rake?14:9);k++){const a=rand(seed+k)*Math.PI*2;emit(k%3?'#8a6239':'#c8a06a',x,HULL_Y+1.5,z,{size:.28+rand(seed*5+k)*.3,life:1.4,vx:Math.cos(a)*(4+rand(k)*5),vy:6+rand(seed+k*3)*7,vz:Math.sin(a)*(4+rand(k)*5),gravity:20,spin:9,opacity:1,geo:chipGeo});}
-  emit('#5b5650',x,HULL_Y+2,z,{size:.9,life:1.8,vy:1.5,grow:1,opacity:.45});
+  if(!maritimeVolumes.impact(x,HULL_Y+2,z,seed))emit('#5b5650',x,HULL_Y+2,z,{size:.9,life:1.8,vy:1.5,grow:1,opacity:.45});
   const by=f.by===me;say((rake?'RAKED! ':'')+'−'+f.amount,mine?'#e9927a':by?'#e6c47e':'#f1e6ca',f.x,f.z,rake);
  }
  else if(f.kind==='sink'){

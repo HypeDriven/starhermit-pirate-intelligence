@@ -1,6 +1,6 @@
 # Pirate Intelligence — v0.2
 
-A playable pirate crew simulation, built on the **actual StarHermit engine 1.30.0, host API 1.32**. The attached concept informed the small ships, island landmarks, sea view, and close-up ship management. The first art pass is original low-poly geometry rather than video frames or licensed assets.
+A playable pirate crew simulation, built on the **StarHermit engine 1.36.2, host API 1.36**. The attached concept informed the small ships, island landmarks, sea view, and close-up ship management. The first art pass is original low-poly geometry rather than video frames or licensed assets.
 
 ## Play
 
@@ -138,6 +138,37 @@ At an island, wait for the anchor, open **Longboat** (or **Go ashore · timber**
 
 **Options → StarHermit engine options** opens runtime graphics and frame-rate settings; **F1** opens it directly. Sound and browser brain CPU controls are also in Options, with **Low load** selected by default. The clock, wind, compass and minimap stay visible during sailing. Aboard ship, select a deck in the left rail, or cycle the deck button on phones.
 
-The remaster includes new ship and island geometry, animated ocean and rigging, illustrated crew portraits, a nautical chart, and refreshed brass/teal menus. The original Yue score follows harbour, sailing and combat; 14 MOSS effects cover cannons, impacts, anchors, rigging, oars, timber work, rewards, warnings and ambience. Use **Options** for saved music/effects controls. Audio begins after the first interaction and uses the engine mixer.
+The visual remaster adds spectral ocean waves, planar reflections and depth-aware refraction, crest scattering, shoreline foam, persistent curved wakes and wave-driven ship motion. Sun and moon lighting, a procedural HDR sky and prefiltered environment, cascaded shadows, ambient occlusion, restrained bloom, wet timber, metal patina, terrain detail and dense wind-bent shore grass replace the flat first art pass. Clouds, marine fog, ship fires and cannon smoke use StarHermit’s ray-marched volumes with self-shadowing, multiple scattering and blackbody fire; GPU rain completes storm weather. Illustrated crew portraits, the nautical chart and brass/teal menus remain. The original Yue score follows harbour, sailing and combat; 14 MOSS effects cover cannons, impacts, anchors, rigging, oars, timber work, rewards, warnings and ambience. Use **Options** for saved music/effects controls. Audio begins after the first interaction and uses the engine mixer.
 
 Generation provenance and event bindings: [art](assets/art/manifest.json), [soundtrack](music/manifest.json), [effects](sfx/manifest.txt). The bundled heading font is Cormorant Garamond under its [SIL Open Font License](assets/fonts/OFL.txt). `tools/prepare-audio.py --yue /path/to/yue-takes --moss /path/to/moss-wavs` reproduces the compact Ogg masters from the recorded takes.
+
+
+## Graphics quality and validation
+
+Use **Options → StarHermit engine options → Graphics**, or **F1**. The game follows the engine’s live level, including Auto changes. Low levels retain the animated lightweight sea and particle smoke. Terrestrial enables the FFT sea; Galactic and above also reflect the volumetric effects. Infinite is selected explicitly; Auto does not choose it.
+
+| Workload | Terrestrial | Galactic | Infinite |
+| --- | --- | --- | --- |
+| FFT ocean | Four 64² cascades | Four 256² cascades | Four 512² cascades |
+| Reflection width cap | 768 px | 1920 px | 3840 px |
+| Volume ray / light samples | 24 / 2 | 64 / 5 | 128 / 8 |
+| Cloud banks | 4 | 9 | 16 |
+| Live combat volumes | 4 | 12 | 24 |
+| Burning ships with volumes | 2 | 4 | 8 |
+| GPU rain streaks | 384 | 2048 | 4096 |
+| Grass candidates per wild island | — | 3000 | 16000 |
+
+Infinite retains the runtime’s 2× render scale: a 4K display requests an 8K internal scene, subject to engine/device limits, with the level’s multisampling, four cascaded shadow maps up to 4096², full-resolution ambient occlusion and high-resolution reflections. These costs improve the image; no artificial busy work is added. The intended flagship target is approximately 60 FPS at 4K on an RTX 5090, **not a measured performance claim**. This development environment has no accessible NVIDIA GPU. Options displays current FPS and GPU timing when the runtime provides it.
+
+The deterministic presentation fixture includes a fleet, a burning ship, repeated broadsides, an island, and daylight/sunset/storm/night views. It never loads a brain model, connects to a world or writes a practice save:
+
+```sh
+# Compile all ocean resolutions and check repeated top-tier allocation/disposal.
+STARHERMIT_BIN=/path/to/starhermit scripts/check-graphics.sh --headless
+# Render the actual effects at the selected tier; defaults to Infinite.
+mkdir -p /tmp/pirate-graphics-shots
+STARHERMIT_RENDER_CHECK_PNG=/tmp/pirate-graphics-shots \
+  STARHERMIT_BIN=/path/to/starhermit scripts/check-graphics.sh infinite
+```
+
+For 4K measurements, copy `tests/fixtures/graphics-play.txt`, change its viewport to `3840x2160`, and wrap representative steady-state frames in `measure start` / `measure stop`. Set `GRAPHICS_PLAY=/absolute/path/to/your-script.txt` when running the check. Use a native window smoke with VSync/frame limits disabled to measure delivered frame rate; the offscreen check is for image correctness. Warm shaders first and compare sailing, combat, storm and night separately. The engine’s GPU pass timings distinguish scene/FFT/reflections, shadows, ambient occlusion and post processing. Ocean and reflection derivations retain their [third-party MIT notice](licenses/Ultra-Water-MIT.txt).

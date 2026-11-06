@@ -22,7 +22,7 @@ python - <<'BUILD'
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 with ZipFile('dist/pirate-intelligence-source.zip', 'w', ZIP_DEFLATED) as archive:
-    for folder in ['src','companion','tests','scripts','tools','models','assets','music','sfx']:
+    for folder in ['src','companion','tests','scripts','tools','models','assets','music','sfx','licenses']:
         for p in sorted(Path(folder).rglob('*')):
             if p.is_file() and '__pycache__' not in p.parts and p.suffix not in ['.pyc','.gguf']:
                 archive.write(p, 'pirate-intelligence/'+str(p))

@@ -1,0 +1,12 @@
+# viewport 1280x720
+frames 30
+save remaster-daylight
+key Digit2 2
+frames 20
+save remaster-golden-hour
+key Digit3 2
+frames 20
+save remaster-storm
+key Digit4 2
+frames 20
+save remaster-night
