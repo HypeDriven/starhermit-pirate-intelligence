@@ -1,6 +1,6 @@
 # Pirate Intelligence — v0.2
 
-A playable pirate crew simulation, built on the **StarHermit engine 1.36.2, host API 1.36**. The attached concept informed the small ships, island landmarks, sea view, and close-up ship management. The first art pass is original low-poly geometry rather than video frames or licensed assets.
+A playable pirate crew simulation, built on the **StarHermit engine 1.38.0, host API 1.38**. The attached concept informed the small ships, island landmarks, sea view, and close-up ship management. The first art pass is original low-poly geometry rather than video frames or licensed assets.
 
 ## Play
 

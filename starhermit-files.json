@@ -13,7 +13,7 @@
     "cover.jpg": {"sha256": "57c4f0c0f0952424b6a1208c4c5b0943a72e41e56f6647d53725232674c272b3", "size": 777676},
     "description.md": {"sha256": "97d3151c0cd0e6f9c230e3de8784fd8ee3e866c06e3efb3c6a9675b430fd09ed", "size": 867},
     "favicon.png": {"sha256": "8ec83067dd83a7a2b6f8563947d277219a52ab08e3223ee88d04d40115e28add", "size": 84415},
-    "index.html": {"sha256": "07fae30d134773226d0863b05eef8717296a157cfd649fe6a747de3de5374a65", "size": 1797},
+    "index.html": {"sha256": "76194376624bede7d2049b69ec6efaa4158f645fa958727e5d608ddf4e96cfb3", "size": 1955},
     "licenses/Ultra-Water-MIT.txt": {"sha256": "d5a8b50baec35c7e5efc430d7a03cd3fe160c4840326d153d308050f545c282e", "size": 1255},
     "models/LICENSE-Apache-2.0.txt": {"sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30", "size": 11358},
     "models/index.json": {"sha256": "6ec1a854e92ca5d7720f2b337afa95627721090358f644d895a5aa0fe6b321b7", "size": 19672},
@@ -76,7 +76,8 @@
     "src/sound.ts": {"sha256": "95bff2320c653dbf669130f05c503b0f5af5e0b1b0dc1780294dc894f57f6949", "size": 3367},
     "src/visuals.ts": {"sha256": "b088a5a7a800e50b8603c641648c2b2212bf73df1920ed2de0f599a0ed1c660b", "size": 36135},
     "starhermit-remote.json": {"sha256": "257e2012233aad71a673f1e83ce0c542e770c65b48a8caee0d89325bd742e5c9", "size": 169},
-    "starhermit.txt": {"sha256": "5317124527b2ed748a4ad6cb56fad9d791f8363a03f87dc1bfc89e068bf74a6c", "size": 1478}
+    "starhermit.txt": {"sha256": "8ec301f7237c8478a9cfe9160a6db29e3f8e6b80ac27c60db4cda382a5abd664", "size": 1478}
   },
+  "excluded": ["DESIGN.md", "README.md", "companion/", "package.json", "publication.json", "scripts/", "spec.md", "tests/", "tools/", "tsconfig.json"],
   "format": 1
 }
