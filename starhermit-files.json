@@ -73,7 +73,7 @@
     "src/render/wave-probe.ts": {"sha256": "1fa5c0d7aee9d5d896f218dda91383319f520e4ed076f868d295c897fa50495d", "size": 2707},
     "src/render/weather.ts": {"sha256": "66e1bb4cacd915daf73300a215702ced7fc208422d88ef9e97bf797b53361aa3", "size": 803},
     "src/sealife.ts": {"sha256": "46b1f4c3aa0a8054bf9c41bfbf1095e040c99a45f98b57095a4098708d444a8b", "size": 8662},
-    "src/sound.ts": {"sha256": "95bff2320c653dbf669130f05c503b0f5af5e0b1b0dc1780294dc894f57f6949", "size": 3367},
+    "src/sound.ts": {"sha256": "a7fcdfd4806c6328d5603a7cfb60be672518b2170da8ad71f51795304a954060", "size": 3609},
     "src/visuals.ts": {"sha256": "b088a5a7a800e50b8603c641648c2b2212bf73df1920ed2de0f599a0ed1c660b", "size": 36135},
     "starhermit-remote.json": {"sha256": "257e2012233aad71a673f1e83ce0c542e770c65b48a8caee0d89325bd742e5c9", "size": 169},
     "starhermit.txt": {"sha256": "8ec301f7237c8478a9cfe9160a6db29e3f8e6b80ac27c60db4cda382a5abd664", "size": 1478}

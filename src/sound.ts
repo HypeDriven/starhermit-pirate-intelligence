@@ -1,18 +1,21 @@
-import {context,loadClip,play,stream} from 'starhermit:audio';
+import {context,loadClip,play,stream,SoundBank} from 'starhermit:audio';
 import {musicMood,SCORE_TITLES} from './audio-events.js';
 
 const EVENTS=['cannon-fire','hull-impact','anchor-chain','sail-hoist','rowing','timber-chop','coins','ship-bell','repair-hammer','cutlass','ocean','storm','gulls','creaking-deck','shot-splash','shot-whistle','guns-run-out','ship-sinking'];
-const clips:any={},cooldowns:any={};let started=false,enabled=true,ambience=false,musicOn=true,musicGain=.35,effectsGain=.65,time=0,voices=0,music:any=null,track='',pending='',ocean:any=null,lastMoodChange=-999,workClock=0,airClock=0;
+const clips:any={},banks:Record<string,SoundBank>={};let started=false,enabled=true,ambience=false,musicOn=true,musicGain=.35,effectsGain=.65,time=0,voices=0,music:any=null,track='',pending='',ocean:any=null,lastMoodChange=-999,workClock=0,airClock=0;
 const retiring:any[]=[];
-export function initAudio(){if(started)return;started=true;for(const id of EVENTS)loadClip('sfx/'+id+'.ogg').then(clip=>{clips[id]=clip;}).catch(()=>{});}
+// Each cue is a bank with its own minimum gap (the engine skips a play sooner after the last); the
+// six-voice cap across cues stays the game's mix.
+const GAP=(id:string)=>id==='cannon-fire'||id==='shot-splash'?.25:id==='hull-impact'?.35:id==='coins'?.7:1.2;
+export function initAudio(){if(started)return;started=true;for(const id of EVENTS)loadClip('sfx/'+id+'.ogg').then(clip=>{clips[id]=clip;banks[id]=new SoundBank({clips:[clip],minGap:GAP(id)});}).catch(()=>{});}
 export function soundSettings(effects:boolean,sea:boolean,musicEnabled=true,musicVolume=.35,effectsVolume=.65){
  enabled=effects;ambience=sea;musicOn=musicEnabled;musicGain=Math.max(0,Math.min(1,musicVolume));effectsGain=Math.max(0,Math.min(1,effectsVolume));
  if(music&&musicOn)music.fade(musicGain,1);if(ocean)ocean.fade(enabled&&ambience ? .13*effectsGain : 0,1);
 }
 export function cue(event:string,gain=1){
  if(!enabled||voices>=6||context.state!=='running')return;const id=event==='reward'?'coins':event==='danger'?'ship-bell':event==='combat'?'cannon-fire':event,clip=clips[id];
- if(!clip||time<(cooldowns[id]||0))return;cooldowns[id]=time+(id==='cannon-fire'||id==='shot-splash'?.25:id==='hull-impact'?.35:id==='coins'?.7:1.2);
- const sound=play(clip,{gain:effectsGain*gain*(id==='storm'?.45:1),bus:'effects'});voices++;sound.onEnded(()=>{voices--;});
+ const bank=banks[id];if(!clip||!bank)return;
+ const sound=bank.play({gain:effectsGain*gain*(id==='storm'?.45:1)});if(!sound)return;voices++;sound.onEnded(()=>{voices--;});
 }
 function retire(){if(!music)return;music.fade(0,2);retiring.push({source:music,stopAt:time+2.1});music=null;while(retiring.length>1)retiring.shift().source.stop();}
 export function audioUpdate(dt:number,state:any,closeView:boolean){

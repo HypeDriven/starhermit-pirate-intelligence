@@ -1,0 +1,12 @@
+# Tier bench: a local practice voyage at sea. Close the welcome card, set sail for Mossjaw Cay and measure
+# from aboard the ship under way over the spectral ocean, sky, weather volumes and crew.
+until 600 Back to the sea
+click Back to the sea
+frames 30
+click Sail here
+frames 60
+click Aboard ship
+frames 120
+measure start
+frames 600
+measure stop
