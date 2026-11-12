@@ -29,3 +29,21 @@ Three original Yue-generated instrumental loops accompany harbour, sailing and c
 The crew’s workshop lets the characters mod the game at runtime with data, never code. A captain asks a sailor for a sail, hull paint, colours, or clothing, a weapon or a makeover (hair colour, hairstyle and one face feature) for a named crewmate. Idle, calm, anchored crew also volunteer sketches. The authority generates four candidate designs from authored palette, pattern, emblem and name tables, biased by the sailor’s taste. That sailor’s browser brain picks one by number, and the captain may pick instead. Unanswered sketches fall back to the sailor’s instinct. Every stored, imported or proposed design is re-validated against those tables.
 
 Commissions cost Plucks (mod.sail 8, mod.hull 10, mod.flag 5, mod.clothing 4, mod.weapon 6, mod.look 5). The game can only ask: the client creates a platform order (`platform.plucks.order`, host API 1.33, `engine.capabilities=plucks`), and the player approves or declines it on their StarHermit dashboard. A design is applied only when the platform hands the authority a paid order in `ctx.pluckOrders`. The authority applies it idempotently by order id and acknowledges it with `pluckOrdersDelivered` in the same result. Player messages can link an order to a sketch but never apply one. Orders for another captain, or with a mismatched item, never apply to the wrong design. An unmatched paid order becomes a credit for that item. Owned designs persist in `playerStates[userId].wardrobe` and follow the captain to every sea. Other captains see only the public appearance. Local practice can sketch and preview for 30 seconds on the captain’s own screen, but cannot commission. Buying Plucks happens on StarHermit, through the wallet button. Operators grant Plucks in the admin dashboard, which audits each grant as `plucks.grant`.
+
+<!-- display-localization:start -->
+
+### Display language
+
+Authored UI text, canvas labels, selector options and composed messages resolve through the packaged string catalog. Message keys are stable hashes, so long story passages fit the runtime’s string-key limit. Display translation preserves simulation and protocol values, interpolated player names and entered text. The source English catalog is shipped; additional languages are available only when their entire catalog has validated translations.
+
+The language panel opens with F2, saves the player’s choice and offers Automatic to follow the account or device language. Packaged script fonts apply to both native and browser text.
+
+<!-- display-localization:end -->
+
+<!-- regional-localization:start -->
+
+### Regional interface languages
+
+The string tables include complete regional variants for `en-SG`, `en-HK`, `en-BQ`, `de-BE`, `de-BR`, `de-IT`, `fr-BE`, `es-CO`, `fr-IT`, `es-CL`, `es-AR`, `es-EC`. These reuse the corresponding existing translations in their language family. The runtime can resolve the exact regional tag. Language selection is available from the game’s Options panel or F2 and is saved per player in `ui.language`. Changes apply during play. Additional national, regional and indigenous language packs are only shipped once every English message has a translation with intact placeholders and markup. Complete additional language tables: `nl-BE`, `nl-NL`, `ja-JP`, `zh-SG`, `ms-SG`, `ta-SG`, `zh-HK`, `yue-HK`, `fi-FI`, `sv-FI`, `ru-FI`, `et-EE`, `ru-EE`, `id-ID`, `vi-VN`, `da-DE`, `lb-BE`, `co-FR`, `eu-FR`, `ca-FR`, `oc-FR`, `sl-IT`, `fur-IT`, `ca-IT`, `oc-IT`, `ca-ES`, `eu-ES`, `gl-ES`, `su-ID`, `bew-ID`, `km-VN`.
+
+<!-- regional-localization:end -->

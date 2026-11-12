@@ -1,3 +1,4 @@
+import { localizedText as __displayText } from "../l10n/text.js";
 import {frame,levelSettings,stats,setBusy} from 'starhermit:engine';
 import {scene,renderer,Color,Fog,Vector3,ACESFilmicToneMapping,PCFShadowMap} from 'starhermit:scene';
 import {visualProfile} from './quality.js';
@@ -53,7 +54,7 @@ export class MaritimeGraphics {
   const f=frame(),settings=levelSettings();
   if(f.levelIndex!==this.level){
    this.level=f.levelIndex;this.profile=visualProfile(this.level);const p=this.profile;
-   setBusy("Preparing maritime graphics",{seconds:120});
+   setBusy(__displayText("Preparing maritime graphics"),{seconds:120});
    this.water?.dispose();this.water=p.fft?new CinematicWater(p,this.places,this.sky,this.wakes,this.crumbs,this.shoals):null;
    this.shore?.dispose();this.shore=p.index>=6?new ShoreDetail(this.places,p.index):null;
    setBusy(null);

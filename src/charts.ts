@@ -1,3 +1,9 @@
+import { localizedStyle as __l10nStyle } from "./l10n/font.js";
+import { localizedDrawOptions as __l10nDrawOptions } from "./l10n/font.js";
+// localization-runtime:attached
+import { localizedFont as __l10nFont } from "./l10n/font.js";
+// display-localization:attached
+import { localizedText as __displayText } from "./l10n/text.js";
 import * as draw from 'starhermit:draw';
 import * as ui from 'starhermit:ui';
 const gold='#e6c47e',ink='#acc8be';
@@ -5,7 +11,7 @@ function triangle(x:number,y:number,r:number,heading:number,color:string){const 
 export function seaChart(w:number,h:number,sc:number,mobile:boolean,state:any,places:any[],poses:any,selected:string,onSelect:(id:string)=>void,onSail:(id:string)=>void,font='serif'){
  if(!state?.myShip)return;const lw=w/sc,lh=h/sc,narrow=lw<420,x=(mobile?10:264)*sc,y=(mobile?(narrow?286:244):196)*sc,width=(mobile?lw-20:lw-576)*sc,height=Math.max(110,lh-181-y/sc)*sc;
  draw.box(x,y,width,height,'chart');
- draw.text(narrow?'THE QUARRELSOME SEA':'CHART OF THE QUARRELSOME SEA',x+14*sc,y+12*sc,{size:(narrow?11:15)*sc,font,color:gold});
+ draw.text(__displayText(narrow?'THE QUARRELSOME SEA':'CHART OF THE QUARRELSOME SEA'),x+14*sc,y+12*sc,__l10nDrawOptions({size:(narrow?11:15)*sc,font: __l10nFont(font),color:gold}));
  const top=y+34*sc,bottom=y+height-52*sc,span=Math.max(50,Math.min(width-44*sc,bottom-top-12*sc)),cx=x+width/2,cy=(top+bottom)/2,k=span/118;
  const point=(p:any)=>({x:cx+p.x*k,y:cy+p.z*k});
  // Chart graticule and rhumb lines are clipped to the usable plot.
@@ -19,11 +25,11 @@ export function seaChart(w:number,h:number,sc:number,mobile:boolean,state:any,pl
   else{const edge:[number,number][]=[],land:[number,number][]=[];for(let j=0;j<12;j++){const a=j/12*Math.PI*2,rr=r*(1+.12*Math.sin(j*2.7+i));edge.push([at.x+Math.cos(a)*rr*1.18,at.y+Math.sin(a)*rr*.88]);land.push([at.x+Math.cos(a)*rr*.9,at.y+Math.sin(a)*rr*.64]);}draw.polygon(edge,'#c7bb87');draw.polygon(land,p.id==='winterwake'?'#a9bbaa':p.id==='cinder'?'#7d8972':'#73986c');
    if(p.kind==='port'){draw.box(at.x-3*sc,at.y-4*sc,6*sc,6*sc,{background:'#e7d3aa'});draw.polygon([[at.x-4*sc,at.y-4*sc],[at.x,at.y-8*sc],[at.x+4*sc,at.y-4*sc]],'#b98761');}else{draw.line(at.x,at.y+2*sc,at.x,at.y-5*sc,'#335d48',2*sc);draw.line(at.x-3*sc,at.y-4*sc,at.x+3*sc,at.y-4*sc,'#335d48',2*sc);}}
   if(selected===p.id)draw.strokeCircle(at.x,at.y,r+5*sc,gold,1.5*sc);
-  if(!narrow||selected===p.id)draw.text(p.name,at.x,at.y+r+7*sc,{size:(narrow?9:10)*sc,color:selected===p.id?gold:ink,align:'center'});
-  ui.area({x:at.x-14*sc,y:at.y-14*sc,width:28*sc,height:28*sc},()=>{const hit=ui.widget(p.name+' chart marker',{role:'button',size:{width:28,height:28},draw:()=>{}});if(hit.activated)onSelect(p.id);});
+  if(!narrow||selected===p.id)draw.text(__displayText(p.name),at.x,at.y+r+7*sc,__l10nDrawOptions({size:(narrow?9:10)*sc,color:selected===p.id?gold:ink,align:'center'}));
+  ui.area({x:at.x-14*sc,y:at.y-14*sc,width:28*sc,height:28*sc},()=>{const hit=ui.widget(__displayText(p.name+' chart marker'),{role:'button',size:{width:28,height:28},draw:()=>{}});if(hit.activated)onSelect(p.id);});
  }
  for(const ship of state.ships.concat(state.raiders)){if(ship.hull<=0)continue;const pose=poses[ship.id]||ship,at=point(pose);triangle(at.x,at.y,(ship.id===state.myShip.id?7:5)*sc,pose.heading||0,ship.id===state.myShip.id?gold:ship.npc?'#df927a':'#b1d7cc');}
- draw.text('N',cx,top-6*sc,{size:10*sc,color:gold,align:'center'});draw.line(x+15*sc,bottom-4*sc,x+15*sc+10*k,bottom-4*sc,ink,2*sc);if(!narrow)draw.text('100 m',x+15*sc,bottom-18*sc,{size:9*sc,color:ink});
+ draw.text(__displayText('N'),cx,top-6*sc,__l10nDrawOptions({size:10*sc,color:gold,align:'center'}));draw.line(x+15*sc,bottom-4*sc,x+15*sc+10*k,bottom-4*sc,ink,2*sc);if(!narrow)draw.text(__displayText('100 m'),x+15*sc,bottom-18*sc,__l10nDrawOptions({size:9*sc,color:ink}));
  const destination=places.find(p=>p.id===selected)!;
- ui.area({x:x+12*sc,y:y+height-42*sc,width:width-24*sc,height:38*sc},()=>ui.row('Chart destination',()=>{ui.label(destination.name,{size:narrow?11:13,color:gold});ui.spacer();if(ui.style('gold').button('Sail here'))onSail(destination.id);},{width:width/sc-24,align:'center',spacing:6}));
+ ui.area({x:x+12*sc,y:y+height-42*sc,width:width-24*sc,height:38*sc},()=>ui.row('Chart destination',()=>{ui.label(__displayText(destination.name),{size:narrow?11:13,color:gold});ui.spacer();if(ui.style(__l10nStyle('gold')).button(__displayText('Sail here')))onSail(destination.id);},{width:width/sc-24,align:'center',spacing:6}));
 }

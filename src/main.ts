@@ -1,4 +1,12 @@
-import { frame, onStart, onRender, onUpdate, onQuit, onSuspend, onResume, files, openMenu } from 'starhermit:engine';
+import { localizedStyle as __l10nStyle } from "./l10n/font.js";
+import { localizedDrawOptions as __l10nDrawOptions } from "./l10n/font.js";
+import { withLanguageRender as __l10nRender } from "./l10n/menu.js";
+// localization-runtime:attached
+import { localizedFont as __l10nFont, setLocalizedStyles as __l10nStyles } from "./l10n/font.js";
+import { openLocalizedOptions as __l10nOptions } from "./l10n/menu.js";
+// display-localization:attached
+import { localizedText as __displayText, localizedOptions as __displayOptions, preserveUserText as __keepDisplayText } from "./l10n/text.js";
+import { frame, onStart, onRender, onUpdate, onQuit, onSuspend, onResume, files } from 'starhermit:engine';
 import {scene,renderer,Color,AmbientLight,DirectionalLight,HemisphereLight,PerspectiveCamera,Group,Vector3,Fog,TextureLoader,ACESFilmicToneMapping,PCFShadowMap} from 'starhermit:scene';
 import { onAction, onWheel, onPointerButton, onPointerMove, buttons, isDown } from 'starhermit:input';
 import { authority } from 'starhermit:script';
@@ -45,7 +53,7 @@ const browserBrain=new BrowserBrain();
 browserBrain.setLoad(loadSetting(storage.getJson('brain-cpu-load')));
 function saveSoundSettings(){storage.setJson('sound-effects',effectsOn);storage.setJson('sea-ambience',seaOn);storage.setJson('soundtrack-enabled',musicOn);storage.setJson('music-volume',musicVolume);storage.setJson('sfx-volume',effectsVolume);soundSettings(effectsOn,seaOn,musicOn,musicVolume,effectsVolume);}
 function changeVolume(music:boolean,delta:number){if(music)musicVolume=Math.max(0,Math.min(1,Math.round((musicVolume+delta)*100)/100));else effectsVolume=Math.max(0,Math.min(1,Math.round((effectsVolume+delta)*100)/100));saveSoundSettings();}
-function brainLoadControl(){ui.label('Browser brain CPU usage',{size:12,color:C.gold,weight:'bold'});const value=ui.select('CPU usage · shared by all browser brains',browserBrain.load,LOADS.map(s=>s.name));if(value!==browserBrain.load){browserBrain.setLoad(value);storage.setJson('brain-cpu-load',value);}ui.paragraph('One inference lane. Targets 10% / 25% / 50% of one CPU core over time. Short work slices and idle gaps keep the game responsive; exact CPU usage varies by device. Pauses when hidden.',dialogWidth,{size:11});}
+function brainLoadControl(){ui.label(__displayText('Browser brain CPU usage'),{size:12,color:C.gold,weight:'bold'});const value=ui.select(__displayText('CPU usage · shared by all browser brains'),browserBrain.load,__displayOptions(LOADS.map(s=>s.name)));if(value!==browserBrain.load){browserBrain.setLoad(value);storage.setJson('brain-cpu-load',value);}ui.paragraph(__displayText('One inference lane. Targets 10% / 25% / 50% of one CPU core over time. Short work slices and idle gaps keep the game responsive; exact CPU usage varies by device. Pauses when hidden.'),dialogWidth,{size:11});}
 
 let labelHits:any[]=[],mobilePanel=false,dialogWidth=530;
 const camera=new PerspectiveCamera(45,16/9,.1,2500);
@@ -53,7 +61,7 @@ renderer.camera=camera;scene.background=new Color('#92bbb3');scene.fog=new Fog('
 const sun=new DirectionalLight('#ffe8bb',1.35*Math.PI);sun.position.set(-20,45,15);const ambient=new AmbientLight('#b3d7d2',.8*Math.PI);const hemisphere=new HemisphereLight('#b3d9de','#6c6247',.55*Math.PI);scene.add(sun,sun.target,ambient,hemisphere);
 renderer.antialias='fxaa';renderer.toneMapping=ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;renderer.shadowMap.enabled=true;renderer.shadowMap.type=PCFShadowMap;sun.castShadow=true;sun.shadow.mapSize=1024;sun.shadow.bias=-.0003;sun.shadow.normalBias=.12;sun.shadow.radius=2;
 let headingFont='serif';let welcomeArt:any=null,crewArt:any=null;new TextureLoader().load('assets/art/quarrelsome-sea.png',texture=>{welcomeArt=texture;});new TextureLoader().load('assets/art/crew-portraits.png',texture=>{crewArt=texture;});
-function portrait(c:any,size=36){const i=['morrow','brisk','fuse','peg','tallow','pip'].indexOf(c.id);if(crewArt&&i>=0)ui.style({radius:5,border:{width:1,color:C.brass}}).image(c.name+' portrait',crewArt,{width:size,height:size},{min:[i%3/3,Math.floor(i/3)/2],max:[(i%3+1)/3,(Math.floor(i/3)+1)/2]});else ui.label('●',{color:c.color,size:18});}
+function portrait(c:any,size=36){const i=['morrow','brisk','fuse','peg','tallow','pip'].indexOf(c.id);if(crewArt&&i>=0)ui.style(__l10nStyle({radius:5,border:{width:1,color:C.brass}})).image(__displayText(c.name+' portrait'),crewArt,{width:size,height:size},{min:[i%3/3,Math.floor(i/3)/2],max:[(i%3+1)/3,(Math.floor(i/3)+1)/2]});else ui.label(__displayText('●'),{color:c.color,size:18});}
 const places:any[]=[
  {id:'saltwick',name:'Saltwick',kind:'port',x:-22,z:8,tag:'A respectable den of thieves'},
  {id:'mossjaw',name:'Mossjaw Cay',kind:'island',x:12,z:17,tag:'Timber, treasure & terrible mosquitoes',jobs:['timber','treasure','forage','herbs']},
@@ -84,9 +92,9 @@ async function joinOpenWorld(){try{if(roomSocket){roomSocket.close();roomSocket=
 function updateBrainFields(){const c=brainConfigs[selectedCrew]||{};endpoint=c.base_url||'http://127.0.0.1:8080/v1';model=c.model||'smollm2-135m';apiKeyEnv=c.api_key_env||'';brainMode=c.mode==='endpoint'?1:0;}
 function saveBrain(){browserBrain.cancel();brainConfigs[selectedCrew]=brainMode?{mode:'endpoint',base_url:endpoint,model,api_key_env:apiKeyEnv}:{mode:'browser'};storage.setJson('crew-brains',brainConfigs);flash(brainMode?'Endpoint saved. Export it for the companion officer.':'Browser brain saved · '+LOADS[browserBrain.load].name+'.');}
 function exportBrains(){saveBrain();files.saveAs('crew-brains.json',JSON.stringify({schema:1,default:{mode:'browser'},browser_cpu:LOADS[browserBrain.load].name,crew:brainConfigs},null,2),{type:'application/json'}).catch(e=>flash(String(e)));}
-function meter(name:string,v:number,max:number,color:string,width=215){ui.row(name,()=>{ui.label(name,{color:C.muted,size:11});ui.spacer();ui.label(Math.round(v)+' / '+max,{size:11,color});},{width});ui.style({parts:{fill:{background:color},track:{background:'#3a2716'}},height:5}).progress(v/max,width);}
-function button(label:string,fn:()=>void,selected=false,disabled=false){if(ui.style(selected?'gold':'soft').button(label,{selected,disabled}))fn();}
-function wideButton(label:string,fn:()=>void,selected=false){if(ui.style({width:dialogWidth}).button(label,{selected,content:()=>ui.paragraph(label,dialogWidth-24,{size:12})}))fn();}
+function meter(name:string,v:number,max:number,color:string,width=215){ui.row(name,()=>{ui.label(__displayText(name),{color:C.muted,size:11});ui.spacer();ui.label(__displayText(Math.round(v)+' / '+max),{size:11,color});},{width});ui.style(__l10nStyle({parts:{fill:{background:color},track:{background:'#3a2716'}},height:5})).progress(v/max,width);}
+function button(label:string,fn:()=>void,selected=false,disabled=false){if(ui.style(__l10nStyle(selected?'gold':'soft')).button(__displayText(label),{selected,disabled}))fn();}
+function wideButton(label:string,fn:()=>void,selected=false){if(ui.style(__l10nStyle({width:dialogWidth})).button(__displayText(label),{selected,content:()=>ui.paragraph(__displayText(label),dialogWidth-24,{size:12})}))fn();}
 let workshopKind='sail',workshopCrew=0,workshopFor=0,preview:any=null;
 // A preview is drawn only on this captain's screen and never sent anywhere.
 function previewLook(look:any){
@@ -97,27 +105,27 @@ function previewLook(look:any){
 function elapsedNow(){return performance.now()/1000;}
 function workshopPanel(s:any){
  const t=state.workshop,k=s.workshop||{designs:[]},names=s.crew.map((c:any)=>c.name.split(' ')[0]);if(!t)return;
- ui.paragraph('Your crew sketch improvements for the ship and each other. Each sailor has their own taste, and their brain picks a favourite sketch. A commission costs Plucks, StarHermit’s currency, and you approve every spend on your StarHermit dashboard. The game can only ask.',dialogWidth,{size:12});
- const note=plucksStatus(online);if(note)ui.style({text:{color:C.gold}}).paragraph(note,dialogWidth,{size:11});
+ ui.paragraph(__displayText('Your crew sketch improvements for the ship and each other. Each sailor has their own taste, and their brain picks a favourite sketch. A commission costs Plucks, StarHermit’s currency, and you approve every spend on your StarHermit dashboard. The game can only ask.'),dialogWidth,{size:12});
+ const note=plucksStatus(online);if(note)ui.style(__l10nStyle({text:{color:C.gold}})).paragraph(__displayText(note),dialogWidth,{size:11});
  ui.row('Wallet',()=>{button('Get Plucks on StarHermit',()=>openWallet(),false,!walletReady());},{spacing:6});
- if(k.brief){const c=s.crew.find((x:any)=>x.id===k.brief.crewId);ui.heading((c?.name.split(' ')[0]||'Crew')+' is sketching '+(t.kinds[k.brief.kind]?.label||'').toLowerCase(),{size:16});
-  ui.paragraph('Their pick lands in '+Math.max(0,Math.ceil(k.brief.decideBy-state.time))+'s. You may choose for them:',dialogWidth,{size:11});
+ if(k.brief){const c=s.crew.find((x:any)=>x.id===k.brief.crewId);ui.heading(__displayText((c?.name.split(' ')[0]||'Crew')+' is sketching '+(t.kinds[k.brief.kind]?.label||'').toLowerCase()),{size:16});
+  ui.paragraph(__displayText('Their pick lands in '+Math.max(0,Math.ceil(k.brief.decideBy-state.time))+'s. You may choose for them:'),dialogWidth,{size:11});
   k.brief.candidates.forEach((spec:any,i:number)=>wideButton((i+1)+'. '+describeDesign(t,k.brief.kind,spec),()=>command({type:'mod.pick',briefId:k.brief.id,index:i})));}
  else{
-  ui.heading('Ask for a sketch',{size:16});
+  ui.heading(__displayText('Ask for a sketch'),{size:16});
   const kinds=Object.keys(t.kinds);for(const slot of ['ship','crew'])ui.row('Design kind '+slot,()=>{for(const id of kinds.filter(k=>t.kinds[k].slot===slot))button(t.kinds[id].label+' · '+t.kinds[id].price+' PLK',()=>workshopKind=id,workshopKind===id);},{spacing:5});
   ui.row('Designer',()=>{names.forEach((n:string,i:number)=>button(n,()=>workshopCrew=i,workshopCrew===i,s.crew[i].away));},{spacing:5});
   const crewItem=t.kinds[workshopKind]?.slot==='crew';
   if(crewItem)ui.row('Made for',()=>{names.forEach((n:string,i:number)=>button(n,()=>workshopFor=i,workshopFor===i));},{spacing:5});
   button('Ask '+names[workshopCrew]+' to sketch it',()=>command({type:'mod.commission',crewId:s.crew[workshopCrew].id,kind:workshopKind,targetId:crewItem?s.crew[workshopFor].id:''}),true);
  }
- ui.heading('Sketches & commissions',{size:16});
- if(!k.designs.length)ui.paragraph('No sketches yet. Idle crew at anchor volunteer ideas now and then.',dialogWidth,{size:11});
+ ui.heading(__displayText('Sketches & commissions'),{size:16});
+ if(!k.designs.length)ui.paragraph(__displayText('No sketches yet. Idle crew at anchor volunteer ideas now and then.'),dialogWidth,{size:11});
  for(const d of k.designs.slice().reverse()){
   const by=s.crew.find((c:any)=>c.id===d.designer),target=d.targetId?s.crew.find((c:any)=>c.id===d.targetId):null,worn=d.status==='owned'&&(d.targetId?k.outfits?.[d.targetId]?.[d.kind]===d.id:k.look?.[d.kind]===d.id);
-  ui.label(d.name+(target?' · for '+target.name.split(' ')[0]:'')+' · '+(worn?'in use':d.status==='owned'?'owned':d.status==='ordered'?'awaiting approval':d.price+' PLK'),{size:13,color:d.status==='owned'?C.green:C.cream});
-  ui.style({text:{color:C.muted}}).paragraph('By '+(by?.name||'the crew')+': '+d.describe+'.',dialogWidth,{size:11});
-  const pending=commissions[d.id];if(pending&&d.status!=='owned'&&(d.status==='ordered'||pending.status!=='pending'))ui.style({text:{color:C.gold}}).paragraph(pending.message,dialogWidth,{size:11});
+  ui.label(__displayText(d.name+(target?' · for '+target.name.split(' ')[0]:'')+' · '+(worn?'in use':d.status==='owned'?'owned':d.status==='ordered'?'awaiting approval':d.price+' PLK')),{size:13,color:d.status==='owned'?C.green:C.cream});
+  ui.style(__l10nStyle({text:{color:C.muted}})).paragraph(__displayText('By '+(by?.name||'the crew')+': '+d.describe+'.'),dialogWidth,{size:11});
+  const pending=commissions[d.id];if(pending&&d.status!=='owned'&&(d.status==='ordered'||pending.status!=='pending'))ui.style(__l10nStyle({text:{color:C.gold}})).paragraph(__displayText(pending.message),dialogWidth,{size:11});
   ui.row('Design '+d.id,()=>{
    if(d.status!=='owned')button(preview?.design?.id===d.id&&elapsedNow()<preview.until?'Previewing…':'Preview 30s',()=>{preview={design:d,until:elapsedNow()+30};panel='';});
    if(d.status==='draft'){button('Commission · '+d.price+' PLK',()=>{void commission(d,by?.name.split(' ')[0]||'Crew',command);},true,!plucksReady(online));button('Scrap',()=>command({type:'mod.discard',designId:d.id}));}
@@ -127,7 +135,7 @@ function workshopPanel(s:any){
  }
 }
 function helmControls(){
- ui.grid('Manual helm',()=>{for(const item of [{label:'Port',turn:-1,throttle:1},{label:'Ahead',turn:0,throttle:1},{label:'Starboard',turn:1,throttle:1}]){const result=ui.widget(item.label,{role:'button',size:{width:72,height:36},style:'soft',draw:(rect,style)=>draw.text(item.label,rect.x+rect.width/2,rect.y+9*frame().scale,{size:12*frame().scale,color:style.colors.text,align:'center'})});if(result.pressed||result.activated){touchTurn=item.turn;touchThrottle=item.throttle;}}button('Stop',()=>command({type:'helm-input',turn:0,throttle:0}));},{columns:dialogWidth<380?2:4,width:Math.min(dialogWidth,340),gap:5});
+ ui.grid('Manual helm',()=>{for(const item of [{label:'Port',turn:-1,throttle:1},{label:'Ahead',turn:0,throttle:1},{label:'Starboard',turn:1,throttle:1}]){const result=ui.widget(__displayText(item.label),{role:'button',size:{width:72,height:36},style:'soft',draw:(rect,style)=>draw.text(__displayText(item.label),rect.x+rect.width/2,rect.y+9*frame().scale,__l10nDrawOptions({size:12*frame().scale,color:style.colors.text,align:'center'}))});if(result.pressed||result.activated){touchTurn=item.turn;touchThrottle=item.throttle;}}button('Stop',()=>command({type:'helm-input',turn:0,throttle:0}));},{columns:dialogWidth<380?2:4,width:Math.min(dialogWidth,340),gap:5});
 }
 function steer(dt:number){
  helmClock+=dt;const s=state?.myShip;
@@ -145,12 +153,12 @@ function parseOrder(){
  if(/patch|fix|hull/.test(text))task='repair';if(/fire|cannon|shoot/.test(text))task='guns';if(/sleep|nap/.test(text))task='rest';if(/sail|steer/.test(text))task='helm';if(/food|soup/.test(text))task='cook';
  if(!task){flash('Try “Peg, repair the hull”, “Fuse, guns” or “Pip, lookout”.');return;}doOrder(task);orderText='';
 }
-onStart(()=>{files.fetch('assets/fonts/CormorantGaramond.ttf').then(()=>{fonts.add(new FontFace('Captain','assets/fonts/CormorantGaramond.ttf',{weight:'600'}));headingFont='Captain';ui.setStyles({heading:{text:{font:headingFont,weight:'bold',color:'#f1e5c8'}}});}).catch(()=>{});initAudio();
+onStart(()=>{files.fetch('assets/fonts/CormorantGaramond.ttf').then(()=>{fonts.add(new FontFace('Captain','assets/fonts/CormorantGaramond.ttf',{weight:'600'}));headingFont='Captain';__l10nStyles({heading:{text:{font:__l10nFont(headingFont),weight:'bold',color:'#f1e5c8'}}});}).catch(()=>{});initAudio();
  soundSettings(effectsOn,seaOn,musicOn,musicVolume,effectsVolume);
  ui.setTheme({fontSize:13,headingSize:20,smallSize:11,padding:12,spacing:8,text:C.cream,muted:C.muted,panel:C.panel,control:'#23474b',hovered:'#3d675d',pressed:'#14363d',field:'#0d2933',accent:C.gold,focus:C.gold,outline:C.edge,radius:4});
  // Naval instruments: deep teal leather, aged brass and parchment cards.
  const edge={width:1,color:'#66857b'};
- ui.setStyles({
+ __l10nStyles({
   '.woodbar':{background:{type:'linear',angle:180,stops:['#193b43','#0c2730']},border:{width:{bottom:2},color:{bottom:C.brass}},shadow:{x:0,y:3,blur:12,color:'#051b2599'}},
   '.woodstrip':{background:'#0d2c36eb',border:{width:{bottom:1},color:{bottom:'#63857b77'}}},
   '.deckbar':{background:{type:'linear',angle:180,stops:['#12343ded','#092630fa']},border:{width:{top:2},color:{top:C.brass}},shadow:{x:0,y:-4,blur:18,color:'#071d2977'}},
@@ -162,7 +170,7 @@ onStart(()=>{files.fetch('assets/fonts/CormorantGaramond.ttf').then(()=>{fonts.a
   '.card':{background:[{type:'linear',angle:180,stops:['#ead9b1df','#d6c39cdd']},{image:'assets/parchment.png',size:'cover'}],border:{width:1,color:'#9e8a5d'},padding:12,radius:6,shadow:{x:0,y:3,blur:8,color:'#06202b66'},inside:{label:{text:{color:'#27413e'}},paragraph:{text:{color:'#31443c'}}}},
   dialog:{background:{type:'linear',angle:135,stops:['#1c4147','#102e39']},border:{width:2,color:'#c3a66b'},radius:10,width:620,padding:22,shadow:{x:0,y:12,blur:34,color:'#031b26cc'},parts:{backdrop:{background:'#031a26c9'}}},
   textField:{width:250,padding:10,border:{width:1,color:'#78927b'},radius:5,background:'#0d2933',text:{color:C.cream}},select:{width:235,border:{width:1,color:'#78927b'},radius:5,background:'#244b4e'},
-  heading:{text:{font:headingFont,weight:'bold',color:'#f1e5c8'}},
+  heading:{text:{font:__l10nFont(headingFont),weight:'bold',color:'#f1e5c8'}},
   '.toast':{background:'#e8d6adf5',border:{width:1,color:'#aa8b50'},radius:7,shadow:{x:0,y:5,blur:14,color:'#06202b88'}},
   '.tag':{background:'#10333ce8',border:{width:1,color:'#c6b57b66'},radius:5},
   '.chart':{background:'#103540',border:{width:1,color:'#a8935a99'},radius:7},
@@ -183,13 +191,14 @@ let lastSnapshot:any=null,helmClock=0,touchTurn=0,touchThrottle=0,ammoType=0,man
 // The practice snapshot is reconstructed only from the authority's explicit
 // private export; online session state never comes from device storage.
 function labelAt(text:string,x:number,y:number,z:number,color:string,id?:string,crew=false){
+ text=__displayText(text);
  const f=frame(),v=new Vector3(x,y,z).project(camera),px=(v.x+1)*f.width/2,py=(1-v.y)*f.height/2;
  if(px<20||px>f.width-20||py<(f.width/ui.preferences().scale<600?280*f.scale:100)||py>f.height-180)return;
- const limit=f.width-40*f.scale;let trimmed=false;while(text.length>3&&draw.measureText(text,{size:12*f.scale}).width>limit){text=text.slice(0,-2);trimmed=true;}if(trimmed)text+='…';
- const width=draw.measureText(text,{size:12*f.scale}).width;const safeX=Math.max(width/2+12*f.scale,Math.min(f.width-width/2-12*f.scale,px));
+ const limit=f.width-40*f.scale;let trimmed=false;while(text.length>3&&draw.measureText(__displayText(__keepDisplayText(text)),__l10nDrawOptions({size:12*f.scale})).width>limit){text=text.slice(0,-2);trimmed=true;}if(trimmed)text+='…';
+ const width=draw.measureText(__displayText(__keepDisplayText(text)),__l10nDrawOptions({size:12*f.scale})).width;const safeX=Math.max(width/2+12*f.scale,Math.min(f.width-width/2-12*f.scale,px));
  draw.box(safeX-width/2-9*f.scale,py-6*f.scale,width+18*f.scale,27*f.scale,'tag');
- draw.text(text,safeX,py,{size:12*f.scale,color,align:'center'});
- if(id){const hit={x:safeX-width/2-9*f.scale,y:py-6*f.scale,w:width+18*f.scale,h:27*f.scale,id,crew};labelHits.push(hit);ui.target(text,{x:hit.x,y:hit.y,width:hit.w,height:hit.h});}
+ draw.text(__displayText(__keepDisplayText(text)),safeX,py,__l10nDrawOptions({size:12*f.scale,color,align:'center'}));
+ if(id){const hit={x:safeX-width/2-9*f.scale,y:py-6*f.scale,w:width+18*f.scale,h:27*f.scale,id,crew};labelHits.push(hit);ui.target(__displayText(__keepDisplayText(text)),{x:hit.x,y:hit.y,width:hit.w,height:hit.h});}
 }
 function renderScene(){
  const f=frame(),s=state?.myShip;camera.aspect=f.width/Math.max(1,f.height);camera.updateProjectionMatrix();
@@ -240,22 +249,22 @@ function instruments(w:number,h:number,scale:number,mobile:boolean){
  const s=state?.myShip;if(!s)return;
  const narrow=w/scale<420,y=mobile?(narrow?230:192):137;draw.box((mobile?9:264)*scale,(y-6)*scale,(mobile?w/scale-18:350)*scale,49*scale,'instrument');
  ui.area({x:(mobile?14:270)*scale,y:y*scale,width:(mobile?w/scale-28:w/scale-585)*scale,height:50*scale},()=>ui.column('Navigation instruments',()=>{
-  ui.label('Day '+state.day+' · '+clock(state.time)+' · '+(daylight(state.time)>.1?'Daylight':'Night watch'),{size:11,color:C.cream});
+  ui.label(__displayText('Day '+state.day+' · '+clock(state.time)+' · '+(daylight(state.time)>.1?'Daylight':'Night watch')),{size:11,color:C.cream});
   const heading=bearing(poses[s.id]?.heading||s.heading||0),wind=bearing((state.wind||0)+Math.PI);
-  ui.label('HDG '+Math.round(heading).toString().padStart(3,'0')+'° '+compass(heading)+' · Wind from '+compass(wind)+' '+(state.windKnots||windSpeed(state.time,state.weather!=='Fair winds'))+' kn',{size:10,color:C.gold});
+  ui.label(__displayText('HDG '+Math.round(heading).toString().padStart(3,'0')+'° '+compass(heading)+' · Wind from '+compass(wind)+' '+(state.windKnots||windSpeed(state.time,state.weather!=='Fair winds'))+' kn'),{size:10,color:C.gold});
  },{spacing:3}));
  if(zoom<.35)return;
  const size=narrow?100:132,x=(mobile?w/scale-size-14:w/scale-305-size)*scale,my=(h/scale-180-size)*scale,k=size/132*scale;
- draw.box(x,my,size*scale,size*scale,'tag');draw.text('N ↑  ·  SEA MAP',x+8*k,my+5*k,{size:10*k,color:C.gold});
+ draw.box(x,my,size*scale,size*scale,'tag');draw.text(__displayText('N ↑  ·  SEA MAP'),x+8*k,my+5*k,__l10nDrawOptions({size:10*k,color:C.gold}));
  const point=(p:any)=>({x:x+(66+p.x*.78)*k,y:my+(74+p.z*.78)*k});
  const own=point(poses[s.id]||s),destination=places.find(p=>p.id===s.destination);
  if(destination){const to=point(destination);draw.line(own.x,own.y,to.x,to.y,C.gold,1);}
  for(const p of places){const at=point(p);draw.box(at.x-3*k,at.y-3*k,6*k,6*k,{background:selectedPlace===p.id?C.gold:p.kind==='port'?C.cream:C.green});}
- for(const raider of state.raiders)if(raider.hull>0){const at=point(poses[raider.id]||raider);draw.text('×',at.x,at.y,{size:12*k,color:C.red,align:'center'});}
+ for(const raider of state.raiders)if(raider.hull>0){const at=point(poses[raider.id]||raider);draw.text(__displayText('×'),at.x,at.y,__l10nDrawOptions({size:12*k,color:C.red,align:'center'}));}
  const roseX=x-33*scale,roseY=my+size*scale-29*scale,r=20*scale;
  draw.circle(roseX,roseY,r+8*scale,'#102f39ef');draw.strokeCircle(roseX,roseY,r+7*scale,C.brass,1.5*scale);draw.strokeCircle(roseX,roseY,r-3*scale,'#8aa39366',.7*scale);
  draw.line(roseX-r,roseY,roseX+r,roseY,C.muted,1);draw.line(roseX,roseY-r,roseX,roseY+r,C.muted,1);
- for(const [name,ox,oy] of [['N',0,-23],['E',24,0],['S',0,21],['W',-24,0]] as [string,number,number][])draw.text(name,roseX+ox*scale,roseY+oy*scale,{size:8*scale,color:C.cream,align:'center'});
+ for(const [name,ox,oy] of [['N',0,-23],['E',24,0],['S',0,21],['W',-24,0]] as [string,number,number][])draw.text(__displayText(name),roseX+ox*scale,roseY+oy*scale,__l10nDrawOptions({size:8*scale,color:C.cream,align:'center'}));
  const head=poses[s.id]?.heading||s.heading||0,wind=state.wind||0;
  draw.polygon([[roseX+Math.sin(head)*r,roseY+Math.cos(head)*r],[roseX+Math.sin(head+2.5)*r*.34,roseY+Math.cos(head+2.5)*r*.34],[roseX+Math.sin(head-2.5)*r*.34,roseY+Math.cos(head-2.5)*r*.34]],C.gold);
  draw.line(roseX-Math.sin(wind)*r,roseY-Math.cos(wind)*r,roseX+Math.sin(wind)*r,roseY+Math.cos(wind)*r,'#8bcadd',1.5*scale);
@@ -266,8 +275,8 @@ function instruments(w:number,h:number,scale:number,mobile:boolean){
 function header(w:number,scale:number,mobile:boolean){
  draw.box(0,0,w,76*scale,'woodbar');
  ui.area({x:20*scale,y:10*scale,width:w-40*scale,height:58*scale},()=>ui.row('Header',()=>{
-  ui.column('Brand',()=>{ui.heading(mobile&&w/scale<600?'Pirate Intel.':'Pirate Intelligence',{font:headingFont,size:mobile?(w/scale<400?16:23):28});if(!mobile)ui.label('A FINE CREW. A TERRIBLE IDEA.',{color:C.muted,size:9});},{spacing:1});
-  ui.spacer();if(!mobile&&state){for(const [name,val] of [['GOLD',Math.floor(state.myShip?.gold||0)],['TIMBER',Math.floor(state.myShip?.timber||0)],['SHOT',state.myShip?.ammo||0]])ui.column(name as string,()=>{ui.label(name as string,{size:9,color:C.muted});ui.label(String(val),{size:21,color:C.gold,weight:'bold'});},{width:80,spacing:2});}
+  ui.column('Brand',()=>{ui.heading(__displayText(mobile&&w/scale<600?'Pirate Intel.':'Pirate Intelligence'),{font:__l10nFont(headingFont),size:mobile?(w/scale<400?16:23):28});if(!mobile)ui.label(__displayText('A FINE CREW. A TERRIBLE IDEA.'),{color:C.muted,size:9});},{spacing:1});
+  ui.spacer();if(!mobile&&state){for(const [name,val] of [['GOLD',Math.floor(state.myShip?.gold||0)],['TIMBER',Math.floor(state.myShip?.timber||0)],['SHOT',state.myShip?.ammo||0]])ui.column(name as string,()=>{ui.label(__displayText(name as string),{size:9,color:C.muted});ui.label(__displayText(String(val)),{size:21,color:C.gold,weight:'bold'});},{width:80,spacing:2});}
   button('Options',()=>panel='settings');button(mobile?'World':'⚓  World & crew',()=>{panel='world';if(platform.player())listWorlds();});
  },{width:(w-40*scale)/scale,align:'center',spacing:16}));
 }
@@ -275,32 +284,32 @@ function toolbar(w:number,scale:number,mobile:boolean){
  draw.box(0,76*scale,w,50*scale,'woodstrip');
  ui.area({x:20*scale,y:84*scale,width:w-40*scale,height:40*scale},()=>ui.row('Views',()=>{
   button('Sea chart',()=>{targetZoom=0;},targetZoom<.5);button('Aboard ship',()=>{targetZoom=1;},targetZoom>=.5);
-  if(!mobile){ui.label('Q / E or scroll to zoom · middle-drag to look around',{size:11,color:C.muted});ui.spacer();ui.label(state?.weather||'Fair winds',{size:11,color:C.muted});}
+  if(!mobile){ui.label(__displayText('Q / E or scroll to zoom · middle-drag to look around'),{size:11,color:C.muted});ui.spacer();ui.label(__displayText(state?.weather||'Fair winds'),{size:11,color:C.muted});}
   else{ui.spacer();button('Orders',()=>{mobilePanel=!mobilePanel;});}
  },{width:(w-40*scale)/scale,align:'center',spacing:8}));
 }
 function navPanel(x:number,y:number,width:number,height:number,scale:number){
  const s=state?.myShip;if(!s)return;
  ui.area({x:x*scale,y:y*scale,width:width*scale,height:height*scale},()=>ui.scrollArea('Navigation rail',{width,height},()=>ui.panel('Navigation',()=>{
-  ui.label('THE QUARRELSOME SEA',{color:C.gold,size:10,weight:'bold'});ui.heading(zoom>.5?'Below the bravado':'Pick your next bad idea',{size:19});button('Contracts & rumours',()=>panel='missions');button('Sea atlas',()=>panel='atlas');
-  if(zoom>.5){ui.paragraph('One ship. Three decks. Six entirely individual opinions.',width-28,{size:12});for(let i=0;i<3;i++)button(['01  Weather deck','02  Gun deck','03  Cargo hold'][i],()=>{deck=i;},deck===i);ui.label(['Helm · rigging · lookout','Six guns · powder · patching','Spices · provisions · questionable cargo'][deck],{color:C.muted,size:10});if(deck===2){ui.label('Cargo: '+cargoTotal(s)+' / '+cargoLimit(s));ui.label('Spice '+s.cargo+' · Cloth '+(s.goods?.cloth||0)+' · Medicine '+(s.goods?.medicine||0));ui.label('Provisions: '+Math.round(s.food));ui.label('Timber: '+Math.floor(s.timber));}ui.style('gold').button(s.anchored?'⚓  At anchor':'Under way',{disabled:true});}
-  else{for(const p of places){if(ui.style(selectedPlace===p.id?'gold':'flat').button(p.name,{content:()=>{ui.label(p.name,{weight:'bold',size:13});ui.label(p.kind==='port'?'PORT & TRADING':p.kind==='wreck'?'SALVAGE':'ISLAND & AWAY MISSIONS',{size:9});}}))selectedPlace=p.id;}
-   const p=places.find(p=>p.id===selectedPlace)!;ui.paragraph(p.tag,width-28,{size:11});button('Set course  →',()=>route(p.id),true);}
-  ui.label('SHIP STATUS',{size:10,color:C.gold,weight:'bold'});meter('Hull',s.hull,s.maxHull,s.hull<40?C.red:C.green,width-28);meter('Crew spirit',s.morale,100,C.gold,width-28);
-  ui.label('LV '+s.level+'   '+Math.floor(s.xp)+' / '+(s.level*100)+' XP',{color:C.muted,size:10});
+  ui.label(__displayText('THE QUARRELSOME SEA'),{color:C.gold,size:10,weight:'bold'});ui.heading(__displayText(zoom>.5?'Below the bravado':'Pick your next bad idea'),{size:19});button('Contracts & rumours',()=>panel='missions');button('Sea atlas',()=>panel='atlas');
+  if(zoom>.5){ui.paragraph(__displayText('One ship. Three decks. Six entirely individual opinions.'),width-28,{size:12});for(let i=0;i<3;i++)button(['01  Weather deck','02  Gun deck','03  Cargo hold'][i],()=>{deck=i;},deck===i);ui.label(__displayText(['Helm · rigging · lookout','Six guns · powder · patching','Spices · provisions · questionable cargo'][deck]),{color:C.muted,size:10});if(deck===2){ui.label(__displayText('Cargo: '+cargoTotal(s)+' / '+cargoLimit(s)));ui.label(__displayText('Spice '+s.cargo+' · Cloth '+(s.goods?.cloth||0)+' · Medicine '+(s.goods?.medicine||0)));ui.label(__displayText('Provisions: '+Math.round(s.food)));ui.label(__displayText('Timber: '+Math.floor(s.timber)));}ui.style(__l10nStyle('gold')).button(__displayText(s.anchored?'⚓  At anchor':'Under way'),{disabled:true});}
+  else{for(const p of places){if(ui.style(__l10nStyle(selectedPlace===p.id?'gold':'flat')).button(__displayText(p.name),{content:()=>{ui.label(__displayText(p.name),{weight:'bold',size:13});ui.label(__displayText(p.kind==='port'?'PORT & TRADING':p.kind==='wreck'?'SALVAGE':'ISLAND & AWAY MISSIONS'),{size:9});}}))selectedPlace=p.id;}
+   const p=places.find(p=>p.id===selectedPlace)!;ui.paragraph(__displayText(p.tag),width-28,{size:11});button('Set course  →',()=>route(p.id),true);}
+  ui.label(__displayText('SHIP STATUS'),{size:10,color:C.gold,weight:'bold'});meter('Hull',s.hull,s.maxHull,s.hull<40?C.red:C.green,width-28);meter('Crew spirit',s.morale,100,C.gold,width-28);
+  ui.label(__displayText('LV '+s.level+'   '+Math.floor(s.xp)+' / '+(s.level*100)+' XP'),{color:C.muted,size:10});
   button('Captain’s log',()=>panel='logbook');
  },{width,padding:14,spacing:10})));
 }
 function ordersPanel(x:number,y:number,width:number,height:number,scale:number){
  const s=state?.myShip;if(!s)return;
  ui.area({x:x*scale,y:y*scale,width:width*scale,height:height*scale},()=>ui.scrollArea('Captain’s desk rail',{width,height},()=>ui.panel('Captain’s desk',()=>{
-  ui.label('CAPTAIN’S DESK',{color:C.gold,size:10,weight:'bold'});ui.heading('What’s the plan?',{size:22});button(s.away?'Longboat · check expedition':landing(s)?.kind==='wreck'?'Longboat · salvage wreck':'Longboat · gather timber',()=>openLongboat(),true);
-  let d=ui.select('Standing directive',Math.max(0,dirs.indexOf(s.directive)),dirNames);if(d!==dirs.indexOf(s.directive))command({type:'directive',value:dirs[d]});
-  ui.paragraph('Your crew chooses how to get there. Direct orders teach them your habits.',width-28,{size:11});
-  ui.row('Crew header',()=>{ui.label('SIX SOULS, ONE CHAIN OF COMMAND',{color:C.gold,size:9});},{width:width-28});
-  for(const c of s.crew){if(ui.id('crew-'+c.id).style('flat').button(c.name,{content:()=>{ui.row('summary-'+c.id,()=>{portrait(c,32);ui.column('name-'+c.id,()=>{ui.label(c.name,{size:12,weight:'bold'});ui.label(c.role+' · Lv '+c.level,{size:9,color:C.muted});},{spacing:0});ui.spacer();ui.label(c.away?'AWAY':taskNames[c.task],{size:10,color:c.away?C.gold:C.green});},{width:width-46,spacing:8,align:'center'});}}))openCrew(c.id);}
-  if(s.fire>0||s.leak>0)ui.label('FIRE '+Math.ceil(s.fire||0)+' · BILGE '+Math.ceil(s.leak||0),{color:C.red,size:11});
-  if(s.requests?.length)ui.paragraph(s.requests[0].text,width-28,{size:11});
+  ui.label(__displayText('CAPTAIN’S DESK'),{color:C.gold,size:10,weight:'bold'});ui.heading(__displayText('What’s the plan?'),{size:22});button(s.away?'Longboat · check expedition':landing(s)?.kind==='wreck'?'Longboat · salvage wreck':'Longboat · gather timber',()=>openLongboat(),true);
+  let d=ui.select(__displayText('Standing directive'),Math.max(0,dirs.indexOf(s.directive)),__displayOptions(dirNames));if(d!==dirs.indexOf(s.directive))command({type:'directive',value:dirs[d]});
+  ui.paragraph(__displayText('Your crew chooses how to get there. Direct orders teach them your habits.'),width-28,{size:11});
+  ui.row('Crew header',()=>{ui.label(__displayText('SIX SOULS, ONE CHAIN OF COMMAND'),{color:C.gold,size:9});},{width:width-28});
+  for(const c of s.crew){if(ui.id('crew-'+c.id).style(__l10nStyle('flat')).button(__displayText(__keepDisplayText(c.name)),{content:()=>{ui.row('summary-'+c.id,()=>{portrait(c,32);ui.column('name-'+c.id,()=>{ui.label(__displayText(__keepDisplayText(c.name)),{size:12,weight:'bold'});ui.label(__displayText(c.role+' · Lv '+c.level),{size:9,color:C.muted});},{spacing:0});ui.spacer();ui.label(__displayText(c.away?'AWAY':taskNames[c.task]),{size:10,color:c.away?C.gold:C.green});},{width:width-46,spacing:8,align:'center'});}}))openCrew(c.id);}
+  if(s.fire>0||s.leak>0)ui.label(__displayText('FIRE '+Math.ceil(s.fire||0)+' · BILGE '+Math.ceil(s.leak||0)),{color:C.red,size:11});
+  if(s.requests?.length)ui.paragraph(__displayText(s.requests[0].text),width-28,{size:11});
   button('Standing orders & watch',()=>panel='book');
   ui.row('quick',()=>{button(s.anchored?'Anchor down':'Drop anchor',()=>command({type:'anchor'}));button('Longboat',openLongboat);},{spacing:6});
  },{width,padding:14,spacing:10})));
@@ -311,12 +320,12 @@ function bottom(w:number,h:number,scale:number,mobile:boolean){
  const width=w/scale,height=h/scale,bh=mobile?156:167,y=height-bh;
  draw.box(0,y*scale,w,bh*scale,'deckbar');
  ui.area({x:20*scale,y:(y+13)*scale,width:(width-40)*scale,height:(bh-20)*scale},()=>ui.row('Bottom',()=>{
-  ui.column('Ship talk',()=>{ui.label('OVERHEARD ABOARD',{size:9,color:C.gold,weight:'bold'});const logs=s.log.slice(-(mobile?2:3));for(const l of logs){ui.paragraph(l.name+': “'+l.text+'”',mobile?width-40:Math.min(480,width*.4),{size:11});}ui.label(network,{size:9,color:C.muted});},{width:mobile?width-40:Math.min(490,width*.41),spacing:7});
+  ui.column('Ship talk',()=>{ui.label(__displayText('OVERHEARD ABOARD'),{size:9,color:C.gold,weight:'bold'});const logs=s.log.slice(-(mobile?2:3));for(const l of logs){ui.paragraph(__displayText(l.name+': “'+l.text+'”'),mobile?width-40:Math.min(480,width*.4),{size:11});}ui.label(__displayText(network),{size:9,color:C.muted});},{width:mobile?width-40:Math.min(490,width*.41),spacing:7});
   if(!mobile){ui.column('Orders and battle',()=>{
-   ui.row('command box',()=>{orderText=ui.textField('Direct command',orderText,{width:Math.max(150,width-885),placeholder:'Peg, repair the hull…',maxChars:160});button('Give order  ↵',parseOrder,true);},{spacing:8});
+   ui.row('command box',()=>{orderText=ui.textField(__displayText('Direct command'),orderText,{width:Math.max(150,width-885),placeholder:__displayText('Peg, repair the hull…'),maxChars:160});button('Give order  ↵',parseOrder,true);},{spacing:8});
    if(s.controlMode==='manual'&&!s.away&&!s.boarding&&!panel)helmControls();
    ui.row('actions',()=>{button(s.away?'Longboat · expedition':landing(s)?.kind==='wreck'?'Go ashore · salvage':landing(s)?'Go ashore · timber':'Longboat',openLongboat,!!landing(s));button('Trade in port',()=>{panel='trade';});button('Fire broadside  [F]',()=>command({type:'fire',target:selectedEnemy,ammunition:['round','chain','grape'][ammoType]}));button('Targets',()=>{panel='combat';});button('Shipyard',()=>{panel='yard';});button('Workshop',()=>{panel='workshop';});},{spacing:8});
-   ui.label(s.away?'Longboat · '+(!s.away.choice&&state.time>=s.away.encounterAt?'encounter ready · ':'')+'returns in '+Math.max(0,Math.ceil(s.away.returnAt-state.time))+'s':s.destination?'Sailing to '+destination?.name+' · '+Math.round(distanceTo(s,destination)*METRES)+' m':s.mission?'CONTRACT: '+s.mission.title:'No contract. The sea is full of bad opportunities.',{size:10,color:C.muted});
+   ui.label(__displayText(s.away?'Longboat · '+(!s.away.choice&&state.time>=s.away.encounterAt?'encounter ready · ':'')+'returns in '+Math.max(0,Math.ceil(s.away.returnAt-state.time))+'s':s.destination?'Sailing to '+destination?.name+' · '+Math.round(distanceTo(s,destination)*METRES)+' m':s.mission?'CONTRACT: '+s.mission.title:'No contract. The sea is full of bad opportunities.'),{size:10,color:C.muted});
   },{spacing:10});}
  },{spacing:24,width:width-40}));
 }
@@ -339,18 +348,18 @@ function battleStrip(w:number,h:number,scale:number,mobile:boolean){
  const t=battleTarget(s),now=serverNow(),threat=state.raiders.find((e:any)=>e.hull>0&&e.aim?.target===me);
  const battery=(side:'port'|'starboard')=>{const left=Math.max(0,(s.reload?.[side]||0)-now),racks=s.racks?.[side]||0,facing=t&&batteryFacing(s,t)===side;
   ui.column('battery-'+side,()=>{
-   if(ui.style(left>0?'soft':facing?'gold':'soft').button((side==='port'?'◀ Port':'Starboard ▶')+(mobile?'':side==='port'?'  [Z]':'  [X]'),{disabled:left>0}))broadside(side);
-   ui.label(left>0?'Reloading '+left.toFixed(1)+'s':'Loaded'+(facing?' · on target':''),{size:10,color:left>0?C.muted:facing?C.gold:C.cream});
-   ui.label('Racks '+'●'.repeat(racks)+'○'.repeat(Math.max(0,3-racks)),{size:10,color:racks?C.cream:C.red});
+   if(ui.style(__l10nStyle(left>0?'soft':facing?'gold':'soft')).button(__displayText((side==='port'?'◀ Port':'Starboard ▶')+(mobile?'':side==='port'?'  [Z]':'  [X]')),{disabled:left>0}))broadside(side);
+   ui.label(__displayText(left>0?'Reloading '+left.toFixed(1)+'s':'Loaded'+(facing?' · on target':'')),{size:10,color:left>0?C.muted:facing?C.gold:C.cream});
+   ui.label(__displayText('Racks '+'●'.repeat(racks)+'○'.repeat(Math.max(0,3-racks))),{size:10,color:racks?C.cream:C.red});
   },{spacing:2,width:mobile?110:130});};
  ui.area({x:(x+10)*scale,y:(y+7)*scale,width:(width-20)*scale,height:(mobile?76:62)*scale},()=>ui.row('Battle',()=>{
   battery('port');
   ui.column('battle-target',()=>{
-   if(threat){ui.label('⚠ '+threat.name.replace(/^The /,'')+' has guns run out — turn!',{size:11,color:C.red,weight:'bold'});}
-   else if(t){ui.label(t.name+' · '+Math.round(distanceTo(s,t)*METRES)+' m'+(t.temper?' · '+t.temper:''),{size:11,color:C.cream,weight:'bold'});}
-   else ui.label('No target in range',{size:11,color:C.muted});
-   if(t)ui.style({parts:{fill:{background:t.hull<t.maxHull*.45?C.red:C.gold},track:{background:'#3a2716'}},height:5}).progress(t.hull/t.maxHull,mobile?lw-300:250);
-   ui.label((s.combo>1&&now-(s.comboAt||0)<6?'Hit streak ×'+s.combo+' · ':'')+(t&&t.hull<=t.maxHull*.45&&!t.ships?'Weak enough to board · ':'')+['Round','Chain','Grape'][ammoType]+' shot · '+s.ammo+' aboard',{size:10,color:C.muted});
+   if(threat){ui.label(__displayText('⚠ '+threat.name.replace(/^The /,'')+' has guns run out — turn!'),{size:11,color:C.red,weight:'bold'});}
+   else if(t){ui.label(__displayText(t.name+' · '+Math.round(distanceTo(s,t)*METRES)+' m'+(t.temper?' · '+t.temper:'')),{size:11,color:C.cream,weight:'bold'});}
+   else ui.label(__displayText('No target in range'),{size:11,color:C.muted});
+   if(t)ui.style(__l10nStyle({parts:{fill:{background:t.hull<t.maxHull*.45?C.red:C.gold},track:{background:'#3a2716'}},height:5})).progress(t.hull/t.maxHull,mobile?lw-300:250);
+   ui.label(__displayText((s.combo>1&&now-(s.comboAt||0)<6?'Hit streak ×'+s.combo+' · ':'')+(t&&t.hull<=t.maxHull*.45&&!t.ships?'Weak enough to board · ':'')+['Round','Chain','Grape'][ammoType]+' shot · '+s.ammo+' aboard'),{size:10,color:C.muted});
   },{spacing:3,width:mobile?lw-280:260});
   battery('starboard');
  },{width:width-20,spacing:8,align:'center'}));
@@ -363,18 +372,18 @@ function portNear(s:any){return state?.places?.find((p:any)=>p.kind==='port'&&di
 function cargoTotal(s:any){return s.cargo+(s.goods?.cloth||0)+(s.goods?.medicine||0);}
 function cargoLimit(s:any){return 50+(s.upgrades?.hold||0)*15;}
 function ordersBook(s:any){
- ui.paragraph('Brisk coordinates free stations each watch. Captain orders reserve a station for 35 seconds; fresh model decisions also take priority over instincts.',dialogWidth,{size:12});
+ ui.paragraph(__displayText('Brisk coordinates free stations each watch. Captain orders reserve a station for 35 seconds; fresh model decisions also take priority over instincts.'),dialogWidth,{size:12});
  const orders=s.standing||{repairAt:75,restAt:70,avoidStorm:false,autoFire:true};
  const repair=[50,75,90],rest=[60,70,85];
- let value=ui.select('Start repairs below hull',Math.max(0,repair.indexOf(orders.repairAt)),['50% · conserve timber','75% · balanced','90% · shipshape']);if(repair[value]!==orders.repairAt)command({type:'standing',rule:'repairAt',value:repair[value]});
- value=ui.select('Rest at fatigue',Math.max(0,rest.indexOf(orders.restAt)),['60% · easy watches','70% · balanced','85% · long watches']);if(rest[value]!==orders.restAt)command({type:'standing',rule:'restAt',value:rest[value]});
- const shelter=ui.checkbox('Wait out squalls at anchor',orders.avoidStorm);if(shelter!==orders.avoidStorm)command({type:'standing',rule:'avoidStorm',value:shelter});
- const firing=ui.checkbox('Fire automatically while hunting',orders.autoFire);if(firing!==orders.autoFire)command({type:'standing',rule:'autoFire',value:firing});
- ui.label('REQUESTS FROM THE CREW',{size:10,color:C.gold});
- if(!s.requests?.length)ui.paragraph('All urgent stations are covered. The crew has the watch.',dialogWidth,{size:12});
- for(const r of s.requests||[]){ui.paragraph((r.from?r.from+': ':'')+r.text,dialogWidth,{size:12});if(r.crewId)button('Assign '+r.crewId+' to '+taskNames[r.task],()=>command({type:'order',crewId:r.crewId,task:r.task,issuer:'brisk',override:false}));}
- ui.label('CURRENT WATCH',{size:10,color:C.gold});
- for(const c of s.crew){ui.label(c.name+' · '+(c.away?'ashore':taskNames[c.task]),{size:12,weight:'bold'});ui.paragraph(c.away?'The ship is covering this sailor’s duties until the longboat returns.':c.reason||'Following the captain’s directive.',dialogWidth,{size:11});}
+ let value=ui.select(__displayText('Start repairs below hull'),Math.max(0,repair.indexOf(orders.repairAt)),__displayOptions(['50% · conserve timber','75% · balanced','90% · shipshape']));if(repair[value]!==orders.repairAt)command({type:'standing',rule:'repairAt',value:repair[value]});
+ value=ui.select(__displayText('Rest at fatigue'),Math.max(0,rest.indexOf(orders.restAt)),__displayOptions(['60% · easy watches','70% · balanced','85% · long watches']));if(rest[value]!==orders.restAt)command({type:'standing',rule:'restAt',value:rest[value]});
+ const shelter=ui.checkbox(__displayText('Wait out squalls at anchor'),orders.avoidStorm);if(shelter!==orders.avoidStorm)command({type:'standing',rule:'avoidStorm',value:shelter});
+ const firing=ui.checkbox(__displayText('Fire automatically while hunting'),orders.autoFire);if(firing!==orders.autoFire)command({type:'standing',rule:'autoFire',value:firing});
+ ui.label(__displayText('REQUESTS FROM THE CREW'),{size:10,color:C.gold});
+ if(!s.requests?.length)ui.paragraph(__displayText('All urgent stations are covered. The crew has the watch.'),dialogWidth,{size:12});
+ for(const r of s.requests||[]){ui.paragraph(__displayText((r.from?r.from+': ':'')+r.text),dialogWidth,{size:12});if(r.crewId)button('Assign '+r.crewId+' to '+taskNames[r.task],()=>command({type:'order',crewId:r.crewId,task:r.task,issuer:'brisk',override:false}));}
+ ui.label(__displayText('CURRENT WATCH'),{size:10,color:C.gold});
+ for(const c of s.crew){ui.label(__displayText(c.name+' · '+(c.away?'ashore':taskNames[c.task])),{size:12,weight:'bold'});ui.paragraph(__displayText(c.away?'The ship is covering this sailor’s duties until the longboat returns.':c.reason||'Following the captain’s directive.'),dialogWidth,{size:11});}
 }
 function nextVoyage(s:any){
  if(s.away)return {text:s.away.choice?'The longboat is on its way home. Review staffing while the party is away.':'The longboat has an encounter. Open Longboat to choose the safe or risky approach.',label:'Check the longboat',run:()=>panel='away'};
@@ -387,68 +396,68 @@ function nextVoyage(s:any){
  return {text:s.mission?'Work toward '+s.mission.title+'. Check its requirements in the contract book.':'Choose another contract, explore the chart, or prepare to hunt a raider.',label:s.mission?'Review contract':'Browse contracts',run:()=>panel='missions'};
 }
 function logbook(s:any){
- ui.heading('The captain’s record',{size:21});ui.paragraph('Renown '+(s.reputation||0)+' · '+((s.reputation||0)<60?'Unknown to the harbourmaster':(s.reputation||0)<180?'A familiar nuisance':'A name across the Quarrelsome Sea'),dialogWidth,{size:12});
- const next=nextVoyage(s);ui.paragraph(next.text,dialogWidth,{size:12});button(next.label,next.run,true);
- ui.label('CHARTED BY THIS CREW',{color:C.gold,size:10});
- for(const p of places)ui.label((s.visited?.includes(p.id)?'✓ ':'○ ')+p.name,{size:12,color:s.visited?.includes(p.id)?C.green:C.muted});
- ui.label('Expeditions '+(s.stats?.expeditions||0)+' · Captures '+(s.stats?.captures||0)+' · Trades '+(s.stats?.trades||0),{size:12});
- ui.label('MILESTONES',{color:C.gold,size:10});
+ ui.heading(__displayText('The captain’s record'),{size:21});ui.paragraph(__displayText('Renown '+(s.reputation||0)+' · '+((s.reputation||0)<60?'Unknown to the harbourmaster':(s.reputation||0)<180?'A familiar nuisance':'A name across the Quarrelsome Sea')),dialogWidth,{size:12});
+ const next=nextVoyage(s);ui.paragraph(__displayText(next.text),dialogWidth,{size:12});button(next.label,next.run,true);
+ ui.label(__displayText('CHARTED BY THIS CREW'),{color:C.gold,size:10});
+ for(const p of places)ui.label(__displayText((s.visited?.includes(p.id)?'✓ ':'○ ')+p.name),{size:12,color:s.visited?.includes(p.id)?C.green:C.muted});
+ ui.label(__displayText('Expeditions '+(s.stats?.expeditions||0)+' · Captures '+(s.stats?.captures||0)+' · Trades '+(s.stats?.trades||0)),{size:12});
+ ui.label(__displayText('MILESTONES'),{color:C.gold,size:10});
  const badges:any={chart:'Every destination visited',trader:'First market trade',raider:'First enemy defeated',shore:'Three expeditions returned',fortune:'1,000 gold in the strongbox'};
- for(const id of Object.keys(badges))ui.label((s.badges?.includes(id)?'✓ ':'○ ')+badges[id],{size:12,color:s.badges?.includes(id)?C.green:C.muted});
- ui.label('VOYAGE JOURNAL',{color:C.gold,size:10});
- for(const entry of s.log.slice().reverse()){ui.label('Day '+(Math.floor(entry.at/240)+1)+' · '+entry.name,{size:10,color:C.gold});ui.paragraph(entry.text,dialogWidth,{size:12});}
+ for(const id of Object.keys(badges))ui.label(__displayText((s.badges?.includes(id)?'✓ ':'○ ')+badges[id]),{size:12,color:s.badges?.includes(id)?C.green:C.muted});
+ ui.label(__displayText('VOYAGE JOURNAL'),{color:C.gold,size:10});
+ for(const entry of s.log.slice().reverse()){ui.label(__displayText('Day '+(Math.floor(entry.at/240)+1)+' · '+entry.name),{size:10,color:C.gold});ui.paragraph(__displayText(entry.text),dialogWidth,{size:12});}
 }
 function crewDialog(s:any){
  const c=s.crew.find((c:any)=>c.id===selectedCrew)||s.crew[0];
  ui.grid('crew picker',()=>{for(let i=0;i<6;i++)button(s.crew[i].name.split(' ')[0],()=>{selectedCrew=s.crew[i].id;updateBrainFields();},c.id===s.crew[i].id);},{columns:dialogWidth<460?3:6,width:dialogWidth,gap:4});
- portrait(c,72);ui.heading(c.name,{size:24});ui.label(c.role,{color:C.gold});ui.paragraph(c.trait,dialogWidth,{size:13});
- ui.label('LEVEL '+c.level+'   ·   '+Math.floor(c.xp)+' / '+(c.level*35)+' XP   ·   FATIGUE '+Math.round(c.fatigue)+'%',{color:C.gold,size:11});
+ portrait(c,72);ui.heading(__displayText(__keepDisplayText(c.name)),{size:24});ui.label(__displayText(c.role),{color:C.gold});ui.paragraph(__displayText(c.trait),dialogWidth,{size:13});
+ ui.label(__displayText('LEVEL '+c.level+'   ·   '+Math.floor(c.xp)+' / '+(c.level*35)+' XP   ·   FATIGUE '+Math.round(c.fatigue)+'%'),{color:C.gold,size:11});
  ui.grid('crew tabs',()=>{button('Orders & memory',()=>tab='voyage',tab==='voyage');button('Crew ties',()=>tab='ties',tab==='ties');button('Individual brain',()=>tab='brain',tab==='brain');},{columns:dialogWidth<380?1:3,width:dialogWidth,gap:6});
  if(tab==='brain'){
-  ui.paragraph('Browser brains share one tiny model while keeping each character’s personality, preferences and learned orders separate.',dialogWidth,{size:12});
-  brainMode=ui.select('Decision provider',brainMode,['Tiny CPU default · in browser','My OpenAI-compatible endpoint']);
-  if(brainMode){endpoint=ui.textField('Endpoint base URL',endpoint,{width:dialogWidth,maxChars:240});model=ui.textField('Model ID',model,{width:dialogWidth,maxChars:100});apiKeyEnv=ui.textField('API key environment variable (optional)',apiKeyEnv,{width:dialogWidth,maxChars:60});ui.paragraph('External endpoints use the optional companion officer. Export after saving.',dialogWidth,{size:11});}
-  else{brainLoadControl();ui.paragraph(browserBrain.status,dialogWidth,{size:11});button('Retry model loading',()=>browserBrain.retry());}
+  ui.paragraph(__displayText('Browser brains share one tiny model while keeping each character’s personality, preferences and learned orders separate.'),dialogWidth,{size:12});
+  brainMode=ui.select(__displayText('Decision provider'),brainMode,__displayOptions(['Tiny CPU default · in browser','My OpenAI-compatible endpoint']));
+  if(brainMode){endpoint=ui.textField(__displayText('Endpoint base URL'),endpoint,{width:dialogWidth,maxChars:240});model=ui.textField(__displayText('Model ID'),model,{width:dialogWidth,maxChars:100});apiKeyEnv=ui.textField(__displayText('API key environment variable (optional)'),apiKeyEnv,{width:dialogWidth,maxChars:60});ui.paragraph(__displayText('External endpoints use the optional companion officer. Export after saving.'),dialogWidth,{size:11});}
+  else{brainLoadControl();ui.paragraph(__displayText(browserBrain.status),dialogWidth,{size:11});button('Retry model loading',()=>browserBrain.retry());}
   ui.column('brain save',()=>{button('Save this character',saveBrain,true);button('Export brain configuration',exportBrains);button('Setup help',()=>panel='brains');});
-  ui.label('DECISION JSON ONLY · NO MODEL-GENERATED DIALOGUE',{size:10,color:C.gold});
-  ui.paragraph('Current source: '+(c.brain==='browser LLM'?'validated browser LLM decision':c.brain==='local LLM'?'validated companion LLM decision':'built-in instinct')+'. Instincts fill gaps while the model loads or thinks.',dialogWidth,{size:11});
+  ui.label(__displayText('DECISION JSON ONLY · NO MODEL-GENERATED DIALOGUE'),{size:10,color:C.gold});
+  ui.paragraph(__displayText('Current source: '+(c.brain==='browser LLM'?'validated browser LLM decision':c.brain==='local LLM'?'validated companion LLM decision':'built-in instinct')+'. Instincts fill gaps while the model loads or thinks.'),dialogWidth,{size:11});
  }else if(tab==='ties'){
   meter('Trust in the captain',c.trust??50,100,C.gold,dialogWidth);
-  ui.paragraph('Praise builds trust. Correcting a habit is a small setback; medical care builds confidence. Shared expeditions and boarding actions change bonds between sailors.',dialogWidth,{size:12});
-  for(const other of s.crew.filter((x:any)=>x.id!==c.id)){const bond=c.bonds?.[other.id]??50;ui.paragraph(other.name+' · '+Math.round(bond)+' / 100 · '+(bond>=65?'trusted shipmate':bond<40?'strained waters':'getting acquainted'),dialogWidth,{size:12});}
-  ui.label('STORIES THEY SHARE',{color:C.gold,size:10});for(const story of c.stories||[])ui.paragraph(story,dialogWidth,{size:12});if(!c.stories?.length)ui.paragraph('Their first shared adventure is still ahead. Send them ashore together to start a story.',dialogWidth,{size:12});
-  ui.paragraph('A strong bond adds 5 percentage points to an expedition’s risky approach. Exhaustion and existing injuries reduce the chance. The longboat shows the final odds.',dialogWidth,{size:11});
+  ui.paragraph(__displayText('Praise builds trust. Correcting a habit is a small setback; medical care builds confidence. Shared expeditions and boarding actions change bonds between sailors.'),dialogWidth,{size:12});
+  for(const other of s.crew.filter((x:any)=>x.id!==c.id)){const bond=c.bonds?.[other.id]??50;ui.paragraph(__displayText(other.name+' · '+Math.round(bond)+' / 100 · '+(bond>=65?'trusted shipmate':bond<40?'strained waters':'getting acquainted')),dialogWidth,{size:12});}
+  ui.label(__displayText('STORIES THEY SHARE'),{color:C.gold,size:10});for(const story of c.stories||[])ui.paragraph(__displayText(story),dialogWidth,{size:12});if(!c.stories?.length)ui.paragraph(__displayText('Their first shared adventure is still ahead. Send them ashore together to start a story.'),dialogWidth,{size:12});
+  ui.paragraph(__displayText('A strong bond adds 5 percentage points to an expedition’s risky approach. Exhaustion and existing injuries reduce the chance. The longboat shows the final odds.'),dialogWidth,{size:11});
  }else{
-  issuer=ui.select('Order through',issuer,['Captain Mara Morrow','First mate Barnaby Brisk']);override=ui.checkbox('Emergency off-role warrant',override);
-  ui.label('Ordinary duties: '+c.ordinary.map((t:string)=>taskNames[t]).join(' · '),{size:11,color:C.muted});
+  issuer=ui.select(__displayText('Order through'),issuer,__displayOptions(['Captain Mara Morrow','First mate Barnaby Brisk']));override=ui.checkbox(__displayText('Emergency off-role warrant'),override);
+  ui.label(__displayText('Ordinary duties: '+c.ordinary.map((t:string)=>taskNames[t]).join(' · ')),{size:11,color:C.muted});
   ui.grid('Task choices',()=>{for(const t of ['helm','lookout','guns','repair','cook','forage','rest'])button(taskNames[t],()=>doOrder(t),c.task===t);},{columns:dialogWidth<380?2:4,width:dialogWidth,gap:6});button('Good work. Remember that.',()=>command({type:'praise',crewId:c.id}));
-  ui.paragraph(c.reason||'Following the standing directive.',dialogWidth,{size:12});
-  if(c.injury>0)ui.paragraph('Injury '+Math.ceil(c.injury)+'% · rest heals gradually; a port doctor treats the crew for 40 gold.',dialogWidth,{size:11});
-  const preferred=['auto',...c.ordinary];const chosen=ui.select('Preferred duty',Math.max(0,preferred.indexOf(c.preferred||'auto')),preferred.map(t=>t==='auto'?'Let the crew decide':taskNames[t]));if(preferred[chosen]!== (c.preferred||'auto'))command({type:'habit',crewId:c.id,action:'prefer',task:preferred[chosen]});
+  ui.paragraph(__displayText(c.reason||'Following the standing directive.'),dialogWidth,{size:12});
+  if(c.injury>0)ui.paragraph(__displayText('Injury '+Math.ceil(c.injury)+'% · rest heals gradually; a port doctor treats the crew for 40 gold.'),dialogWidth,{size:11});
+  const preferred=['auto',...c.ordinary];const chosen=ui.select(__displayText('Preferred duty'),Math.max(0,preferred.indexOf(c.preferred||'auto')),__displayOptions(preferred.map(t=>t==='auto'?'Let the crew decide':taskNames[t])));if(preferred[chosen]!== (c.preferred||'auto'))command({type:'habit',crewId:c.id,action:'prefer',task:preferred[chosen]});
   button('Less of this in this situation',()=>command({type:'habit',crewId:c.id,action:'discourage'}));
-  ui.label('LEARNED FROM YOU',{color:C.gold,size:10,weight:'bold'});
-  if(!c.memories.length)ui.paragraph('No orders remembered yet. Direct commands build bounded task preferences; praise reinforces the current choice.',dialogWidth,{size:12});else{for(const m of c.memories.slice(-3))ui.label('↳ '+m.text+'  ['+m.directive+']',{size:11});}
-  const prefs=Object.keys(c.preferences).map(k=>taskNames[k]+' +'+c.preferences[k].toFixed(1));if(prefs.length)ui.paragraph('Habits: '+prefs.join(' · '),dialogWidth,{size:11});for(const t of Object.keys(c.preferences))button('Forget habit: '+taskNames[t],()=>command({type:'habit',crewId:c.id,action:'forget',task:t}));ui.paragraph('Praise and correction also build separate habits for each directive and danger level. Preferred duty is a nudge; urgent work and captain orders take priority.',dialogWidth,{size:11});
-  ui.paragraph('Captain → First mate → specialists. Officer warrants work only when low hull, hunger or a nearby hostile makes the situation urgent. A direct order lasts 35 seconds.',dialogWidth,{size:11});
+  ui.label(__displayText('LEARNED FROM YOU'),{color:C.gold,size:10,weight:'bold'});
+  if(!c.memories.length)ui.paragraph(__displayText('No orders remembered yet. Direct commands build bounded task preferences; praise reinforces the current choice.'),dialogWidth,{size:12});else{for(const m of c.memories.slice(-3))ui.label(__displayText('↳ '+m.text+'  ['+m.directive+']'),{size:11});}
+  const prefs=Object.keys(c.preferences).map(k=>taskNames[k]+' +'+c.preferences[k].toFixed(1));if(prefs.length)ui.paragraph(__displayText('Habits: '+prefs.join(' · ')),dialogWidth,{size:11});for(const t of Object.keys(c.preferences))button('Forget habit: '+taskNames[t],()=>command({type:'habit',crewId:c.id,action:'forget',task:t}));ui.paragraph(__displayText('Praise and correction also build separate habits for each directive and danger level. Preferred duty is a nudge; urgent work and captain orders take priority.'),dialogWidth,{size:11});
+  ui.paragraph(__displayText('Captain → First mate → specialists. Officer warrants work only when low hull, hunger or a nearby hostile makes the situation urgent. A direct order lasts 35 seconds.'),dialogWidth,{size:11});
  }
 }
 function worldDialog(){
- ui.paragraph('Local practice is playable now. Online worlds use the same server rules through StarHermit sessions, with one ship for every captain. Empty worlds pause under StarHermit’s recovery policy.',dialogWidth,{size:12});
- if(online&&!state.featureVersion)ui.paragraph('This sea was created with earlier rules. Create a new persistent sea to use the expanded chart, markets and crew systems.',dialogWidth,{size:12});
+ ui.paragraph(__displayText('Local practice is playable now. Online worlds use the same server rules through StarHermit sessions, with one ship for every captain. Empty worlds pause under StarHermit’s recovery policy.'),dialogWidth,{size:12});
+ if(online&&!state.featureVersion)ui.paragraph(__displayText('This sea was created with earlier rules. Create a new persistent sea to use the expanded chart, markets and crew systems.'),dialogWidth,{size:12});
  ui.grid('Captain’s hub',()=>{button('Contracts',()=>panel='missions');button('Sea atlas',()=>panel='atlas');button('Captain’s log',()=>panel='logbook');button('Standing orders & watch',()=>panel='book');},{columns:dialogWidth<430?1:2,width:dialogWidth,gap:6});
- ui.label(online?'CONNECTED TO STARHERMIT':'PLAYING LOCAL PRACTICE',{color:C.gold,size:10});
+ ui.label(__displayText(online?'CONNECTED TO STARHERMIT':'PLAYING LOCAL PRACTICE'),{color:C.gold,size:10});
  if(!platform.player()){
-  ui.paragraph('You are playing as a guest. Sign in with StarHermit to create a persistent sea, invite other captains and return to saved online sessions.',dialogWidth,{size:12});
+  ui.paragraph(__displayText('You are playing as a guest. Sign in with StarHermit to create a persistent sea, invite other captains and return to saved online sessions.'),dialogWidth,{size:12});
   button('StarHermit account',()=>{platform.requestSignIn().catch(e=>flash(String(e)));});
  }else{
-  ui.label('Signed in: '+platform.player()!.displayName,{size:12});worldName=ui.textField('New sea name',worldName,{width:dialogWidth,maxChars:60});worldPublic=ui.checkbox('List this sea publicly',worldPublic);ui.paragraph(worldPublic?'Any signed-in captain can find the sea in the public list.':'A private sea can be joined with its invitation code.',dialogWidth,{size:11});ui.row('online actions',()=>{button('Create persistent sea',makeWorld,true);button('Refresh worlds',listWorlds);});button('Join an open sea',joinOpenWorld);
-  joinCode=ui.textField('World join code',joinCode,{width:Math.min(300,dialogWidth),maxChars:8});button('Join by code',joinWorld);
-  if(activeSession)ui.label('Session: '+activeSession,{font:'monospace',size:10,color:C.muted});
-  if(room){ui.label('WORLD CODE: '+(room.joinCode||'Starting…'),{color:C.gold});ui.paragraph((room.name||'Persistent sea')+' · '+room.participants.length+' / '+room.seatsPerTeam+' captains',dialogWidth,{size:11});}
+  ui.label(__displayText('Signed in: '+platform.player()!.displayName),{size:12});worldName=ui.textField(__displayText('New sea name'),worldName,{width:dialogWidth,maxChars:60});worldPublic=ui.checkbox(__displayText('List this sea publicly'),worldPublic);ui.paragraph(__displayText(worldPublic?'Any signed-in captain can find the sea in the public list.':'A private sea can be joined with its invitation code.'),dialogWidth,{size:11});ui.row('online actions',()=>{button('Create persistent sea',makeWorld,true);button('Refresh worlds',listWorlds);});button('Join an open sea',joinOpenWorld);
+  joinCode=ui.textField(__displayText('World join code'),joinCode,{width:Math.min(300,dialogWidth),maxChars:8});button('Join by code',joinWorld);
+  if(activeSession)ui.label(__displayText('Session: '+activeSession),{font:__l10nFont('monospace'),size:10,color:C.muted});
+  if(room){ui.label(__displayText('WORLD CODE: '+(room.joinCode||'Starting…')),{color:C.gold});ui.paragraph(__displayText((room.name||'Persistent sea')+' · '+room.participants.length+' / '+room.seatsPerTeam+' captains'),dialogWidth,{size:11});}
   for(const s of sessionList.slice(0,4))button('Resume '+s.sessionId.slice(0,12)+'…',()=>connect(s.sessionId));
-  for(const r of roomsList.slice(0,3))ui.label((r.name||'Open sea')+' · '+r.freeSeats+' free berths',{size:11});
+  for(const r of roomsList.slice(0,3))ui.label(__displayText((r.name||'Open sea')+' · '+r.freeSeats+' free berths'),{size:11});
  }
- ui.label('LOCAL BRAIN OFFICER',{color:C.gold,size:10});delegate=ui.textField('Authorised companion participant user ID',delegate,{width:dialogWidth,maxChars:80});
+ ui.label(__displayText('LOCAL BRAIN OFFICER'),{color:C.gold,size:10});delegate=ui.textField(__displayText('Authorised companion participant user ID'),delegate,{width:dialogWidth,maxChars:80});
  ui.row('delegate',()=>{button('Authorise crew decisions',()=>command({type:'delegate',userId:delegate}));button('Brain setup',()=>panel='brains');});
  ui.row('practice actions',()=>{button('Return to saved practice',local);button('How to sail',()=>panel='help');button('Sound & CPU settings',()=>panel='settings');});
 }
@@ -457,76 +466,76 @@ function dialogs(){
  const titles:any={atlas:'The wider Quarrelsome Sea',settings:'Options & performance',book:'The captain’s orders book',logbook:'Tales of the Quarrelsome Sea',combat:'Choose a ship to pick on',crew:'Crew manifest',missions:'Contracts & rumours',away:'Launch the longboat',trade:'A little honest commerce',yard:'The shipwright’s ledger',workshop:'The crew’s workshop',world:'A sea worth coming back to',brains:'Your crew, your models',help:'Welcome aboard, Captain',more:'The captain’s toolkit'};
  if(!panel)return;
  const f=frame(),sc=ui.preferences().scale;
- const open=ui.style({width:dialogWidth+56}).dialog('Game panel',titles[panel]||'',true,()=>{ui.scrollArea('Panel contents',{width:dialogWidth+12,height:Math.max(140,Math.min(600,f.height/sc-240))},()=>{
+ const open=ui.style(__l10nStyle({width:dialogWidth+56})).dialog('Game panel',titles[panel]||'',true,()=>{ui.scrollArea('Panel contents',{width:dialogWidth+12,height:Math.max(140,Math.min(600,f.height/sc-240))},()=>{
   if(panel==='crew')crewDialog(s);
   if(panel==='world')worldDialog();
-  if(panel==='atlas'){ui.paragraph('Four trading ports, four islands and one extremely crooked wreck. Wind affects speed at the manual helm. Choose a destination for an automatic course.',dialogWidth,{size:12});ui.grid('Atlas destinations',()=>{for(const p of places)ui.style('card').column('atlas-'+p.id,()=>{ui.paragraph(p.name,dialogWidth<430?dialogWidth-24:(dialogWidth-58)/2,{size:16,weight:'bold'});ui.label(Math.round(distanceTo(s,p)*METRES)+' m · '+p.kind,{size:11});button('Sail to '+p.name,()=>{route(p.id);panel='';});},{spacing:5});},{columns:dialogWidth<430?1:2,width:dialogWidth,gap:10});}
-  if(panel==='settings'){wideButton('StarHermit engine options · F1',()=>{panel='';openMenu();},true);ui.paragraph('Choose graphics quality and frame rate in engine options. Infinite enables the full remaster: spectral water, 4K reflections, volumetric weather, fire and cannon smoke, and the engine’s 2× supersampling. Auto adjusts quality to your machine.',dialogWidth,{size:12});ui.paragraph(graphics.description(),dialogWidth,{size:11});ui.heading('The ship’s soundscape',{size:19});ui.grid('Sound switches',()=>{button(musicOn?'Music: on':'Music: off',()=>{musicOn=!musicOn;saveSoundSettings();},musicOn);button(effectsOn?'Effects: on':'Effects: off',()=>{effectsOn=!effectsOn;saveSoundSettings();},effectsOn);button(seaOn?'Sea ambience: on':'Sea ambience: off',()=>{seaOn=!seaOn;saveSoundSettings();},seaOn);},{columns:dialogWidth<380?1:3,width:dialogWidth,gap:6});
-   ui.label('Music volume · '+Math.round(musicVolume*100)+'%',{size:11,color:C.gold});ui.grid('Music level',()=>{button('Music quieter',()=>changeVolume(true,-.1),false,musicVolume<=0);button('Music louder',()=>changeVolume(true,.1),false,musicVolume>=1);},{columns:2,width:dialogWidth,gap:6});
-   ui.label('Effects volume · '+Math.round(effectsVolume*100)+'%',{size:11,color:C.gold});ui.grid('Effects level',()=>{button('Effects quieter',()=>changeVolume(false,-.1),false,effectsVolume<=0);button('Effects louder',()=>changeVolume(false,.1),false,effectsVolume>=1);},{columns:2,width:dialogWidth,gap:6});
-   ui.paragraph(audioStatus()+'. Original instrumental cues change between harbour, open sea and combat, with gentle crossfades. Music starts after your first interaction.',dialogWidth,{size:12});button('Test cannon sound',()=>cue('cannon-fire'));ui.paragraph('MOSS-generated cannons, timber impacts, rigging, oars, axes, bells, coins and weather follow game events. Sea ambience adds quiet water, deck creaks and gulls. The engine’s mixer controls their overall volume.',dialogWidth,{size:11});brainLoadControl();button('Browser brain details',()=>panel='brains');}
+  if(panel==='atlas'){ui.paragraph(__displayText('Four trading ports, four islands and one extremely crooked wreck. Wind affects speed at the manual helm. Choose a destination for an automatic course.'),dialogWidth,{size:12});ui.grid('Atlas destinations',()=>{for(const p of places)ui.style(__l10nStyle('card')).column('atlas-'+p.id,()=>{ui.paragraph(__displayText(p.name),dialogWidth<430?dialogWidth-24:(dialogWidth-58)/2,{size:16,weight:'bold'});ui.label(__displayText(Math.round(distanceTo(s,p)*METRES)+' m · '+p.kind),{size:11});button('Sail to '+p.name,()=>{route(p.id);panel='';});},{spacing:5});},{columns:dialogWidth<430?1:2,width:dialogWidth,gap:10});}
+  if(panel==='settings'){wideButton('StarHermit engine options · F1',()=>{panel='';__l10nOptions();},true);ui.paragraph(__displayText('Choose graphics quality and frame rate in engine options. Infinite enables the full remaster: spectral water, 4K reflections, volumetric weather, fire and cannon smoke, and the engine’s 2× supersampling. Auto adjusts quality to your machine.'),dialogWidth,{size:12});ui.paragraph(__displayText(graphics.description()),dialogWidth,{size:11});ui.heading(__displayText('The ship’s soundscape'),{size:19});ui.grid('Sound switches',()=>{button(musicOn?'Music: on':'Music: off',()=>{musicOn=!musicOn;saveSoundSettings();},musicOn);button(effectsOn?'Effects: on':'Effects: off',()=>{effectsOn=!effectsOn;saveSoundSettings();},effectsOn);button(seaOn?'Sea ambience: on':'Sea ambience: off',()=>{seaOn=!seaOn;saveSoundSettings();},seaOn);},{columns:dialogWidth<380?1:3,width:dialogWidth,gap:6});
+   ui.label(__displayText('Music volume · '+Math.round(musicVolume*100)+'%'),{size:11,color:C.gold});ui.grid('Music level',()=>{button('Music quieter',()=>changeVolume(true,-.1),false,musicVolume<=0);button('Music louder',()=>changeVolume(true,.1),false,musicVolume>=1);},{columns:2,width:dialogWidth,gap:6});
+   ui.label(__displayText('Effects volume · '+Math.round(effectsVolume*100)+'%'),{size:11,color:C.gold});ui.grid('Effects level',()=>{button('Effects quieter',()=>changeVolume(false,-.1),false,effectsVolume<=0);button('Effects louder',()=>changeVolume(false,.1),false,effectsVolume>=1);},{columns:2,width:dialogWidth,gap:6});
+   ui.paragraph(__displayText(audioStatus()+'. Original instrumental cues change between harbour, open sea and combat, with gentle crossfades. Music starts after your first interaction.'),dialogWidth,{size:12});button('Test cannon sound',()=>cue('cannon-fire'));ui.paragraph(__displayText('MOSS-generated cannons, timber impacts, rigging, oars, axes, bells, coins and weather follow game events. Sea ambience adds quiet water, deck creaks and gulls. The engine’s mixer controls their overall volume.'),dialogWidth,{size:11});brainLoadControl();button('Browser brain details',()=>panel='brains');}
   if(panel==='book')ordersBook(s);
   if(panel==='logbook')logbook(s);
   if(panel==='missions'){
-   if(s.mission){const def=state.contracts?.[s.mission.id];ui.heading(s.mission.title);ui.paragraph((def?.desc||'Fulfil this contract.')+(s.mission.destination?' Destination: '+places.find(p=>p.id===s.mission.destination)?.name+'.':'')+' Reward: '+s.mission.reward+' gold.',dialogWidth,{size:13});button('Abandon contract',()=>command({type:'abandon'}));}
-   else{for(const m of Object.values(state.contracts||{}) as any[]){const done=m.id==='daily'?s.dailyDone?.includes(Math.floor(state.time/240)):s.missionsDone?.includes(m.id);ui.style('card').column(m.id,()=>{ui.paragraph(m.title,dialogWidth-24,{weight:'bold',size:15});ui.label(m.reward+' GOLD',{size:11});ui.paragraph(m.desc,dialogWidth-24,{size:12});button(done?(m.id==='daily'?'Done today':'Completed'):'Accept contract',()=>command({type:'mission',id:m.id}),false,done);},{width:dialogWidth,spacing:7});}}
+   if(s.mission){const def=state.contracts?.[s.mission.id];ui.heading(__displayText(s.mission.title));ui.paragraph(__displayText((def?.desc||'Fulfil this contract.')+(s.mission.destination?' Destination: '+places.find(p=>p.id===s.mission.destination)?.name+'.':'')+' Reward: '+s.mission.reward+' gold.'),dialogWidth,{size:13});button('Abandon contract',()=>command({type:'abandon'}));}
+   else{for(const m of Object.values(state.contracts||{}) as any[]){const done=m.id==='daily'?s.dailyDone?.includes(Math.floor(state.time/240)):s.missionsDone?.includes(m.id);ui.style(__l10nStyle('card')).column(m.id,()=>{ui.paragraph(__displayText(m.title),dialogWidth-24,{weight:'bold',size:15});ui.label(__displayText(m.reward+' GOLD'),{size:11});ui.paragraph(__displayText(m.desc),dialogWidth-24,{size:12});button(done?(m.id==='daily'?'Done today':'Completed'):'Accept contract',()=>command({type:'mission',id:m.id}),false,done);},{width:dialogWidth,spacing:7});}}
   }
   if(panel==='away'){
-   const p=landing(s);ui.paragraph(p?'Anchored at '+p.name+'. '+(p.kind==='wreck'?'Choose Salvage wreck.':'This island offers '+p.jobs.length+' kinds of work ashore. Each needs a different skill: Peg for timber, Pip for treasure and ruins, Brisk for hunting, Tallow for herbs, Fuse for saltpetre.')+' Select two fit sailors, then lower the longboat. They row ashore, work and bring the haul back automatically.':'Anchor within 70 m of an island or wreck before launching.',dialogWidth,{size:12});if(!p&&!s.away){wideButton('Sail to Mossjaw Cay',()=>{route('mossjaw');panel='';},true);}
-   if(s.away){ui.heading('Longboat away');wideButton('Watch the shore party',()=>{targetZoom=1;deck=0;panel='';});ui.progress(Math.max(0,Math.min(1,1-(s.away.returnAt-state.time)/(s.away.returnAt-s.away.departAt))),dialogWidth);ui.label('Returning in '+Math.max(0,Math.ceil(s.away.returnAt-state.time))+' seconds.');
-    if(s.away.encounter){const e=s.away.encounter;ui.heading(e.title,{size:19});ui.paragraph(e.text,dialogWidth,{size:12});ui.paragraph('A '+e.skill.toLowerCase()+' helps with this encounter. Current party success chance: '+Math.round((s.away.successChance||.62)*100)+'%. Bonds help; fatigue and injuries make it harder. Failure can injure a sailor.',dialogWidth,{size:11});if(!s.away.choice){if(state.time>=s.away.encounterAt){wideButton(e.safe,()=>command({type:'expedition-choice',choice:'safe'}),true);wideButton(e.risk,()=>command({type:'expedition-choice',choice:'risk'}));}else ui.label('Reaching the shore in '+Math.ceil(s.away.encounterAt-state.time)+' seconds.',{size:11});ui.paragraph('If you leave it to the crew, they take the safe haul and return on schedule.',dialogWidth,{size:11});}else ui.label(s.away.choice==='risk'?'Risky approach chosen · return delayed 8s':'Safe approach chosen',{color:C.gold,size:12});}
+   const p=landing(s);ui.paragraph(__displayText(p?'Anchored at '+p.name+'. '+(p.kind==='wreck'?'Choose Salvage wreck.':'This island offers '+p.jobs.length+' kinds of work ashore. Each needs a different skill: Peg for timber, Pip for treasure and ruins, Brisk for hunting, Tallow for herbs, Fuse for saltpetre.')+' Select two fit sailors, then lower the longboat. They row ashore, work and bring the haul back automatically.':'Anchor within 70 m of an island or wreck before launching.'),dialogWidth,{size:12});if(!p&&!s.away){wideButton('Sail to Mossjaw Cay',()=>{route('mossjaw');panel='';},true);}
+   if(s.away){ui.heading(__displayText('Longboat away'));wideButton('Watch the shore party',()=>{targetZoom=1;deck=0;panel='';});ui.progress(Math.max(0,Math.min(1,1-(s.away.returnAt-state.time)/(s.away.returnAt-s.away.departAt))),dialogWidth);ui.label(__displayText('Returning in '+Math.max(0,Math.ceil(s.away.returnAt-state.time))+' seconds.'));
+    if(s.away.encounter){const e=s.away.encounter;ui.heading(__displayText(e.title),{size:19});ui.paragraph(__displayText(e.text),dialogWidth,{size:12});ui.paragraph(__displayText('A '+e.skill.toLowerCase()+' helps with this encounter. Current party success chance: '+Math.round((s.away.successChance||.62)*100)+'%. Bonds help; fatigue and injuries make it harder. Failure can injure a sailor.'),dialogWidth,{size:11});if(!s.away.choice){if(state.time>=s.away.encounterAt){wideButton(e.safe,()=>command({type:'expedition-choice',choice:'safe'}),true);wideButton(e.risk,()=>command({type:'expedition-choice',choice:'risk'}));}else ui.label(__displayText('Reaching the shore in '+Math.ceil(s.away.encounterAt-state.time)+' seconds.'),{size:11});ui.paragraph(__displayText('If you leave it to the crew, they take the safe haul and return on schedule.'),dialogWidth,{size:11});}else ui.label(__displayText(s.away.choice==='risk'?'Risky approach chosen · return delayed 8s':'Safe approach chosen'),{color:C.gold,size:12});}
    }
-   else{const jobs:string[]=p?.jobs||['timber'];job=Math.min(job,jobs.length-1);job=ui.select('Expedition',job,jobs.map(j=>JOB_TEXT[j]));for(const c of s.crew.filter((c:any)=>c.rank>0)){const checked=ui.checkbox(c.name+' · '+c.role+(c.injury>0?' · injured '+Math.ceil(c.injury)+'%':''),party.includes(c.id));if(checked&&!party.includes(c.id))party.push(c.id);if(!checked&&party.includes(c.id))party=party.filter(id=>id!==c.id);}if(p?.kind==='wreck')ui.paragraph('Wrecks support salvage. Islands offer timber, treasure, hunting, herbs, saltpetre and ruins.',dialogWidth,{size:11});ui.label(party.length+' / 2 selected',{color:party.length===2?C.green:C.red,size:11});button('Lower the longboat',()=>{command({type:'away',job:jobs[job],crewIds:party});targetZoom=1;deck=0;},true,party.length!==2||!p||party.some(id=>s.crew.find((c:any)=>c.id===id)?.injury>40));}
+   else{const jobs:string[]=p?.jobs||['timber'];job=Math.min(job,jobs.length-1);job=ui.select(__displayText('Expedition'),job,__displayOptions(jobs.map(j=>JOB_TEXT[j])));for(const c of s.crew.filter((c:any)=>c.rank>0)){const checked=ui.checkbox(__displayText(c.name+' · '+c.role+(c.injury>0?' · injured '+Math.ceil(c.injury)+'%':'')),party.includes(c.id));if(checked&&!party.includes(c.id))party.push(c.id);if(!checked&&party.includes(c.id))party=party.filter(id=>id!==c.id);}if(p?.kind==='wreck')ui.paragraph(__displayText('Wrecks support salvage. Islands offer timber, treasure, hunting, herbs, saltpetre and ruins.'),dialogWidth,{size:11});ui.label(__displayText(party.length+' / 2 selected'),{color:party.length===2?C.green:C.red,size:11});button('Lower the longboat',()=>{command({type:'away',job:jobs[job],crewIds:party});targetZoom=1;deck=0;},true,party.length!==2||!p||party.some(id=>s.crew.find((c:any)=>c.id===id)?.injury>40));}
   }
   if(panel==='trade'){
    const p=portNear(s),ready=!!p&&s.anchored,prices=state.prices?.find((x:any)=>x.id===p?.id)?.goods;
-   ui.paragraph(ready?'Trading at '+p.name+'. Harbour guns protect anchored ships. Merchants replenish five crates of each cargo every minute. Prices react to scarcity after the first sea day.':'Sail to Saltwick or Gallows Reach and anchor to trade.',dialogWidth,{size:12});
-   ui.label('Purse: '+Math.floor(s.gold)+' gold · Hold '+cargoTotal(s)+' / '+cargoLimit(s),{color:C.gold});
-   for(const id of Object.keys(state.goods||{})){const def=state.goods[id],amount=id==='spice'?s.cargo:s.goods?.[id]||0,price=prices?.[id];ui.heading(def.name,{size:17});ui.label('Aboard '+amount+' · Port stock '+(state.markets?.[p?.id]?.[id]??'—'),{size:11});ui.grid('market-'+id,()=>{button('Buy 5 '+def.name.toLowerCase()+' · '+(price?price.buy*5:'—')+' gold',()=>command({type:'trade',item:'buy',good:id}),false,!ready);button('Sell '+amount+' '+def.name.toLowerCase()+' · '+(price?price.sell*amount:'—')+' gold',()=>command({type:'trade',item:'sell',good:id}),false,!ready||amount===0);},{columns:dialogWidth<430?1:2,width:dialogWidth,gap:6});}
+   ui.paragraph(__displayText(ready?'Trading at '+p.name+'. Harbour guns protect anchored ships. Merchants replenish five crates of each cargo every minute. Prices react to scarcity after the first sea day.':'Sail to Saltwick or Gallows Reach and anchor to trade.'),dialogWidth,{size:12});
+   ui.label(__displayText('Purse: '+Math.floor(s.gold)+' gold · Hold '+cargoTotal(s)+' / '+cargoLimit(s)),{color:C.gold});
+   for(const id of Object.keys(state.goods||{})){const def=state.goods[id],amount=id==='spice'?s.cargo:s.goods?.[id]||0,price=prices?.[id];ui.heading(__displayText(def.name),{size:17});ui.label(__displayText('Aboard '+amount+' · Port stock '+(state.markets?.[p?.id]?.[id]??'—')),{size:11});ui.grid('market-'+id,()=>{button('Buy 5 '+def.name.toLowerCase()+' · '+(price?price.buy*5:'—')+' gold',()=>command({type:'trade',item:'buy',good:id}),false,!ready);button('Sell '+amount+' '+def.name.toLowerCase()+' · '+(price?price.sell*amount:'—')+' gold',()=>command({type:'trade',item:'sell',good:id}),false,!ready||amount===0);},{columns:dialogWidth<430?1:2,width:dialogWidth,gap:6});}
    button('Resupply & quick patch · 65 gold',()=>command({type:'trade',item:'supplies'}),true,!ready);
    button('Port doctor · 40 gold',()=>command({type:'service',service:'doctor'}),false,!ready);
    const repairCost=Math.max(10,Math.ceil((s.maxHull-s.hull)*.7+(s.fire||0)+(s.leak||0)+(s.rigDamage||0)*.5));
    button('Full repairs & damage control · '+repairCost+' gold',()=>command({type:'service',service:'repairs'}),false,!ready);
-   ui.paragraph('Spice and medicine sell well at Gallows Reach. Sailcloth makes a useful return cargo to Saltwick. Port services tend injuries, refill stores, or extinguish fires and dry the bilge.',dialogWidth,{size:12});
+   ui.paragraph(__displayText('Spice and medicine sell well at Gallows Reach. Sailcloth makes a useful return cargo to Saltwick. Port services tend injuries, refill stores, or extinguish fires and dry the bilge.'),dialogWidth,{size:12});
   }
   if(panel==='combat'){
-   ui.paragraph('Each broadside fires three balls from one side: Z for port, X for starboard, F for whichever side faces your target. Balls take a moment to fly, so a ship that turns or changes speed can dodge them. Firing along a ship’s length rakes her for extra damage. Each side reloads on its own; gunners stock the racks from the hold, and an empty rack slows the reload. When a raider runs out her guns, a red arc shows where they are laid: turn out of it. Sunk ships leave loot afloat for the first ship through.',dialogWidth,{size:12});ui.paragraph('Round shot breaks hulls. Chain shot slows a ship. Grape shot hurts crews and improves boarding odds. Every broadside costs 2 shot.',dialogWidth,{size:12});
-   ui.label('Helm: '+(s.controlMode==='manual'?'manual':'charted courses')+' · Wind '+compass(bearing((state.wind||0)+Math.PI))+' '+(state.windKnots||windSpeed(state.time,state.weather!=='Fair winds'))+' kn',{size:12,color:C.gold});
+   ui.paragraph(__displayText('Each broadside fires three balls from one side: Z for port, X for starboard, F for whichever side faces your target. Balls take a moment to fly, so a ship that turns or changes speed can dodge them. Firing along a ship’s length rakes her for extra damage. Each side reloads on its own; gunners stock the racks from the hold, and an empty rack slows the reload. When a raider runs out her guns, a red arc shows where they are laid: turn out of it. Sunk ships leave loot afloat for the first ship through.'),dialogWidth,{size:12});ui.paragraph(__displayText('Round shot breaks hulls. Chain shot slows a ship. Grape shot hurts crews and improves boarding odds. Every broadside costs 2 shot.'),dialogWidth,{size:12});
+   ui.label(__displayText('Helm: '+(s.controlMode==='manual'?'manual':'charted courses')+' · Wind '+compass(bearing((state.wind||0)+Math.PI))+' '+(state.windKnots||windSpeed(state.time,state.weather!=='Fair winds'))+' kn'),{size:12,color:C.gold});
    button(s.controlMode==='manual'?'Return to charted courses':'Take the manual helm · H',()=>command({type:'helm-mode',mode:s.controlMode==='manual'?'course':'manual'}));
-   if(s.controlMode==='manual'){ui.paragraph('Hold W / Up to make way; A / Left and D / Right steer while moving. The touch controls work while held. Turn your flank toward a target before firing; the bow and stern cannot fire broadsides.',dialogWidth,{size:12});helmControls();}
-   ammoType=ui.select('Ammunition',ammoType,['Round shot · hull damage','Chain shot · slow the rigging','Grape shot · suppress boarders']);
-   for(const target of state.raiders.concat(state.ships.filter((t:any)=>t.id!==me))){ui.column('target-'+target.id,()=>{wideButton(target.name,()=>selectedEnemy=target.id,selectedEnemy===target.id);ui.label(Math.round(distanceTo(s,target)*METRES)+' m · hull '+Math.round(target.hull)+' / '+target.maxHull,{size:11});},{spacing:3});}
+   if(s.controlMode==='manual'){ui.paragraph(__displayText('Hold W / Up to make way; A / Left and D / Right steer while moving. The touch controls work while held. Turn your flank toward a target before firing; the bow and stern cannot fire broadsides.'),dialogWidth,{size:12});helmControls();}
+   ammoType=ui.select(__displayText('Ammunition'),ammoType,__displayOptions(['Round shot · hull damage','Chain shot · slow the rigging','Grape shot · suppress boarders']));
+   for(const target of state.raiders.concat(state.ships.filter((t:any)=>t.id!==me))){ui.column('target-'+target.id,()=>{wideButton(target.name,()=>selectedEnemy=target.id,selectedEnemy===target.id);ui.label(__displayText(Math.round(distanceTo(s,target)*METRES)+' m · hull '+Math.round(target.hull)+' / '+target.maxHull),{size:11});},{spacing:3});}
    button('Close with selected target',()=>command({type:'pursue',target:selectedEnemy}));button('Fire at selected ship',()=>command({type:'fire',target:selectedEnemy,ammunition:['round','chain','grape'][ammoType]}),true);
-   if(s.boarding){ui.paragraph('Boarders return in '+Math.max(0,Math.ceil(s.boarding.finishAt-state.time))+' seconds. Success chance '+Math.round(s.boarding.chance*100)+'%.',dialogWidth,{size:12});}
-   else{ui.heading('Board a weakened raider',{size:18});ui.paragraph('Close within 70 m after reducing a raider below 45% hull. Keep the captain aboard and send two fit sailors. Brisk or Fuse improves the chance; grape shot helps. Boarding takes 12 seconds and can cause injuries. Success takes a 200 gold prize.',dialogWidth,{size:12});for(const c of s.crew.filter((c:any)=>c.rank>0)){const selected=ui.checkbox('Boarder: '+c.name,party.includes(c.id));if(selected&&!party.includes(c.id))party.push(c.id);if(!selected&&party.includes(c.id))party=party.filter(id=>id!==c.id);}ui.label(party.length+' / 2 boarders selected',{size:11});button('Grapples away',()=>command({type:'board',target:selectedEnemy,crewIds:party}),false,party.length!==2);}
+   if(s.boarding){ui.paragraph(__displayText('Boarders return in '+Math.max(0,Math.ceil(s.boarding.finishAt-state.time))+' seconds. Success chance '+Math.round(s.boarding.chance*100)+'%.'),dialogWidth,{size:12});}
+   else{ui.heading(__displayText('Board a weakened raider'),{size:18});ui.paragraph(__displayText('Close within 70 m after reducing a raider below 45% hull. Keep the captain aboard and send two fit sailors. Brisk or Fuse improves the chance; grape shot helps. Boarding takes 12 seconds and can cause injuries. Success takes a 200 gold prize.'),dialogWidth,{size:12});for(const c of s.crew.filter((c:any)=>c.rank>0)){const selected=ui.checkbox(__displayText('Boarder: '+c.name),party.includes(c.id));if(selected&&!party.includes(c.id))party.push(c.id);if(!selected&&party.includes(c.id))party=party.filter(id=>id!==c.id);}ui.label(__displayText(party.length+' / 2 boarders selected'),{size:11});button('Grapples away',()=>command({type:'board',target:selectedEnemy,crewIds:party}),false,party.length!==2);}
   }
   if(panel==='yard'){
    const ready=!!portNear(s)&&s.anchored;
-   ui.paragraph('Fit equipment at either port. Each fitting has three levels; later levels cost more. Ship experience still improves hull strength.',dialogWidth,{size:12});
-   if(!shipNameDraft)shipNameDraft=s.name;shipNameDraft=ui.textField('Ship name',shipNameDraft,{width:dialogWidth,maxChars:40});button('Rechristen this ship',()=>command({type:'rename',name:shipNameDraft}));
-   ui.label('Ship Lv '+s.level+' · '+Math.floor(s.gold)+' gold',{color:C.gold});meter('Hull',s.hull,s.maxHull,C.green,dialogWidth);
+   ui.paragraph(__displayText('Fit equipment at either port. Each fitting has three levels; later levels cost more. Ship experience still improves hull strength.'),dialogWidth,{size:12});
+   if(!shipNameDraft)shipNameDraft=s.name;shipNameDraft=ui.textField(__displayText('Ship name'),shipNameDraft,{width:dialogWidth,maxChars:40});button('Rechristen this ship',()=>command({type:'rename',name:shipNameDraft}));
+   ui.label(__displayText('Ship Lv '+s.level+' · '+Math.floor(s.gold)+' gold'),{color:C.gold});meter('Hull',s.hull,s.maxHull,C.green,dialogWidth);
    const effects:any={hull:'+25 hull and full repair',sails:'+10% sailing speed',guns:'+4 broadside damage',hold:'+15 cargo capacity',berths:'Faster rest and injury recovery',pump:'Faster bilge repairs and less flooding damage'};
-   for(const id of Object.keys(state.fittings||{})){const def=state.fittings[id],level=s.upgrades?.[id]||0;ui.heading(def.name+' · '+level+' / '+def.max,{size:17});ui.paragraph(effects[id],dialogWidth,{size:12});button(level>=def.max?'Fully fitted':'Fit '+def.name.toLowerCase()+' · '+def.cost*(level+1)+' gold',()=>command({type:'upgrade',fitting:id}),false,!ready||level>=def.max);}
+   for(const id of Object.keys(state.fittings||{})){const def=state.fittings[id],level=s.upgrades?.[id]||0;ui.heading(__displayText(def.name+' · '+level+' / '+def.max),{size:17});ui.paragraph(__displayText(effects[id]),dialogWidth,{size:12});button(level>=def.max?'Fully fitted':'Fit '+def.name.toLowerCase()+' · '+def.cost*(level+1)+' gold',()=>command({type:'upgrade',fitting:id}),false,!ready||level>=def.max);}
   }
   if(panel==='workshop')workshopPanel(s);
   if(panel==='brains'){
-   ui.paragraph('The default SmolLM2 135M brain runs entirely in your browser on CPU. Its 138 MB quantized model downloads once and is cached when browser storage permits. Your crew context stays on this device. No localhost service, Python or extra account is needed.',dialogWidth,{size:12});
-   brainLoadControl();ui.paragraph(browserBrain.status,dialogWidth,{size:12});
-   ui.paragraph('Low load is the default. Decisions arrive slowly to leave CPU time for other work. Crew instincts keep the ship running between decisions. Each character keeps its own memories and preferences.',dialogWidth,{size:12});
-   ui.paragraph('For your own OpenAI-compatible endpoint, choose it under Individual brain and use the optional Python companion with a separate authorised participant account.',dialogWidth,{size:12});
+   ui.paragraph(__displayText('The default SmolLM2 135M brain runs entirely in your browser on CPU. Its 138 MB quantized model downloads once and is cached when browser storage permits. Your crew context stays on this device. No localhost service, Python or extra account is needed.'),dialogWidth,{size:12});
+   brainLoadControl();ui.paragraph(__displayText(browserBrain.status),dialogWidth,{size:12});
+   ui.paragraph(__displayText('Low load is the default. Decisions arrive slowly to leave CPU time for other work. Crew instincts keep the ship running between decisions. Each character keeps its own memories and preferences.'),dialogWidth,{size:12});
+   ui.paragraph(__displayText('For your own OpenAI-compatible endpoint, choose it under Individual brain and use the optional Python companion with a separate authorised participant account.'),dialogWidth,{size:12});
    ui.column('brain setup',()=>{button('Export per-character config',exportBrains,true);button('Configure a character',()=>{panel='crew';tab='brain';updateBrainFields();});});
-   ui.paragraph('Decision-only v0.1: JSON task choices. Pirate shouts are authored game lines. The default instinct scheduler keeps the game playable when a model is absent, slow or invalid.',dialogWidth,{size:11});
+   ui.paragraph(__displayText('Decision-only v0.1: JSON task choices. Pirate shouts are authored game lines. The default instinct scheduler keeps the game playable when a model is absent, slow or invalid.'),dialogWidth,{size:11});
   }
   if(panel==='more'){for(const [label,id] of [['Sea atlas','atlas'],['Sound & CPU settings','settings'],['Captain’s log','logbook'],['Contracts','missions'],['Combat targets','combat'],['Shipyard','yard'],['Crew workshop','workshop'],['Standing orders & watch','book'],['How to sail','help']])button(label,()=>panel=id);}
-  if(panel==='help'){if(welcomeArt)ui.image('The Quarrelsome Sea',welcomeArt,{width:dialogWidth,height:dialogWidth/2});
-   const next=nextVoyage(s);ui.heading('Your next good idea',{size:19});ui.paragraph(next.text,dialogWidth,{size:13});button(next.label,next.run,true);
-   for(const text of ['1  Pick an island or port and set course. The crew sails for you.','2  Set a standing directive; crew choose tasks from their roles.','3  Give direct orders or praise good work to teach task preferences.','4  Zoom in with E to inspect three decks. Q returns to the sea.','5  Anchor at islands and send two crew on a longboat expedition.','6  Trade spice between ports, fulfil contracts and level up.','7  Assign Little Fuse to Guns, close to 170 m and fire with F.','8  H takes the manual helm. Hold W with A / D to steer; show your flank for a broadside.','9  Crew ties and the orders book explain habits, trust and useful partnerships.','10  Visit the shipyard and treat injuries at a port. Watch fire, bilge and rigging damage.'])ui.paragraph(text,dialogWidth,{size:13});
-   ui.paragraph('Instincts run immediately. Browser brains are optional, decision-only and validated by the authority. Progress in local practice is saved on this device.',dialogWidth,{size:11});
+  if(panel==='help'){if(welcomeArt)ui.image(__displayText('The Quarrelsome Sea'),welcomeArt,{width:dialogWidth,height:dialogWidth/2});
+   const next=nextVoyage(s);ui.heading(__displayText('Your next good idea'),{size:19});ui.paragraph(__displayText(next.text),dialogWidth,{size:13});button(next.label,next.run,true);
+   for(const text of ['1  Pick an island or port and set course. The crew sails for you.','2  Set a standing directive; crew choose tasks from their roles.','3  Give direct orders or praise good work to teach task preferences.','4  Zoom in with E to inspect three decks. Q returns to the sea.','5  Anchor at islands and send two crew on a longboat expedition.','6  Trade spice between ports, fulfil contracts and level up.','7  Assign Little Fuse to Guns, close to 170 m and fire with F.','8  H takes the manual helm. Hold W with A / D to steer; show your flank for a broadside.','9  Crew ties and the orders book explain habits, trust and useful partnerships.','10  Visit the shipyard and treat injuries at a port. Watch fire, bilge and rigging damage.'])ui.paragraph(__displayText(text),dialogWidth,{size:13});
+   ui.paragraph(__displayText('Instincts run immediately. Browser brains are optional, decision-only and validated by the authority. Progress in local practice is saved on this device.'),dialogWidth,{size:11});
   }
  });ui.row('close panel',()=>{ui.spacer();button('Back to the sea',()=>panel='',true);},{width:dialogWidth});
  });if(!open)panel='';
 }
-onRender(()=>{
+onRender(__l10nRender(()=>{
  touchTurn=0;touchThrottle=0;
  const f=frame(),scale=ui.preferences().scale,w=f.width,h=f.height,mobile=w/scale<1000;
  if(w<1||h<1)return;
@@ -540,6 +549,10 @@ onRender(()=>{
  }
  instruments(w,h,scale,mobile);bottom(w,h,scale,mobile);if(!panel)battleStrip(w,h,scale,mobile);
  dialogs();
- if(noticeTime>0){const width=Math.min(520,lw-24),x=(w-width*scale)/2,y=h-84*scale;draw.box(x,y,width*scale,72*scale,'toast');ui.area({x:x+12*scale,y:y+10*scale,width:(width-24)*scale,height:55*scale},()=>ui.style({text:{color:C.ink}}).paragraph(notice,width-24,{size:12}));}
+ if(noticeTime>0){const width=Math.min(520,lw-24),x=(w-width*scale)/2,y=h-84*scale;draw.box(x,y,width*scale,72*scale,'toast');ui.area({x:x+12*scale,y:y+10*scale,width:(width-24)*scale,height:55*scale},()=>ui.style(__l10nStyle({text:{color:C.ink}})).paragraph(__displayText(notice),width-24,{size:12}));}
  // Model providers never receive platform tokens or authority handles.
-});
+}));
+
+// localization-runtime:menu
+import { installLanguageMenu as __installLanguageMenu } from "./l10n/menu.js";
+__installLanguageMenu(false);
