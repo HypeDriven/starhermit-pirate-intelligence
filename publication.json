@@ -22,7 +22,7 @@
       "pinnedCommitSha": null,
       "deployedCommitSha": null,
       "deployError": null,
-      "deployedAt": "2026-11-07T14:16:54.49787+00:00",
+      "deployedAt": "2026-11-12T08:16:38.16275+00:00",
       "externalLaunchUrl": null,
       "engineVersion": "1.38.0",
       "deployWarning": null
@@ -42,15 +42,15 @@
     "links": [],
     "isDisabled": false
   },
-  "publishedAt": "2026-11-07T14:16:54.616Z",
-  "sourceCommit": "6df3714008a79c1c731bcebcf2e72a4b12a178bd",
-  "bytesReceived": 11120677,
-  "archiveSha256": "3dcf8a1b3e58d065989063993e05b0cfb6c4df109db0014abd1797c9af2d5618",
+  "publishedAt": "2026-11-12T08:16:43.498Z",
+  "sourceCommit": "f3036bf9b8a76e5fff12258a34012116662eb077",
+  "bytesReceived": 14475023,
+  "archiveSha256": "206cb7c8d66269d25bdb95d29d896404568909544b4558e3e00f09fe3a538627",
   "result": {
     "clientPublished": true,
     "serverImageLoaded": false,
     "imageDigest": null,
-    "bytesReceived": 11120677,
+    "bytesReceived": 14475023,
     "mode": "replace",
     "filesRemoved": 0,
     "engineVersion": "1.38.0",
@@ -170,5 +170,71 @@
       }
     ],
     "rtx5090PerformanceMeasured": false
+  },
+  "indexSha256": "724f5bdb2d21d7f8b330ba77f27d7826bb86cf341052a6e803bf8df88461eff4",
+  "liveVerification": {
+    "at": "2026-11-12T08:16:43.498Z",
+    "files": [
+      {
+        "file": "starhermit-files.json",
+        "sha256": "724f5bdb2d21d7f8b330ba77f27d7826bb86cf341052a6e803bf8df88461eff4",
+        "status": 200
+      },
+      {
+        "file": "assets/localization/Japanese.otf",
+        "sha256": "b1132cbb47a40dabbf303b72a22c017b1816d37572c8693d7ba4b6a8b70406ff",
+        "status": 200
+      },
+      {
+        "file": "assets/localization/Khmer.ttf",
+        "sha256": "d78d0b07c58acc43ef616b6ea599a5ac4f61f9fc31ab4d3abc06af376a2b3951",
+        "status": 200
+      },
+      {
+        "file": "assets/localization/SimplifiedChinese.otf",
+        "sha256": "4928878ce6313173fc35a02b5b8e41b1b5cd2037448253b790f393f7b70e74d0",
+        "status": 200
+      },
+      {
+        "file": "assets/localization/Tamil.ttf",
+        "sha256": "3640decccf2ef0c4393e7a5b8acdb1cba59b9aa358f01b98cbaabb80448a0c91",
+        "status": 200
+      },
+      {
+        "file": "assets/localization/TraditionalChinese.otf",
+        "sha256": "2048ff0da13d256230c8febb0890722bee71fa38302cf3ebf7f166b00fbb2f87",
+        "status": 200
+      },
+      {
+        "file": "assets/localization/common.json",
+        "sha256": "d5adcb1a556165f715a37095d1f5c8290cf442cf610be85bd358b7cca4d818a6",
+        "status": 200
+      },
+      {
+        "file": "assets/localization/fonts.json",
+        "sha256": "37beaea0dba54c9f2c45995cbf9fd19fad21719d701718c41d7e58dd7748ca13",
+        "status": 200
+      },
+      {
+        "file": "assets/localization/locales.json",
+        "sha256": "131d65447f1d24ca644931d483028a5825974d97cc1eb67380094a4dab768ca6",
+        "status": 200
+      },
+      {
+        "file": "assets/strings.json",
+        "sha256": "fb3cc6a80411a27137ee2ca8736b2d8b6ce9b3a3acccc6f216ba83612c645d86",
+        "status": 200
+      },
+      {
+        "file": "index.html",
+        "sha256": "76194376624bede7d2049b69ec6efaa4158f645fa958727e5d608ddf4e96cfb3",
+        "status": 200
+      },
+      {
+        "file": "starhermit.txt",
+        "sha256": "60ca7aeaba6d7b5dd4520ef14313f64d945b77625db9cb2a138c4004328a9007",
+        "status": 200
+      }
+    ]
   }
 }
