@@ -22,9 +22,9 @@
       "pinnedCommitSha": null,
       "deployedCommitSha": null,
       "deployError": null,
-      "deployedAt": "2026-11-12T08:16:38.16275+00:00",
+      "deployedAt": "2026-11-13T08:39:54.138538+00:00",
       "externalLaunchUrl": null,
-      "engineVersion": "1.38.0",
+      "engineVersion": "1.39.0",
       "deployWarning": null
     },
     "description": "Six questionable souls. One small ship. Your orders.\n\nYou are the captain of a patched-up sloop on the Quarrelsome Sea. Set a standing directive (make your fortune, hunt raiders, play it safe) and your crew decide how to get there. Every sailor has a role, a temper and habits of their own, and they learn from the orders you give them.\n\n- Chart a course between ports, islands and wrecks, trade spice, resupply and refit your hull.\n- Send two of the crew ashore by longboat for timber, buried treasure or salvage, and manage the ship short-handed while they are gone.\n- Take on contracts, bring rival ships within range and trade broadsides.\n- Keep the chain of command: off-role orders need an officer's warrant and real danger.\n\nPlay local practice straight away, or sign in to create a persistent shared sea and invite other captains to join it with a room code.",
@@ -42,18 +42,18 @@
     "links": [],
     "isDisabled": false
   },
-  "publishedAt": "2026-11-12T08:16:43.498Z",
-  "sourceCommit": "f3036bf9b8a76e5fff12258a34012116662eb077",
-  "bytesReceived": 14475023,
-  "archiveSha256": "206cb7c8d66269d25bdb95d29d896404568909544b4558e3e00f09fe3a538627",
+  "publishedAt": "2026-11-13T08:39:58.322Z",
+  "sourceCommit": "1638f9fe1e739468b6d75828975502398719e862",
+  "bytesReceived": 14475202,
+  "archiveSha256": "f34bb0b397a3c83477f1b176ef63841d13367ea7b0f942e7467d3fd544a69fd3",
   "result": {
     "clientPublished": true,
     "serverImageLoaded": false,
     "imageDigest": null,
-    "bytesReceived": 14475023,
+    "bytesReceived": 14475202,
     "mode": "replace",
     "filesRemoved": 0,
-    "engineVersion": "1.38.0",
+    "engineVersion": "1.39.0",
     "deployWarning": null
   },
   "remoteObjects": {
@@ -171,13 +171,13 @@
     ],
     "rtx5090PerformanceMeasured": false
   },
-  "indexSha256": "724f5bdb2d21d7f8b330ba77f27d7826bb86cf341052a6e803bf8df88461eff4",
+  "indexSha256": "2068e8ef5eaa25a81b1829b2998f0911492cab9fd03561357fd5e6ad0828f002",
   "liveVerification": {
-    "at": "2026-11-12T08:16:43.498Z",
+    "at": "2026-11-13T08:39:58.322Z",
     "files": [
       {
         "file": "starhermit-files.json",
-        "sha256": "724f5bdb2d21d7f8b330ba77f27d7826bb86cf341052a6e803bf8df88461eff4",
+        "sha256": "2068e8ef5eaa25a81b1829b2998f0911492cab9fd03561357fd5e6ad0828f002",
         "status": 200
       },
       {
@@ -227,12 +227,12 @@
       },
       {
         "file": "index.html",
-        "sha256": "76194376624bede7d2049b69ec6efaa4158f645fa958727e5d608ddf4e96cfb3",
+        "sha256": "a1beb81ad68dd5eba68a538994dac4e01ba3d25c83f9e824b24882bb3fea65bd",
         "status": 200
       },
       {
         "file": "starhermit.txt",
-        "sha256": "60ca7aeaba6d7b5dd4520ef14313f64d945b77625db9cb2a138c4004328a9007",
+        "sha256": "cf4e2e60eab0852d55b2e2525c48f2b985bf13d9be35feccae81c22a29859de3",
         "status": 200
       }
     ]
