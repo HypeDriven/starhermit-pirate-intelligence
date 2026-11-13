@@ -9,8 +9,8 @@ cp tests/fixtures/graphics-scene.ts "$fixture/src/graphics-check.ts"
 cat > "$fixture/starhermit.txt" <<'MANIFEST'
 name=Pirate Intelligence graphics check
 engine.api=1
-engine.version=1.38.0
-engine.minor=38
+engine.version=1.39.0
+engine.minor=39
 engine.entry=src/graphics-check.ts
 engine.limits.image_mib=512
 engine.limits.mesh_mib=256
