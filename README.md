@@ -1,5 +1,7 @@
 # Pirate Intelligence — v0.2
 
+**[▶ Play Pirate Intelligence on StarHermit](https://dashboard.starhermit.com/play/546dae33-aa48-4775-bff9-c0c48deb759f)**
+
 A playable pirate crew simulation, built on the **StarHermit engine 1.39.0, host API 1.39**. The attached concept informed the small ships, island landmarks, sea view, and close-up ship management. The first art pass is original low-poly geometry rather than video frames or licensed assets.
 
 ## Play
