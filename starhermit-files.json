@@ -30,7 +30,7 @@
     "description.md": {"sha256": "97d3151c0cd0e6f9c230e3de8784fd8ee3e866c06e3efb3c6a9675b430fd09ed", "size": 867},
     "favicon.png": {"sha256": "8ec83067dd83a7a2b6f8563947d277219a52ab08e3223ee88d04d40115e28add", "size": 84415},
     "favicon.png.ktx2": {"sha256": "43aadca3660b8612eb5186649c834c38f73da909c29678c52be9df8fb2c5df58", "size": 87776},
-    "index.html": {"sha256": "d33a1d0ea36c4e51a9cda800bf4efe7e804e40976437bf29a6eab84bf8c594ff", "size": 1797},
+    "index.html": {"sha256": "c4ad667b76c3c398610b11c653c6e44f3d9163ad62a91ce73464578e2dd05b36", "size": 1797},
     "licenses/Ultra-Water-MIT.txt": {"sha256": "d5a8b50baec35c7e5efc430d7a03cd3fe160c4840326d153d308050f545c282e", "size": 1255},
     "models/LICENSE-Apache-2.0.txt": {"sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30", "size": 11358},
     "models/index.json": {"sha256": "6ec1a854e92ca5d7720f2b337afa95627721090358f644d895a5aa0fe6b321b7", "size": 19672},
@@ -81,7 +81,7 @@
     "src/main.ts": {"sha256": "37ed4d60a5cdb3ec2b284a2214ac884a92cef225a5d664d0511abf0da2247f44", "size": 86885},
     "src/navigation.js": {"sha256": "102aeffb5e57aff029cf3565c8462ce08c0da47eea08e456172e8d93cc60245c", "size": 1346},
     "src/plucks.ts": {"sha256": "1c1262eb60bc83ba1fa46c6d94ca3ef2eb7df165f616931d4a22c9a41dbfa480", "size": 3770},
-    "src/render/graphics.ts": {"sha256": "844ca937905a1c30b9d90b3f7f3b3ac898ffcf67a92ac76c1b5ae380009d8cfc", "size": 7659},
+    "src/render/graphics.ts": {"sha256": "99febc25a2a7f751366fb6970181b81509d36be4081eafd9333d6e61cbb1c0b1", "size": 7794},
     "src/render/materials.ts": {"sha256": "37c76d0427a95ca12c33a45d2d13e8855f9127db1c520d457ee634039055fe68", "size": 2394},
     "src/render/ocean-sim.ts": {"sha256": "6184225a46c9f4f8b935db0129f23e25e34bd3809fb09a11b2fd86db7eaa3192", "size": 21643},
     "src/render/precipitation.ts": {"sha256": "754bbc2e29be2b775d1511a510959984f68cfac193aff4b0d5d05d8aa38fb7f9", "size": 2630},
@@ -98,7 +98,7 @@
     "src/sound.ts": {"sha256": "a7fcdfd4806c6328d5603a7cfb60be672518b2170da8ad71f51795304a954060", "size": 3609},
     "src/visuals.ts": {"sha256": "b088a5a7a800e50b8603c641648c2b2212bf73df1920ed2de0f599a0ed1c660b", "size": 36135},
     "starhermit-remote.json": {"sha256": "257e2012233aad71a673f1e83ce0c542e770c65b48a8caee0d89325bd742e5c9", "size": 169},
-    "starhermit.txt": {"sha256": "ca5b89171d4f60cc78578f38f292a1b13e40af0baeb3333a6cb187b2d70ebb10", "size": 1676}
+    "starhermit.txt": {"sha256": "a5238bc8e69e769d8c3c04509df02930ce6d29644c9f9a6b7b744f3e266a37e0", "size": 1699}
   },
   "excluded": ["DESIGN.md", "README.md", "companion/", "dist/", "package.json", "publication.json", "scripts/", "spec.md", "tests/", "tools/", "tsconfig.json"],
   "format": 1

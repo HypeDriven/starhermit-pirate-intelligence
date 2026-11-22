@@ -60,6 +60,7 @@ export class MaritimeGraphics {
    setBusy(null);
    this.rain?.dispose();this.rain=p.index>=4?new SeaRain([0,0,0,0,384,640,1024,2048,3072,4096][p.index]):null;
    maritimeVolumes.configure(p);renderer.antialias=settings.antialias;
+  renderer.motionBlur = settings.bloom !== null ? { intensity: 0.25, samples: 8, maxPixels: 16, targetFps: 60, camera: false } : null;
    renderer.ao=settings.ao?{resolution:settings.ao.resolution,samples:settings.ao.samples,radius:2.2,thickness:1.4,scale:1.1,blendIntensity:.65,denoise:{samples:settings.ao.denoiseSamples,radius:8}}:null;
    renderer.bloom=settings.bloom?{resolution:settings.bloom.resolution,threshold:1.25,strength:.16,radius:.55}:null;
    renderer.grade=settings.grade?{space:'display',saturation:1.04,contrast:.035,shadows:[.97,1,1.025],highlights:[1.025,1.01,.975],amount:.65,vignette:{amount:.13,inner:.3,outer:.95}}:null;
