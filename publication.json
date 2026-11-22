@@ -22,9 +22,9 @@
       "pinnedCommitSha": null,
       "deployedCommitSha": null,
       "deployError": null,
-      "deployedAt": "2026-11-18T17:52:25.309783+00:00",
+      "deployedAt": "2026-11-22T14:24:26.04557+00:00",
       "externalLaunchUrl": null,
-      "engineVersion": "1.44.1",
+      "engineVersion": "1.47.0",
       "deployWarning": null
     },
     "description": "Six questionable souls. One small ship. Your orders.\n\nYou are the captain of a patched-up sloop on the Quarrelsome Sea. Set a standing directive (make your fortune, hunt raiders, play it safe) and your crew decide how to get there. Every sailor has a role, a temper and habits of their own, and they learn from the orders you give them.\n\n- Chart a course between ports, islands and wrecks, trade spice, resupply and refit your hull.\n- Send two of the crew ashore by longboat for timber, buried treasure or salvage, and manage the ship short-handed while they are gone.\n- Take on contracts, bring rival ships within range and trade broadsides.\n- Keep the chain of command: off-role orders need an officer's warrant and real danger.\n\nPlay local practice straight away, or sign in to create a persistent shared sea and invite other captains to join it with a room code.",
@@ -42,19 +42,19 @@
     "links": [],
     "isDisabled": false
   },
-  "publishedAt": "2026-11-18T17:52:25.361Z",
-  "sourceCommit": "06b0c983520766202df02fd119773802ef33e224",
-  "bytesReceived": 17012219,
-  "archiveSha256": "5251466e438fb39adad130726bf83e1f682b0d3d4b8be297e1d1518c2af15105",
+  "publishedAt": "2026-11-22T14:24:26.04557+00:00",
+  "sourceCommit": "e998c0f8e0d0416f43dbbc4e8459f2710e766239",
+  "bytesReceived": 18666739,
+  "archiveSha256": "8d203e61e3d1b4f45a1e48a8160e42a0077209c803c62805238e4ac99da1a5d3",
   "result": {
+    "bytesReceived": 18666739,
     "clientPublished": true,
-    "serverImageLoaded": false,
-    "imageDigest": null,
-    "bytesReceived": 17012219,
-    "mode": "replace",
+    "deployWarning": null,
+    "engineVersion": "1.47.0",
     "filesRemoved": 0,
-    "engineVersion": "1.44.1",
-    "deployWarning": null
+    "imageDigest": null,
+    "mode": "replace",
+    "serverImageLoaded": false
   },
   "remoteObjects": {
     "baseUrl": "https://546dae33-aa48-4775-bff9-c0c48deb759f.starhermit.com/_remote/",
@@ -236,5 +236,6 @@
         "status": 200
       }
     ]
-  }
+  },
+  "verifiedAt": "2026-11-22T14:31:17.856Z"
 }
