@@ -1,3 +1,4 @@
+import { showCursor } from "./cursor.js";
 import { localizedStyle as __l10nStyle } from "./l10n/font.js";
 import { localizedDrawOptions as __l10nDrawOptions } from "./l10n/font.js";
 import { withLanguageRender as __l10nRender } from "./l10n/menu.js";
@@ -153,7 +154,8 @@ function parseOrder(){
  if(/patch|fix|hull/.test(text))task='repair';if(/fire|cannon|shoot/.test(text))task='guns';if(/sleep|nap/.test(text))task='rest';if(/sail|steer/.test(text))task='helm';if(/food|soup/.test(text))task='cook';
  if(!task){flash('Try “Peg, repair the hull”, “Fuse, guns” or “Pip, lookout”.');return;}doOrder(task);orderText='';
 }
-onStart(()=>{files.fetch('assets/fonts/CormorantGaramond.ttf').then(()=>{fonts.add(new FontFace('Captain','assets/fonts/CormorantGaramond.ttf',{weight:'600'}));headingFont='Captain';__l10nStyles({heading:{text:{font:__l10nFont(headingFont),weight:'bold',color:'#f1e5c8'}}});}).catch(()=>{});initAudio();
+onStart(()=>{
+  showCursor();files.fetch('assets/fonts/CormorantGaramond.ttf').then(()=>{fonts.add(new FontFace('Captain','assets/fonts/CormorantGaramond.ttf',{weight:'600'}));headingFont='Captain';__l10nStyles({heading:{text:{font:__l10nFont(headingFont),weight:'bold',color:'#f1e5c8'}}});}).catch(()=>{});initAudio();
  soundSettings(effectsOn,seaOn,musicOn,musicVolume,effectsVolume);
  ui.setTheme({fontSize:13,headingSize:20,smallSize:11,padding:12,spacing:8,text:C.cream,muted:C.muted,panel:C.panel,control:'#23474b',hovered:'#3d675d',pressed:'#14363d',field:'#0d2933',accent:C.gold,focus:C.gold,outline:C.edge,radius:4});
  // Naval instruments: deep teal leather, aged brass and parchment cards.
