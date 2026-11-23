@@ -12,7 +12,7 @@
     "metadataSource": "manual",
     "createdAt": "2026-10-28T10:06:59.596865+00:00",
     "coverArtSource": "manifest",
-    "coverArtUpdatedAt": "2026-11-18T17:52:25.345483+00:00",
+    "coverArtUpdatedAt": "2026-11-23T17:04:27.46514+00:00",
     "submittedByUserId": "2712e04e-461b-4d23-81ae-e40b429128a8",
     "submittedByUsername": "starhermit",
     "hosting": {
@@ -22,7 +22,7 @@
       "pinnedCommitSha": null,
       "deployedCommitSha": null,
       "deployError": null,
-      "deployedAt": "2026-11-22T14:24:26.04557+00:00",
+      "deployedAt": "2026-11-23T17:04:27.432913+00:00",
       "externalLaunchUrl": null,
       "engineVersion": "1.47.0",
       "deployWarning": null
@@ -31,7 +31,7 @@
     "releaseNotesUpdatedAt": "2026-11-06T13:38:34.835863+00:00",
     "serverRuntime": "script",
     "bannerArtSource": "manifest",
-    "bannerArtUpdatedAt": "2026-11-18T17:52:25.345483+00:00",
+    "bannerArtUpdatedAt": "2026-11-23T17:04:27.46514+00:00",
     "tags": [
       "Pirates",
       "Simulation",
@@ -42,19 +42,19 @@
     "links": [],
     "isDisabled": false
   },
-  "publishedAt": "2026-11-22T14:24:26.04557+00:00",
-  "sourceCommit": "e998c0f8e0d0416f43dbbc4e8459f2710e766239",
-  "bytesReceived": 18666739,
-  "archiveSha256": "8d203e61e3d1b4f45a1e48a8160e42a0077209c803c62805238e4ac99da1a5d3",
+  "publishedAt": "2026-11-23T17:04:27.569Z",
+  "sourceCommit": "63c37383718d0ee60152929f6c790664fb9fdd00",
+  "bytesReceived": 17012280,
+  "archiveSha256": "733f58ab24c5e94689629a217654b23a655e7cce129d278be70919c04af12c7f",
   "result": {
-    "bytesReceived": 18666739,
     "clientPublished": true,
-    "deployWarning": null,
-    "engineVersion": "1.47.0",
-    "filesRemoved": 0,
+    "serverImageLoaded": false,
     "imageDigest": null,
+    "bytesReceived": 17012280,
     "mode": "replace",
-    "serverImageLoaded": false
+    "filesRemoved": 0,
+    "engineVersion": "1.47.0",
+    "deployWarning": null
   },
   "remoteObjects": {
     "baseUrl": "https://546dae33-aa48-4775-bff9-c0c48deb759f.starhermit.com/_remote/",
