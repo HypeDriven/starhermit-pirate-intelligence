@@ -49,7 +49,7 @@ def load_config(path):
 
 
 def decision(context, character, config):
-    """One bounded OpenAI-compatible call. Returns a task, never prose commands."""
+    """One bounded OpenAI-compatible call. Returns a task and optional in-character speech."""
     options = dict(config.get('default', {}))
     options.update(config.get('crew', {}).get(character['id'], {}))
     if options.get('mode') in ('instinct', 'browser'):
@@ -77,12 +77,13 @@ def decision(context, character, config):
     system = ('You are a pirate crew decision model. Choose ONE useful allowed task. '
               'Prioritise captain orders and learned preferences, repair a damaged hull, '
               'staff helm while sailing, guns near enemies, rest when tired. '
-              'Return only JSON: {"task":"repair"}. No dialogue. '
+              'Return only JSON with an allowed task and a short line of spoken English in character, '
+              'for example {"task":"repair","dialogue":"Pass me the oakum before the sea comes in!"}. '
               + str(options.get('system_prompt', ''))[:1000])
     body = {'model': options.get('model', 'smollm2-135m'),
             'messages': [{'role': 'system', 'content': system},
                          {'role': 'user', 'content': json.dumps(prompt, separators=(',', ':'))}],
-            'temperature': 0.15, 'max_tokens': 40,
+            'temperature': 0.15, 'max_tokens': 80,
             'response_format': {'type': 'json_object'}}
     key = os.environ.get(options.get('api_key_env', ''), '') or None
     response = http_json(endpoint + '/chat/completions', body, key, timeout=8)
@@ -96,9 +97,13 @@ def decision(context, character, config):
     task = parsed.get('task')
     if task not in allowed:
         return None
-    return {'type': 'decision', 'ownerId': context['ownerId'],
+    result = {'type': 'decision', 'ownerId': context['ownerId'],
             'crewId': character['id'], 'task': task, 'issuer': 'brisk',
             'override': bool(warrant)}
+    line = parsed.get('dialogue')
+    if isinstance(line, str) and 10 <= len(line.strip()) <= 110 and not re.search(r'[\x00-\x1f\x7f<>|]', line):
+        result['dialogue'] = line.strip()
+    return result
 
 
 def start_tiny():

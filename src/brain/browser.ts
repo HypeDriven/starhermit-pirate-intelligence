@@ -1,7 +1,7 @@
 import { files, runtime } from 'starhermit:engine';
 import { Tokenizer } from './tokenizer.js';
 import { TinyModel } from './inference.js';
-import { LOADS, loadSetting, brainRequest, designRequest, nextWorkAt } from './policy.js';
+import { LOADS, loadSetting, brainRequest, designRequest, dialogueRequest, nextWorkAt } from './policy.js';
 
 // The game already runs off the browser's rendering thread. SIMD math runs in
 // that realm so it uses the browser's WASM engine rather than an interpreted
@@ -23,13 +23,20 @@ export class BrowserBrain {
  private generation=0;
  private stream:any=null;
  private paused=false;
+ private pendingDialogue:{ crewId:string }|null=null;
+ requestDialogue(crewId:string){
+  if(this.load===3||this.failed||runtime?.()!=='web')return false;
+  this.pendingDialogue={crewId};
+  this.nextAt=0;
+  return true;
+ }
  setLoad(value:number){
   const n=loadSetting(value);if(n===this.load)return;
   this.load=n;this.nextAt=0;
-  if(n===3)this.cancel();
+  if(n===3){this.cancel();this.pendingDialogue=null;}
  }
  cancel(){this.iterator=null;this.request=null;this.generation++;if(this.model)this.model.prefix=[];}
- suspend(){this.paused=true;this.cancel();}
+ suspend(){this.paused=true;this.cancel();this.pendingDialogue=null;}
  resume(){this.paused=false;this.nextAt=0;}
  retry(){this.failed=false;this.status='Waiting to load the tiny model';}
  private async start(){
@@ -52,7 +59,7 @@ export class BrowserBrain {
   catch(e){this.cancel();this.failed=true;this.status='Tiny model paused · '+String(e).slice(0,160);}
  }
  private work(state:any,configs:any,send:(c:any)=>void,stream:any){
-  if(stream!==this.stream){this.stream=stream;this.cancel();this.attempts={};this.nextAt=0;}
+  if(stream!==this.stream){this.stream=stream;this.cancel();this.attempts={};this.pendingDialogue=null;this.nextAt=0;}
   const setting=LOADS[this.load];
   if(!setting.duty){this.status='Paused · crew instincts continue';return;}
   if(this.paused||!state?.myShip)return;
@@ -79,6 +86,16 @@ export class BrowserBrain {
     this.iterator=this.model.choose(input.prompt,input.options);this.status=designer.name.split(' ')[0]+' is sketching';
    }
   }
+  if(!this.iterator&&this.pendingDialogue){
+   const pending=this.pendingDialogue;
+   this.pendingDialogue=null;
+   const speaker=eligible.find((c:any)=>c.id===pending.crewId);
+   if(state.crewDialogue&&speaker&&!speaker.away&&state.time>=(speaker.lastDialogue??-999)+20){
+    this.request={dialogue:true,crewId:speaker.id,ownerId:state.myShip.id,revision:speaker.orderRevision};
+    this.iterator=this.model.speak(dialogueRequest(state,speaker));
+    this.status=speaker.name.split(' ')[0]+' is finding the words';
+   }
+  }
   if(!this.iterator){
    let selected:any=null;
    for(let i=0;i<eligible.length;i++){
@@ -101,6 +118,23 @@ export class BrowserBrain {
    }while(performance.now()-start<setting.slice);
    const end=performance.now();this.nextAt=Math.max(nextWorkAt(end,end-start,setting.duty),done?end+setting.rest*1000:0);return;
   }
+  if(this.request.dialogue){
+   if(!current||!eligible.includes(current)||current.away||current.orderRevision!==this.request.revision||
+      state.myShip.id!==this.request.ownerId){this.cancel();return;}
+   do{
+    const result=this.iterator.next();
+    if(!result.done)continue;
+    if(result.value&&state.time>=(current.lastDialogue??-999)+20){
+     send({type:'crew-dialogue',crewId:current.id,revision:this.request.revision,text:result.value});
+    }
+    this.iterator=null;this.request=null;
+    this.status=result.value?'Ready · '+current.name.split(' ')[0]+' spoke':'Ready · waiting for the next crew watch';
+    break;
+   }while(performance.now()-start<setting.slice);
+   const end=performance.now();
+   this.nextAt=nextWorkAt(end,end-start,setting.duty);
+   return;
+  }
   if(!current||current.away||current.manualUntil!==this.request.manualUntil||current.orderRevision!==this.request.revision||state.myShip.id!==this.request.ownerId||
      (configs[current.id]&& !['tiny','browser'].includes(configs[current.id].mode))){this.cancel();return;}
   try{
@@ -112,6 +146,7 @@ export class BrowserBrain {
      const live=brainRequest(state,current);
      if(live.allowed.includes(result.value)&&state.time>=current.manualUntil&&this.request.generation===this.generation){
       send({type:'decision',ownerId:state.myShip.id,crewId:current.id,task:result.value,issuer:'brisk',override:live.emergency,source:'browser'});
+      if(state.crewDialogue&&!this.pendingDialogue)this.pendingDialogue={crewId:current.id};
       console.info('Browser brain: '+current.id+' chose '+result.value+'.');
      }
      this.iterator=null;this.request=null;this.status='Ready · '+current.name.split(' ')[0]+' chose '+result.value;done=true;break;

@@ -6,6 +6,12 @@ export class Tokenizer {
   const bytes=[];for(let i=33;i<=126;i++)bytes.push(i);for(let i=161;i<=172;i++)bytes.push(i);for(let i=174;i<=255;i++)bytes.push(i);
   const chars=bytes.slice();let n=0;for(let i=0;i<256;i++)if(!bytes.includes(i)){bytes.push(i);chars.push(256+n++);}
   this.byteChars=[];for(let i=0;i<256;i++)this.byteChars[bytes[i]]=String.fromCharCode(chars[i]);
+  this.endId=this.ids.get('<|im_end|>');
+  this.speechVocabulary=[];
+  for(const [id,token] of data.tokens.entries()){
+   const word=token.replaceAll(this.byteChars[32],' ');
+   if(id===this.endId||/^[ A-Za-z0-9.,!?'-]+$/.test(word))this.speechVocabulary.push([id,word]);
+  }
  }
  encode(text){
   const out=[];

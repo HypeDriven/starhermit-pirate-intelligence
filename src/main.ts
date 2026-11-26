@@ -7,7 +7,7 @@ import { localizedFont as __l10nFont, setLocalizedStyles as __l10nStyles } from 
 import { openLocalizedOptions as __l10nOptions } from "./l10n/menu.js";
 // display-localization:attached
 import { localizedText as __displayText, localizedOptions as __displayOptions, preserveUserText as __keepDisplayText } from "./l10n/text.js";
-import { frame, onStart, onRender, onUpdate, onQuit, onSuspend, onResume, files } from 'starhermit:engine';
+import { frame, onStart, onRender, onUpdate, onQuit, onSuspend, onResume, files, runtime } from 'starhermit:engine';
 import {scene,renderer,Color,AmbientLight,DirectionalLight,HemisphereLight,PerspectiveCamera,Group,Vector3,Fog,TextureLoader,ACESFilmicToneMapping,PCFShadowMap} from 'starhermit:scene';
 import { onAction, onWheel, onPointerButton, onPointerMove, buttons, isDown } from 'starhermit:input';
 import { authority } from 'starhermit:script';
@@ -18,6 +18,7 @@ import * as draw from 'starhermit:draw';
 import {FontFace,fonts} from 'starhermit:canvas';
 import {commission,commissions,plucksReady,plucksStatus,openApproval,openWallet,walletReady} from './plucks.js';
 import {describeDesign} from './brain/policy.js';
+import {CrewVoice} from './crew-voice.js';
 import {cue,soundSettings,initAudio,audioUpdate,audioStatus,audioSuspend,audioResume} from './sound.js';
 import {audioEvents} from './audio-events.js';
 import {seaChart} from './charts.js';
@@ -50,9 +51,10 @@ let brainConfigs:any=storage.getJson('crew-brains')||{};
 for(const id of Object.keys(brainConfigs))if(brainConfigs[id]?.mode==='tiny')brainConfigs[id]={mode:'browser'};
 let effectsOn=storage.getJson('sound-effects')!==false,seaOn=storage.getJson('sea-ambience')===true,musicOn=storage.getJson('soundtrack-enabled')!==false;
 let musicVolume=Number(storage.getJson('music-volume')??.35),effectsVolume=Number(storage.getJson('sfx-volume')??.65);
-const browserBrain=new BrowserBrain();
+const browserBrain=new BrowserBrain(),crewVoice=new CrewVoice();
+let crewVoicesOn=storage.getJson('crew-voices')!==false;
 browserBrain.setLoad(loadSetting(storage.getJson('brain-cpu-load')));
-function saveSoundSettings(){storage.setJson('sound-effects',effectsOn);storage.setJson('sea-ambience',seaOn);storage.setJson('soundtrack-enabled',musicOn);storage.setJson('music-volume',musicVolume);storage.setJson('sfx-volume',effectsVolume);soundSettings(effectsOn,seaOn,musicOn,musicVolume,effectsVolume);}
+function saveSoundSettings(){storage.setJson('crew-voices',crewVoicesOn);storage.setJson('sound-effects',effectsOn);storage.setJson('sea-ambience',seaOn);storage.setJson('soundtrack-enabled',musicOn);storage.setJson('music-volume',musicVolume);storage.setJson('sfx-volume',effectsVolume);soundSettings(effectsOn,seaOn,musicOn,musicVolume,effectsVolume);crewVoice.settings(crewVoicesOn,effectsVolume);}
 function changeVolume(music:boolean,delta:number){if(music)musicVolume=Math.max(0,Math.min(1,Math.round((musicVolume+delta)*100)/100));else effectsVolume=Math.max(0,Math.min(1,Math.round((effectsVolume+delta)*100)/100));saveSoundSettings();}
 function brainLoadControl(){ui.label(__displayText('Browser brain CPU usage'),{size:12,color:C.gold,weight:'bold'});const value=ui.select(__displayText('CPU usage · shared by all browser brains'),browserBrain.load,__displayOptions(LOADS.map(s=>s.name)));if(value!==browserBrain.load){browserBrain.setLoad(value);storage.setJson('brain-cpu-load',value);}ui.paragraph(__displayText('One inference lane. Targets 10% / 25% / 50% of one CPU core over time. Short work slices and idle gaps keep the game responsive; exact CPU usage varies by device. Pauses when hidden.'),dialogWidth,{size:11});}
 
@@ -82,10 +84,10 @@ let longboat:any=null,shoreParty:any=null,battleFrame=0;const battleAim={x:0,z:0
 function buildShip(id:string,enemy=false){const obj=shipModel(enemy);obj.g.userData.waterCaster=true;obj.g.traverse((o:any)=>{if(o.castShadow)o.layers.enable(1);});scene.add(obj.g);ships[id]=obj;return obj;}
 function flash(text:string){notice=text;noticeTime=7;}
 function command(c:any){if(!channel||!channel.sendCommand(c))flash('The channel is busy. Try again in a moment.');}
-function got(data:any){if(!data)return;if(data.type==='snapshot'&&!online){lastSnapshot=data.world;storage.setJson('practice-world',lastSnapshot);return;}if(data.type!=='state')return;const oldDelegate=state?.myShip?.delegate;for(const event of audioEvents(state,data))cue(event);if(!state&&data.myShip)console.info('Authoritative ship ready: '+data.myShip.crew.length+' crew.');state=data;snapshotAt=elapsed;if(state.myShip&&oldDelegate!==state.myShip.delegate)delegate=state.myShip.delegate||'';}
+function got(data:any){if(!data)return;if(data.type==='snapshot'&&!online){lastSnapshot=data.world;storage.setJson('practice-world',lastSnapshot);return;}if(data.type!=='state')return;const oldDelegate=state?.myShip?.delegate;for(const event of audioEvents(state,data))cue(event);if(data.myShip)crewVoice.observe(data.myShip,state?.myShip?.id!==data.myShip.id);if(!state&&data.myShip)console.info('Authoritative ship ready: '+data.myShip.crew.length+' crew.');state=data;snapshotAt=elapsed;if(state.myShip&&oldDelegate!==state.myShip.delegate)delegate=state.myShip.delegate||'';}
 function watch(c:any){c.on('game',got);c.on('error',(e:any)=>flash(String(e)));c.on('open',()=>c.sendCommand({type:'sync'}));c.on('stopped',(e:any)=>{network='Disconnected · '+e;flash('Connection ended: '+e+'. Open World to reconnect.');});}
-function local(){if(roomSocket){roomSocket.close();roomSocket=null;}room=null;if(channel)channel.close();state=null;shipNameDraft='';online=false;me='captain-local';const saved:any=storage.getJson('practice-world');channel=authority('server.js',{context:{sessionId:'brine-local',players:[{id:me,name:'Captain'}],sessionState:saved||null},rate:4});watch(channel);network='Local practice · saved on device';}
-function connect(id:string){activeSession=id;if(channel)channel.close();state=null;shipNameDraft='';me=platform.player()?.userId||'';online=true;channel=platform.connectGame(id);watch(channel);network='StarHermit · connecting';channel.on('open',()=>{network='StarHermit · persistent world';});channel.on('disconnected',()=>{network='Reconnecting to StarHermit…';});}
+function local(){if(roomSocket){roomSocket.close();roomSocket=null;}room=null;if(channel)channel.close();state=null;crewVoice.reset();shipNameDraft='';online=false;me='captain-local';const saved:any=storage.getJson('practice-world');channel=authority('server.js',{context:{sessionId:'brine-local',players:[{id:me,name:'Captain'}],sessionState:saved||null},rate:4});watch(channel);network='Local practice · saved on device';}
+function connect(id:string){activeSession=id;if(channel)channel.close();state=null;crewVoice.reset();shipNameDraft='';me=platform.player()?.userId||'';online=true;channel=platform.connectGame(id);watch(channel);network='StarHermit · connecting';channel.on('open',()=>{network='StarHermit · persistent world';});channel.on('disconnected',()=>{network='Reconnecting to StarHermit…';});}
 async function listWorlds(){try{sessionList=await platform.sessions.list();roomsList=await platform.rooms.browse({inProgress:true});}catch(e){flash(String(e));}}
 async function makeWorld(){try{if(roomSocket){roomSocket.close();roomSocket=null;}room=await platform.rooms.create({name:worldName.trim()||'The Quarrelsome Sea',teamCount:1,seatsPerTeam:8,isVisible:worldPublic,joinInProgress:true,backfillAiPlayers:0});room=await platform.rooms.open(room.id);roomSocket=platform.rooms.connect(room.id);roomSocket.on('roster',(r:any)=>{if(!room||r.id!==room.id)return;room=r;if(r.gameSessionId&&(!online||activeSession!==r.gameSessionId))connect(r.gameSessionId);});room=await platform.rooms.start(room.id);if(room.gameSessionId)connect(room.gameSessionId);}catch(e){flash(String(e));}}
 async function joinWorld(){try{if(roomSocket){roomSocket.close();roomSocket=null;}room=await platform.rooms.joinByCode(joinCode.trim());roomSocket=platform.rooms.connect(room.id);roomSocket.on('roster',(r:any)=>{if(!room||r.id!==room.id)return;room=r;if(r.gameSessionId&&(!online||activeSession!==r.gameSessionId))connect(r.gameSessionId);});if(room.gameSessionId)connect(room.gameSessionId);else flash('Joined. Waiting for the host to start this sea.');}catch(e){flash(String(e));}}
@@ -156,7 +158,7 @@ function parseOrder(){
 }
 onStart(()=>{
   showCursor();files.fetch('assets/fonts/CormorantGaramond.ttf').then(()=>{fonts.add(new FontFace('Captain','assets/fonts/CormorantGaramond.ttf',{weight:'600'}));headingFont='Captain';__l10nStyles({heading:{text:{font:__l10nFont(headingFont),weight:'bold',color:'#f1e5c8'}}});}).catch(()=>{});initAudio();
- soundSettings(effectsOn,seaOn,musicOn,musicVolume,effectsVolume);
+ soundSettings(effectsOn,seaOn,musicOn,musicVolume,effectsVolume);crewVoice.settings(crewVoicesOn,effectsVolume);
  ui.setTheme({fontSize:13,headingSize:20,smallSize:11,padding:12,spacing:8,text:C.cream,muted:C.muted,panel:C.panel,control:'#23474b',hovered:'#3d675d',pressed:'#14363d',field:'#0d2933',accent:C.gold,focus:C.gold,outline:C.edge,radius:4});
  // Naval instruments: deep teal leather, aged brass and parchment cards.
  const edge={width:1,color:'#66857b'};
@@ -186,8 +188,8 @@ onWheel((_,dy)=>{if(!ui.pointerOver())targetZoom=Math.max(0,Math.min(1,targetZoo
 onPointerButton(e=>{if(e.button!==1)return;if(e.pressed){if(!ui.pointerOver())orbiting={x:e.x,y:e.y,moved:0};}else{if(orbiting&&orbiting.moved<4){orbitYaw=0;orbitPitch=0;}orbiting=null;}});
 onPointerMove((x,y)=>{if(!orbiting)return;if(!(buttons()&2)){orbiting=null;return;}const f=frame(),k=1/Math.max(1,f.scale),dx=(x-orbiting.x)*k,dy=(y-orbiting.y)*k;orbiting.moved+=Math.abs(dx)+Math.abs(dy);orbitYaw-=dx*.008;orbitPitch=Math.max(-.5,Math.min(.75,orbitPitch+dy*.005));orbiting.x=x;orbiting.y=y;});
 onPointerButton(e=>{if(e.pressed||e.button!==0||ui.pointerOver())return;for(const l of labelHits)if(e.x>=l.x&&e.x<=l.x+l.w&&e.y>=l.y&&e.y<=l.y+l.h){if(l.crew)openCrew(l.id);else selectedPlace=l.id;return;}});
-onUpdate(dt=>{frameDt=Math.min(dt,.1);elapsed+=dt;audioUpdate(dt,state,zoom>.65);noticeTime=Math.max(0,noticeTime-dt);zoom+=(targetZoom-zoom)*Math.min(1,dt*5);saveClock+=dt;if(saveClock>10&&state&&!online){saveClock=0;command({type:'snapshot'});}steer(dt);browserBrain.tick(state,brainConfigs,command,channel);});
-onSuspend(()=>{touchTurn=0;touchThrottle=0;manualSending=false;audioSuspend();browserBrain.suspend();});onResume(()=>{audioResume();browserBrain.resume();});
+onUpdate(dt=>{frameDt=Math.min(dt,.1);elapsed+=dt;audioUpdate(dt,state,zoom>.65);crewVoice.tick();noticeTime=Math.max(0,noticeTime-dt);zoom+=(targetZoom-zoom)*Math.min(1,dt*5);saveClock+=dt;if(saveClock>10&&state&&!online){saveClock=0;command({type:'snapshot'});}steer(dt);browserBrain.tick(state,brainConfigs,command,channel);});
+onSuspend(()=>{touchTurn=0;touchThrottle=0;manualSending=false;audioSuspend();crewVoice.stop();browserBrain.suspend();});onResume(()=>{audioResume();browserBrain.resume();});
 onQuit(()=>{graphics.dispose();if(state&&!online&&lastSnapshot)storage.setJson('practice-world',lastSnapshot);});
 let lastSnapshot:any=null,helmClock=0,touchTurn=0,touchThrottle=0,ammoType=0,manualSending=false;
 // The practice snapshot is reconstructed only from the authority's explicit
@@ -413,6 +415,15 @@ function crewDialog(s:any){
  const c=s.crew.find((c:any)=>c.id===selectedCrew)||s.crew[0];
  ui.grid('crew picker',()=>{for(let i=0;i<6;i++)button(s.crew[i].name.split(' ')[0],()=>{selectedCrew=s.crew[i].id;updateBrainFields();},c.id===s.crew[i].id);},{columns:dialogWidth<460?3:6,width:dialogWidth,gap:4});
  portrait(c,72);ui.heading(__displayText(__keepDisplayText(c.name)),{size:24});ui.label(__displayText(c.role),{color:C.gold});ui.paragraph(__displayText(c.trait),dialogWidth,{size:13});
+ ui.grid('Crew speech',()=>{
+  button('Hear voice',()=>crewVoice.preview(c.id),false,!crewVoicesOn||effectsVolume<=0);
+  if(runtime()==='web'&&state.crewDialogue&&(!brainConfigs[c.id]||brainConfigs[c.id].mode==='browser')){
+   button('Ask for a remark',()=>{
+    if(browserBrain.requestDialogue(c.id))flash(c.name+' is preparing a remark.');
+    else flash('Crew remarks need an active browser brain.');
+   },false,c.away||state.time<(c.lastDialogue??-999)+20);
+  }
+ },{columns:dialogWidth<300?1:2,width:dialogWidth,gap:6});
  ui.label(__displayText('LEVEL '+c.level+'   ·   '+Math.floor(c.xp)+' / '+(c.level*35)+' XP   ·   FATIGUE '+Math.round(c.fatigue)+'%'),{color:C.gold,size:11});
  ui.grid('crew tabs',()=>{button('Orders & memory',()=>tab='voyage',tab==='voyage');button('Crew ties',()=>tab='ties',tab==='ties');button('Individual brain',()=>tab='brain',tab==='brain');},{columns:dialogWidth<380?1:3,width:dialogWidth,gap:6});
  if(tab==='brain'){
@@ -421,7 +432,7 @@ function crewDialog(s:any){
   if(brainMode){endpoint=ui.textField(__displayText('Endpoint base URL'),endpoint,{width:dialogWidth,maxChars:240});model=ui.textField(__displayText('Model ID'),model,{width:dialogWidth,maxChars:100});apiKeyEnv=ui.textField(__displayText('API key environment variable (optional)'),apiKeyEnv,{width:dialogWidth,maxChars:60});ui.paragraph(__displayText('External endpoints use the optional companion officer. Export after saving.'),dialogWidth,{size:11});}
   else{brainLoadControl();ui.paragraph(__displayText(browserBrain.status),dialogWidth,{size:11});button('Retry model loading',()=>browserBrain.retry());}
   ui.column('brain save',()=>{button('Save this character',saveBrain,true);button('Export brain configuration',exportBrains);button('Setup help',()=>panel='brains');});
-  ui.label(__displayText('DECISION JSON ONLY · NO MODEL-GENERATED DIALOGUE'),{size:10,color:C.gold});
+  ui.label(__displayText('TASK CHOICES AND CREW DIALOGUE'),{size:10,color:C.gold});
   ui.paragraph(__displayText('Current source: '+(c.brain==='browser LLM'?'validated browser LLM decision':c.brain==='local LLM'?'validated companion LLM decision':'built-in instinct')+'. Instincts fill gaps while the model loads or thinks.'),dialogWidth,{size:11});
  }else if(tab==='ties'){
   meter('Trust in the captain',c.trust??50,100,C.gold,dialogWidth);
@@ -472,7 +483,7 @@ function dialogs(){
   if(panel==='crew')crewDialog(s);
   if(panel==='world')worldDialog();
   if(panel==='atlas'){ui.paragraph(__displayText('Four trading ports, four islands and one extremely crooked wreck. Wind affects speed at the manual helm. Choose a destination for an automatic course.'),dialogWidth,{size:12});ui.grid('Atlas destinations',()=>{for(const p of places)ui.style(__l10nStyle('card')).column('atlas-'+p.id,()=>{ui.paragraph(__displayText(p.name),dialogWidth<430?dialogWidth-24:(dialogWidth-58)/2,{size:16,weight:'bold'});ui.label(__displayText(Math.round(distanceTo(s,p)*METRES)+' m · '+p.kind),{size:11});button('Sail to '+p.name,()=>{route(p.id);panel='';});},{spacing:5});},{columns:dialogWidth<430?1:2,width:dialogWidth,gap:10});}
-  if(panel==='settings'){wideButton('StarHermit engine options · F1',()=>{panel='';__l10nOptions();},true);ui.paragraph(__displayText('Choose graphics quality and frame rate in engine options. Infinite enables the full remaster: spectral water, 4K reflections, volumetric weather, fire and cannon smoke, and the engine’s 2× supersampling. Auto adjusts quality to your machine.'),dialogWidth,{size:12});ui.paragraph(__displayText(graphics.description()),dialogWidth,{size:11});ui.heading(__displayText('The ship’s soundscape'),{size:19});ui.grid('Sound switches',()=>{button(musicOn?'Music: on':'Music: off',()=>{musicOn=!musicOn;saveSoundSettings();},musicOn);button(effectsOn?'Effects: on':'Effects: off',()=>{effectsOn=!effectsOn;saveSoundSettings();},effectsOn);button(seaOn?'Sea ambience: on':'Sea ambience: off',()=>{seaOn=!seaOn;saveSoundSettings();},seaOn);},{columns:dialogWidth<380?1:3,width:dialogWidth,gap:6});
+  if(panel==='settings'){wideButton('StarHermit engine options · F1',()=>{panel='';__l10nOptions();},true);ui.paragraph(__displayText('Choose graphics quality and frame rate in engine options. Infinite enables the full remaster: spectral water, 4K reflections, volumetric weather, fire and cannon smoke, and the engine’s 2× supersampling. Auto adjusts quality to your machine.'),dialogWidth,{size:12});ui.paragraph(__displayText(graphics.description()),dialogWidth,{size:11});ui.heading(__displayText('The ship’s soundscape'),{size:19});ui.grid('Sound switches',()=>{button(musicOn?'Music: on':'Music: off',()=>{musicOn=!musicOn;saveSoundSettings();},musicOn);button(effectsOn?'Effects: on':'Effects: off',()=>{effectsOn=!effectsOn;saveSoundSettings();},effectsOn);button(seaOn?'Sea ambience: on':'Sea ambience: off',()=>{seaOn=!seaOn;saveSoundSettings();},seaOn);button(crewVoicesOn?'Crew voices: on':'Crew voices: off',()=>{crewVoicesOn=!crewVoicesOn;saveSoundSettings();},crewVoicesOn);},{columns:dialogWidth<380?1:2,width:dialogWidth,gap:6});
    ui.label(__displayText('Music volume · '+Math.round(musicVolume*100)+'%'),{size:11,color:C.gold});ui.grid('Music level',()=>{button('Music quieter',()=>changeVolume(true,-.1),false,musicVolume<=0);button('Music louder',()=>changeVolume(true,.1),false,musicVolume>=1);},{columns:2,width:dialogWidth,gap:6});
    ui.label(__displayText('Effects volume · '+Math.round(effectsVolume*100)+'%'),{size:11,color:C.gold});ui.grid('Effects level',()=>{button('Effects quieter',()=>changeVolume(false,-.1),false,effectsVolume<=0);button('Effects louder',()=>changeVolume(false,.1),false,effectsVolume>=1);},{columns:2,width:dialogWidth,gap:6});
    ui.paragraph(__displayText(audioStatus()+'. Original instrumental cues change between harbour, open sea and combat, with gentle crossfades. Music starts after your first interaction.'),dialogWidth,{size:12});button('Test cannon sound',()=>cue('cannon-fire'));ui.paragraph(__displayText('MOSS-generated cannons, timber impacts, rigging, oars, axes, bells, coins and weather follow game events. Sea ambience adds quiet water, deck creaks and gulls. The engine’s mixer controls their overall volume.'),dialogWidth,{size:11});brainLoadControl();button('Browser brain details',()=>panel='brains');}
@@ -526,13 +537,13 @@ function dialogs(){
    ui.paragraph(__displayText('Low load is the default. Decisions arrive slowly to leave CPU time for other work. Crew instincts keep the ship running between decisions. Each character keeps its own memories and preferences.'),dialogWidth,{size:12});
    ui.paragraph(__displayText('For your own OpenAI-compatible endpoint, choose it under Individual brain and use the optional Python companion with a separate authorised participant account.'),dialogWidth,{size:12});
    ui.column('brain setup',()=>{button('Export per-character config',exportBrains,true);button('Configure a character',()=>{panel='crew';tab='brain';updateBrainFields();});});
-   ui.paragraph(__displayText('Decision-only v0.1: JSON task choices. Pirate shouts are authored game lines. The default instinct scheduler keeps the game playable when a model is absent, slow or invalid.'),dialogWidth,{size:11});
+   ui.paragraph(__displayText('Crew brains choose duties and can write short spoken remarks. Ship events and instinct decisions also have voiced lines.'),dialogWidth,{size:11});
   }
   if(panel==='more'){for(const [label,id] of [['Sea atlas','atlas'],['Sound & CPU settings','settings'],['Captain’s log','logbook'],['Contracts','missions'],['Combat targets','combat'],['Shipyard','yard'],['Crew workshop','workshop'],['Standing orders & watch','book'],['How to sail','help']])button(label,()=>panel=id);}
   if(panel==='help'){if(welcomeArt)ui.image(__displayText('The Quarrelsome Sea'),welcomeArt,{width:dialogWidth,height:dialogWidth/2});
    const next=nextVoyage(s);ui.heading(__displayText('Your next good idea'),{size:19});ui.paragraph(__displayText(next.text),dialogWidth,{size:13});button(next.label,next.run,true);
    for(const text of ['1  Pick an island or port and set course. The crew sails for you.','2  Set a standing directive; crew choose tasks from their roles.','3  Give direct orders or praise good work to teach task preferences.','4  Zoom in with E to inspect three decks. Q returns to the sea.','5  Anchor at islands and send two crew on a longboat expedition.','6  Trade spice between ports, fulfil contracts and level up.','7  Assign Little Fuse to Guns, close to 170 m and fire with F.','8  H takes the manual helm. Hold W with A / D to steer; show your flank for a broadside.','9  Crew ties and the orders book explain habits, trust and useful partnerships.','10  Visit the shipyard and treat injuries at a port. Watch fire, bilge and rigging damage.'])ui.paragraph(__displayText(text),dialogWidth,{size:13});
-   ui.paragraph(__displayText('Instincts run immediately. Browser brains are optional, decision-only and validated by the authority. Progress in local practice is saved on this device.'),dialogWidth,{size:11});
+   ui.paragraph(__displayText('Instincts run immediately. Browser brains can choose duties and voice short remarks. Progress in local practice is saved on this device.'),dialogWidth,{size:11});
   }
  });ui.row('close panel',()=>{ui.spacer();button('Back to the sea',()=>panel='',true);},{width:dialogWidth});
  });if(!open)panel='';

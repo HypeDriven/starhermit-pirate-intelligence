@@ -23,7 +23,7 @@ Orders and praise retain bounded task preferences and separate weights for each 
 
 ## Decision-model contract
 
-Input: role, personality, directive, observable ship state, nearby enemies, fatigue, learned preferences, recent orders and allowed task enum. Output: `{"task":"repair"}`. No generated dialogue or free-form executable plans. A model proposal has no authority to modify resources, travel, rewards, damage, experience or rank. The server authenticates the sender, validates explicit delegation, command priority, rate, task, crew presence and emergency warrant.
+Input: role, personality, directive, observable ship state, nearby enemies, fatigue, learned preferences, recent orders and allowed task enum. Task output is a validated enum. The companion can include an optional short dialogue line alongside the task. Browser brains write remarks in a separate turn on the shared inference lane. Dialogue is stored as private log text and rendered by the embedded speech engine. A model proposal has no authority to modify resources, travel, rewards, damage, experience or rank. The server authenticates the sender, validates explicit delegation, command priority, rate, task, crew presence and emergency warrant.
 
 The browser provider shares one 138 MiB Q8_0 model, runs a serial inference lane with short SIMD work slices and defaults to a 10% single-core pacing target. It uses the captain’s existing authority/socket. Its inputs include current available stations, preferred duty, trust, injuries and damage control; changed orders invalidate unfinished work. The optional external companion retains its separate authorised participant and bounded HTTP calls.
 

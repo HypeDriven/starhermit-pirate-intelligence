@@ -1,0 +1,24 @@
+[package]
+name = "pirate-crew-voice"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[workspace]
+resolver = "3"
+
+[workspace.package]
+version = "0.2.1"
+edition = "2024"
+license = "MIT"
+
+[dependencies]
+chimera = { path = "chimera" }
+flate2 = "1"
+
+[profile.release]
+lto = true
+panic = "abort"
+strip = true

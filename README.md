@@ -28,7 +28,7 @@ Practice state is saved on the device every ten seconds. Refresh resumes the sam
 - Fire, flooding, damaged rigging, expedition injuries, rest and medical care; six three-level ship fittings.
 - Bigger islands with their own work ashore (timber, treasure, hunting, herbs, saltpetre, ruins) and safe/risky encounters with party skill and bond bonuses; automatic safe return when no choice is made.
 - Whales, dolphin pods that ride your bow, and drifting fish shoals where foragers catch triple provisions.
-- A welcome guide, sea atlas, captain’s log, exploration milestones, renown, authored crew barks, optional sea ambience and procedural combat/reward sounds.
+- A welcome guide, sea atlas, captain’s log, exploration milestones, renown, six distinct crew voices for ship events and AI-generated dialogue, optional sea ambience and procedural combat/reward sounds.
 - Persistent StarHermit rooms, device practice saves, migration of older snapshots, private crew views, shared authority rules and a scene using instanced repeated geometry.
 
 ## Crew workshop and Plucks
@@ -86,7 +86,11 @@ Under **Individual brain** or **Brain setup**, CPU usage is shared across all br
 
 These are cooperative pacing targets for inference, not operating-system CPU caps or limits on rendering/downloads. A small indivisible kernel call can exceed a slice on a slow device. Idle gaps follow measured work; unused time never accumulates into a burst. Inference pauses when hidden. Low load produces slower decisions; deterministic instincts fill the gaps. One character thinks at a time, with at least a minute between its requests and a 15-second rest between completed requests at Low load.
 
-The model chooses a single legal task through constrained number-token decoding. The client checks current orders and duties again before sending the result through the captain's existing gameplay socket. The authority revalidates ownership, duty restrictions, emergency warrants and command priority. Pirate dialogue remains authored. No prompts or crew memories are sent to a model service. Native play uses instincts by default; this accelerated provider is for the web runtime.
+The browser model chooses duties using constrained number-token decoding. The authority revalidates ownership, duties, emergency warrants and command priority. The same model can write short remarks in English using the sailor’s personality, current station and ship conditions. Choose **Ask for a remark** in a sailor’s crew panel or listen for remarks during a watch. The captain’s log keeps the text, and the browser runs inference locally.
+
+Each sailor has a different voice. Mara speaks steadily, Brisk has a low, crisp voice, Little Fuse is high and quick, Peg is dry and measured, Tallow is low and gravelly, and Pip is airy and brisk. Choose **Hear voice** to preview a sailor. **Options → Crew voices** toggles speech, and the effects volume controls its level.
+
+The game synthesizes speech on the player’s device with Chimera’s embedded physical voice engine and English pronunciation dictionary. Native play uses instincts by default and can voice authored lines and remarks from the optional companion. To rebuild the bundled speech module, run `scripts/build-crew-voices.sh` with Rust’s `wasm32-unknown-unknown` target installed. The vendored engine is pinned to [Chimera 577faa1](https://github.com/jamesondh/chimera-vocal-synth/tree/577faa1be232d8366ae4ee239210a77db71717da). Chimera and CMUdict include their own notices. [Chimera license](licenses/Chimera-MIT.txt) · [CMUdict license](licenses/CMUDICT.txt)
 
 ### Optional external models
 
@@ -98,7 +102,7 @@ Choose **My OpenAI-compatible endpoint**, save the character and export `crew-br
 4. Run `python companion/brain_bridge.py --game ASSIGNED_GAME_UUID --session WORLD_SESSION_UUID --config crew-brains.json`.
 5. Enter the companion's printed user ID under **World & crew → Local brain officer** and authorise it.
 
-Each endpoint may use its own model and local API-key environment variable. It can propose crew tasks only. The legacy `--tiny` flag still launches llama.cpp on localhost for explicitly configured external characters; it is separate from the browser default.
+Each endpoint may use its own model and local API-key environment variable. It can propose a crew task and include a spoken remark in its response. The legacy `--tiny` flag still launches llama.cpp on localhost for explicitly configured external characters; it is separate from the browser default.
 
 ### Build the browser model assets
 

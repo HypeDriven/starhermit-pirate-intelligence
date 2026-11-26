@@ -14,38 +14,42 @@ export class TinyModel {
  rms(out,input,name){const t=this.tensor(name);const weight=new Float32Array(this.memory.buffer,t.p,576);let ss=0;for(let i=0;i<576;i++)ss+=input.a[i]*input.a[i];const scale=1/Math.sqrt(ss/576+this.index.epsilon);for(let i=0;i<576;i++)out.a[i]=input.a[i]*scale*weight[i];}
  *linear(name,input,out){const t=this.tensor(name);for(let row=0;row<t.shape[1];row+=16){this.w.linear(t.p,input.p,out.p,t.shape[0],row,Math.min(row+16,t.shape[1]));yield;}}
  rope(vector,heads,pos){for(let h=0;h<heads;h++)for(let j=0;j<64;j+=2){const angle=pos/Math.pow(this.index.ropeTheta,j/64),c=Math.cos(angle),s=Math.sin(angle),i=h*64+j,a=vector.a[i],b=vector.a[i+1];vector.a[i]=a*c-b*s;vector.a[i+1]=a*s+b*c;}}
- *choose(prompt,allowed){
-  const encoded=this.tokenizer.encode(prompt);
-  // Keep the role/current ship context and final task choices even when a
-  // Unicode order uses many byte-level tokens. Long memories must not disable
-  // the shared model for every other sailor.
-  const tokens=encoded.length>256?encoded.slice(0,160).concat(encoded.slice(-96)):encoded;
+ *prefill(tokens){
   let common=0;while(common<tokens.length-1&&common<this.prefix.length&&tokens[common]===this.prefix[common])common++;
   // Prefix K/V rows are valid only after a complete preceding request.
   const oldPrefix=this.prefix;this.prefix=[];
   for(let pos=common;pos<tokens.length;pos++){
-   this.w.embed(this.tensor('token_embd.weight').p,this.x.p,576,tokens[pos]);
-   for(let layer=0;layer<30;layer++){
-    const name='blk.'+layer+'.';
-    this.rms(this.norm,this.x,name+'attn_norm.weight');
-    yield* this.linear(name+'attn_q.weight',this.norm,this.q);
-    yield* this.linear(name+'attn_k.weight',this.norm,this.k);
-    yield* this.linear(name+'attn_v.weight',this.norm,this.v);
-    this.rope(this.q,9,pos);this.rope(this.k,3,pos);
-    this.keys[layer].a.set(this.k.a,pos*192);this.values[layer].a.set(this.v.a,pos*192);
-    this.w.attention(this.q.p,this.keys[layer].p,this.values[layer].p,this.att.p,this.scores.p,pos,9,3,64);yield;
-    yield* this.linear(name+'attn_output.weight',this.att,this.proj);
-    for(let i=0;i<576;i++)this.x.a[i]+=this.proj.a[i];
-    this.rms(this.norm,this.x,name+'ffn_norm.weight');
-    yield* this.linear(name+'ffn_gate.weight',this.norm,this.gate);
-    yield* this.linear(name+'ffn_up.weight',this.norm,this.up);
-    for(let i=0;i<1536;i++)this.gate.a[i]=this.gate.a[i]/(1+Math.exp(-this.gate.a[i]))*this.up.a[i];
-    yield* this.linear(name+'ffn_down.weight',this.gate,this.proj);
-    for(let i=0;i<576;i++)this.x.a[i]+=this.proj.a[i];
-    yield;
-   }
+   yield* this.forward(tokens[pos],pos);
    yield {token:pos+1,total:tokens.length,cached:Math.min(common,oldPrefix.length)};
   }
+ }
+ *forward(token,pos){
+  this.w.embed(this.tensor('token_embd.weight').p,this.x.p,576,token);
+  for(let layer=0;layer<30;layer++){
+   const name='blk.'+layer+'.';
+   this.rms(this.norm,this.x,name+'attn_norm.weight');
+   yield* this.linear(name+'attn_q.weight',this.norm,this.q);
+   yield* this.linear(name+'attn_k.weight',this.norm,this.k);
+   yield* this.linear(name+'attn_v.weight',this.norm,this.v);
+   this.rope(this.q,9,pos);this.rope(this.k,3,pos);
+   this.keys[layer].a.set(this.k.a,pos*192);this.values[layer].a.set(this.v.a,pos*192);
+   this.w.attention(this.q.p,this.keys[layer].p,this.values[layer].p,this.att.p,this.scores.p,pos,9,3,64);yield;
+   yield* this.linear(name+'attn_output.weight',this.att,this.proj);
+   for(let i=0;i<576;i++)this.x.a[i]+=this.proj.a[i];
+   this.rms(this.norm,this.x,name+'ffn_norm.weight');
+   yield* this.linear(name+'ffn_gate.weight',this.norm,this.gate);
+   yield* this.linear(name+'ffn_up.weight',this.norm,this.up);
+   for(let i=0;i<1536;i++)this.gate.a[i]=this.gate.a[i]/(1+Math.exp(-this.gate.a[i]))*this.up.a[i];
+   yield* this.linear(name+'ffn_down.weight',this.gate,this.proj);
+   for(let i=0;i<576;i++)this.x.a[i]+=this.proj.a[i];
+   yield;
+  }
+ }
+ *choose(prompt,allowed){
+  const encoded=this.tokenizer.encode(prompt);
+  // Leave room for the task choices even when memories tokenize poorly.
+  const tokens=encoded.length>256?encoded.slice(0,160).concat(encoded.slice(-96)):encoded;
+  yield* this.prefill(tokens);
   this.rms(this.norm,this.x,'output_norm.weight');
   // Constrained decoding: only digits corresponding to legal tasks can win.
   const output=this.tensor(this.index.tensors['output.weight']?'output.weight':'token_embd.weight');
@@ -57,5 +61,33 @@ export class TinyModel {
   this.prefix=tokens;
   if(!Number.isFinite(best)||!choice)throw Error('Invalid model output');
   return choice;
+ }
+ *speak(prompt){
+  const maxTokens=24;
+  const tokens=this.tokenizer.encode(prompt).slice(-(256-maxTokens));
+  yield* this.prefill(tokens);
+  const output=this.tensor(this.index.tensors['output.weight']?'output.weight':'token_embd.weight');
+  // Score printable speech tokens in slices and discourage repeated words.
+  const spoken=new Map();
+  let line='';
+  for(let step=0;step<maxTokens;step++){
+   this.rms(this.norm,this.x,'output_norm.weight');
+   let best=-Infinity,piece='',winner=-1;
+   const vocabulary=this.tokenizer.speechVocabulary;
+   for(let i=0;i<vocabulary.length;i++){
+    const [id,word]=vocabulary[i];
+    const score=this.w.score(output.p,this.norm.p,576,id)-(spoken.get(id)||0)*1.25;
+    if(score>best){best=score;piece=word;winner=id;}
+    if(i%128===127)yield;
+   }
+   if(winner<0||winner===this.tokenizer.endId)break;
+   line+=piece;
+   if(/[.!?]/.test(line)||line.length>=100)break;
+   spoken.set(winner,(spoken.get(winner)||0)+1);
+   yield* this.forward(winner,tokens.length+step);
+   yield {token:step+1,total:maxTokens};
+  }
+  const sentence=line.trim().match(/^[^.!?]+[.!?]/)?.[0];
+  return sentence&&sentence.length>=10&&sentence.length<=110&&/[a-z]/i.test(sentence)?sentence:'';
  }
 }

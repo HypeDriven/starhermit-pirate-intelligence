@@ -39,3 +39,15 @@ export function designRequest(state,crew,brief){
   +options.map((t,i)=>i+'='+t).join(', ')+'<|im_end|>\n<|im_start|>assistant\n';
  return {prompt,options};
 }
+
+export function dialogueRequest(state,crew){
+ const ship=state.myShip;
+ const condition=ship.fire>15?'the ship is on fire':ship.hull<ship.maxHull*.65?'the hull is damaged':
+  ship.food<20?'provisions are low':ship.anchored?'the ship is at anchor':'the ship is under sail';
+ return '<|im_start|>system\nWrite a pirate sailor’s dialogue. Speak as the sailor. '
+  +'Write one short sentence addressed to the captain.<|im_end|>\n'
+  +'<|im_start|>user\nHow would an excitable gunner report that the powder is ready?<|im_end|>\n'
+  +'<|im_start|>assistant\nKeep your fingers clear of my fuse!<|im_end|>\n'
+  +'<|im_start|>user\n'+clean(crew.role,24)+'. '+clean(crew.trait,80)
+  +' Current duty: '+clean(crew.task,12)+'. '+condition+'.<|im_end|>\n<|im_start|>assistant\n';
+}

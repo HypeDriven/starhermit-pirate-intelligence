@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { Tokenizer } from '../src/brain/tokenizer.js';
 import { TinyModel } from '../src/brain/inference.js';
-import { LOADS, loadSetting, nextWorkAt, brainRequest } from '../src/brain/policy.js';
+import { LOADS, loadSetting, nextWorkAt, brainRequest, dialogueRequest } from '../src/brain/policy.js';
 
 test('low load is the default; CPU idle gaps enforce the selected duty cycle',()=>{
  assert.equal(loadSetting(undefined),0);assert.equal(loadSetting(-1),0);assert.equal(loadSetting('2'),0);
@@ -51,6 +51,13 @@ test('real tiny model chooses repair for a damaged hull; cached context matches 
  assert.ok(Math.abs(repairProbability-.63590014)<.005);
  const changed=prompt.replace('Hull badly damaged','Exhausted, needs sleep');
  const cached=choose(changed);m.prefix=[];assert.equal(choose(changed),cached);
+ const request=dialogueRequest({myShip:{anchored:false,hull:60,maxHull:100,food:40}},
+  {role:'Gunner',trait:'Small, cheerful, technically on fire.',task:'guns'});
+ const speech=m.speak(request);
+ let remark;
+ do{remark=speech.next();}while(!remark.done);
+ assert.match(remark.value,/^[A-Za-z][ A-Za-z0-9,.'!?-]{8,109}$/);
+ assert.equal(choose(prompt),'repair');
  const large=m.choose(prompt.replace('Hull badly damaged','Hull badly damaged. '+'🦜'.repeat(500)),['rest','repair']);
  let progress;
  do{progress=large.next();}while(!progress.done&&!progress.value?.token);

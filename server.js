@@ -139,7 +139,21 @@ function crew(){return [
  {id:'pip',name:'Pip Gulliver',role:'Navigator',rank:2,color:'#8aadaf',trait:'Afraid of the sea. Excellent at maps.',ordinary:['helm','lookout','forage','rest'],task:'lookout'}
  ].map(function(c){c.level=1;c.xp=0;c.fatigue=8;c.preferences={};c.memories=[];c.manualUntil=0;c.away=false;c.brain='instinct';return c;});}
 function newShip(id,name,index){return {id:id,name:index===0?'The Mild Inconvenience':String(name||'Captain').slice(0,24)+"’s Bad Idea",ownerName:name,x:-8+index*4,z:1+index*5,heading:0,hull:100,maxHull:100,morale:87,food:75,timber:30,ammo:32,gold:340,cargo:5,level:1,xp:0,crew:crew(),directive:'prosper',destination:null,anchored:true,away:null,mission:null,completed:[],missionsDone:[],kills:0,lastShot:-999,lastBrain:{},delegate:'',log:[{at:0,name:'Mara',text:'A ship, six questionable souls, and absolutely no refunds.',kind:'crew'}]};}
-function log(s,t,name,text,kind){s.log.push({at:Math.round(t),name:name,text:String(text).slice(0,180),kind:kind||'crew'});if(s.log.length>35)s.log.shift();}
+function log(s,t,name,text,kind,crewId){
+ var seq=(s.log[s.log.length-1]?.seq||0)+1;
+ var entry={at:Math.round(t),name:name,text:String(text).slice(0,180),kind:kind||'crew',seq:seq};
+ if(crewId)entry.crewId=crewId;
+ s.log.push(entry);if(s.log.length>35)s.log.shift();
+}
+function dialogueText(value){
+ if(typeof value!=='string'||value.length>110||/[\x00-\x1f\x7f<>|]/.test(value))return '';
+ var line=value.trim();
+ return line.length>=10&&/[a-z]/i.test(line)?line:'';
+}
+function crewDialogue(s,w,c,line){
+ c.lastDialogue=w.time;
+ log(s,w.time,c.name.split(' ')[0],line,'dialogue',c.id);
+}
 function xp(s,n){s.xp+=n;while(s.xp>=s.level*100){s.xp-=s.level*100;s.level++;s.maxHull+=10;s.hull=Math.min(s.maxHull,s.hull+15);log(s,s.clock||0,'Shipwright','Ship level '+s.level+'! More hull. More swagger.','reward');}}
 function cxp(c,n){c.xp+=n;while(c.xp>=c.level*35){c.xp-=c.level*35;c.level++;}}
 function harbourSafe(s){return !!(s.anchored&&near(s,'port'));}
@@ -166,7 +180,7 @@ function choose(w,s,c,counts){
  return best;
 }
 function windKnots(w){return Math.round(12+3*Math.sin(w.time/90)+(w.weather!=='Fair winds'?8:0));}
-function view(w,id){var own=w.ships[id];if(own){own.inHarbour=harbourSafe(own);own.emergency=emergency(w,own);}return {type:'state',schema:1,featureVersion:2,time:w.time,day:Math.floor(w.time/240)+1,weather:w.weather,wind:Math.sin(w.time/240),windKnots:windKnots(w),places:PLACES,jobs:JOBS,shoals:shoals(w.time),ships:Object.keys(w.ships).map(function(k){var s=w.ships[k];return {id:s.id,name:s.name,ownerName:s.ownerName,x:s.x,z:s.z,hull:s.hull,maxHull:s.maxHull,heading:s.heading,level:s.level,anchored:s.anchored,fire:s.fire||0,leak:s.leak||0,lastShot:s.lastShot,lastTarget:s.lastTarget||'',vx:s.vx||0,vz:s.vz||0,look:lookOf(s)};}),raiders:w.raiders,shots:w.shots,fx:w.fx,loot:w.loot,myShip:own||null,goods:GOODS,fittings:FITTINGS,workshop:{kinds:MOD_KINDS,palette:MOD_PALETTE,emblems:MOD_EMBLEMS},contracts:BOOK,markets:w.markets,prices:PLACES.filter(function(p){return p.kind==='port';}).map(function(p){var prices={};Object.keys(GOODS).forEach(function(g){prices[g]=portPrice(w,p,g);});return {id:p.id,goods:prices};})};}
+function view(w,id){var own=w.ships[id];if(own){own.inHarbour=harbourSafe(own);own.emergency=emergency(w,own);}return {type:'state',schema:1,featureVersion:2,crewDialogue:true,time:w.time,day:Math.floor(w.time/240)+1,weather:w.weather,wind:Math.sin(w.time/240),windKnots:windKnots(w),places:PLACES,jobs:JOBS,shoals:shoals(w.time),ships:Object.keys(w.ships).map(function(k){var s=w.ships[k];return {id:s.id,name:s.name,ownerName:s.ownerName,x:s.x,z:s.z,hull:s.hull,maxHull:s.maxHull,heading:s.heading,level:s.level,anchored:s.anchored,fire:s.fire||0,leak:s.leak||0,lastShot:s.lastShot,lastTarget:s.lastTarget||'',vx:s.vx||0,vz:s.vz||0,look:lookOf(s)};}),raiders:w.raiders,shots:w.shots,fx:w.fx,loot:w.loot,myShip:own||null,goods:GOODS,fittings:FITTINGS,workshop:{kinds:MOD_KINDS,palette:MOD_PALETTE,emblems:MOD_EMBLEMS},contracts:BOOK,markets:w.markets,prices:PLACES.filter(function(p){return p.kind==='port';}).map(function(p){var prices={};Object.keys(GOODS).forEach(function(g){prices[g]=portPrice(w,p,g);});return {id:p.id,goods:prices};})};}
 function result(ctx,w){var b=[];for(var i=0;i<ctx.players.length;i++)b.push({to:[ctx.players[i].id],data:view(w,ctx.players[i].id)});var keys=Object.keys(w.ships);for(var j=0;j<keys.length;j++){var s=w.ships[keys[j]];if(s.delegate&&ctx.players.some(function(p){return p.id===s.delegate;}))b.push({to:[s.delegate],data:{type:'brain_context',ownerId:s.id,time:w.time,ship:s,emergency:emergency(w,s),nearbyEnemies:w.raiders.filter(function(r){return r.hull>0&&distance(s,r)<17;}).map(function(r){return {name:r.name,hull:r.hull};})}});}return {ok:true,sessionState:w,broadcast:b};}
 function near(s,kind){var best=null,d=999;for(var i=0;i<PLACES.length;i++){var p=PLACES[i],n=distance(s,p);if((!kind||p.kind===kind)&&n<d){d=n;best=p;}}return d<7?best:null;}
 function mission(w,s){var m=s.mission;if(!m)return;var port=near(s,'port'),done=
@@ -591,6 +605,13 @@ globalThis.game={
   else if(m.type==='pursue'){var target=(Object.prototype.hasOwnProperty.call(w.ships,m.target)?w.ships[m.target]:null)||w.raiders.filter(function(e){return e.id===m.target&&e.hull>0;})[0];if(!target||target.id===s.id||!Number.isFinite(target.x))error='No target afloat.';else if(s.away||s.boarding)error='Wait for the away party.';else{s.controlMode='course';s.destination='ship:'+target.id;s.anchored=false;if(w.time>=s.crew[0].manualUntil)s.crew[0].task='helm';log(s,w.time,'Mara','Close with '+target.name+'. Looking charming is optional.','combat');}}
   else if(m.type==='anchor'){s.sheltered=false;s.anchored=!s.anchored;if(!s.anchored&&!s.destination)s.anchored=true;log(s,w.time,'Brisk',s.anchored?'Anchor down. Mind your toes.':'Heave away!');}
   else if(m.type==='directive'){if(['prosper','hunt','explore','survive'].indexOf(m.value)<0)error='Unknown directive.';else{s.directive=m.value;log(s,w.time,'Captain’s orders','Standing directive: '+m.value+'.');coordinate(w,s);}}
+  else if(m.type==='crew-dialogue'){
+   var speaker=crewById(s,m.crewId),line=dialogueText(m.text);
+   if(!speaker||speaker.away||speaker.orderRevision!==m.revision)error='That sailor is unavailable for a shipboard remark.';
+   else if(!line)error='Invalid crew dialogue.';
+   else if(w.time<(speaker.lastDialogue??-999)+20)error='Give that sailor a moment before speaking again.';
+   else crewDialogue(s,w,speaker,line);
+  }
   else if(m.type==='order'||m.type==='decision'){
    var c=s.crew.filter(function(c){return c.id===m.crewId;})[0];
    if(!c)error='Unknown crew member.';
@@ -598,7 +619,10 @@ globalThis.game={
    else if(m.type==='decision'&&w.time<c.manualUntil)error='A direct order is still in effect.';
    else if(m.type==='decision'&&available(w,s,c).indexOf(m.task)<0)error='That duty station is already staffed.';
    else if(!canTask(w,s,c,m.task,m.issuer,!!m.override))error='Outside '+c.role.toLowerCase()+" duties. An officer may override only during danger (low hull, low food, or nearby enemy).";
-   else{c.task=m.task;if(m.type==='order'){c.manualUntil=w.time+35;c.orderRevision++;c.reason='Following a direct captain’s order.';learn(w,s,c,m.task,.5);c.preferences[m.task]=clamp((c.preferences[m.task]||0)+.7,0,6);c.memories.push({task:m.task,directive:s.directive,emergency:emergency(w,s),text:String(m.note||'Direct order: '+m.task).slice(0,120)});if(c.memories.length>10)c.memories.shift();log(s,w.time,c.name.split(' ')[0],(m.override?'By the first mate’s warrant! ':'')+crewSays(c,m.task));}else{s.lastBrain[c.id]=w.time;c.reason='Model proposal validated against duties and the current watch.';c.brain=m.source==='browser'&&id===s.id?'browser LLM':'local LLM';log(s,w.time,c.name.split(' ')[0],crewSays(c,m.task));}}
+   else{c.task=m.task;if(m.type==='order'){c.manualUntil=w.time+35;c.orderRevision++;c.reason='Following a direct captain’s order.';learn(w,s,c,m.task,.5);c.preferences[m.task]=clamp((c.preferences[m.task]||0)+.7,0,6);c.memories.push({task:m.task,directive:s.directive,emergency:emergency(w,s),text:String(m.note||'Direct order: '+m.task).slice(0,120)});if(c.memories.length>10)c.memories.shift();log(s,w.time,c.name.split(' ')[0],(m.override?'By the first mate’s warrant! ':'')+crewSays(c,m.task));}else{s.lastBrain[c.id]=w.time;c.reason='Model proposal validated against duties and the current watch.';c.brain=m.source==='browser'&&id===s.id?'browser LLM':'local LLM';
+    var spoken=dialogueText(m.dialogue);
+    if(spoken&&w.time>=(c.lastDialogue??-999)+20)crewDialogue(s,w,c,spoken);
+    else log(s,w.time,c.name.split(' ')[0],crewSays(c,m.task));}}
   }
   else if(m.type==='delegate'){if(typeof m.userId!=='string'||m.userId.length>80)error='Invalid brain delegate ID.';else{s.delegate=m.userId;log(s,w.time,'Brisk',m.userId?'Local brain officer authorised for crew decisions.':'Local brain officer disconnected.');}}
   else if(m.type==='rename'){var name=typeof m.name==='string'?m.name.trim():'';if(name.length<3||name.length>40||/[\x00-\x1f\x7f]/.test(name))error='A ship name needs 3 to 40 printable characters.';else{s.name=name;log(s,w.time,'Captain’s log','Rechristened '+name+'. Keep the old name away from the taxman.');}}
