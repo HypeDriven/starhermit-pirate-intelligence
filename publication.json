@@ -19,7 +19,7 @@
       "deployError": null,
       "deployStatus": "live",
       "deployWarning": null,
-      "deployedAt": "2026-11-26T12:47:33.197448+00:00",
+      "deployedAt": "2026-11-26T13:53:57.47946+00:00",
       "deployedCommitSha": null,
       "engineVersion": "1.47.0",
       "externalLaunchUrl": null,
@@ -42,12 +42,12 @@
     "links": [],
     "isDisabled": false
   },
-  "publishedAt": "2026-11-26T12:47:33.197448+00:00",
-  "sourceCommit": "9bbb51678391fa7e078b1a4433b07d362e012b0a",
-  "bytesReceived": 19855047,
-  "archiveSha256": "cd75dc4e3ba844bf980989d51f5488b215794569b859333aa691a9d447d3f134",
+  "publishedAt": "2026-11-26T13:53:57.47946+00:00",
+  "sourceCommit": "f299d0b1d87610fbf63bd232c75196033056e9c0",
+  "bytesReceived": 19893893,
+  "archiveSha256": "8da16f8bda606211e80eddf77cd724eec092ac3de775bef506644af3c66f9534",
   "result": {
-    "bytesReceived": 19855047,
+    "bytesReceived": 19893893,
     "clientPublished": true,
     "deployWarning": null,
     "engineVersion": "1.47.0",
@@ -65,21 +65,30 @@
     "sentBytes": 0
   },
   "verification": {
-    "verifiedAt": "2026-11-26T12:47:53.489Z",
+    "verifiedAt": "2026-11-26T13:54:26.339Z",
     "packageHeadlessFrames": 120,
     "typeScriptPassed": true,
-    "nodeTestFilesPassed": 9,
+    "nodeTestFilesPassed": 11,
     "companionTestsPassed": 7,
+    "nativeMaritimeWasmActive": true,
     "nativeCrewSpeechPlayback": true,
     "hostedFilesMatchUpload": [
       "index.html",
       "starhermit-files.json",
+      "assets/voices/chimera.wasm",
+      "assets/maritime.wasm",
+      "models/kernel.wasm",
       "server.js",
-      "src/main.ts",
       "src/brain/browser.ts",
+      "src/brain/inference.js",
+      "src/brain/policy.js",
+      "src/cloth.ts",
       "src/crew-voice.ts",
-      "src/chimera-speech.ts",
-      "assets/voices/chimera.wasm"
+      "src/crew.ts",
+      "src/main.ts",
+      "src/maritime-kernel.ts",
+      "src/maritime-motion.ts",
+      "src/navigation.js"
     ],
     "remoteObjectsAccessible": [
       {
@@ -89,9 +98,9 @@
       }
     ]
   },
-  "indexSha256": "c95610c2eccc78fee402123c1a9090824acfc33c3a821dbc2b03f47f1c133b92",
+  "indexSha256": "f46e0fc1f934909ba7219228ae5b4cc3b98b1993c2cd631819cf83a166564a5e",
   "liveVerification": {
-    "at": "2026-11-26T12:47:53.489Z",
+    "at": "2026-11-26T13:54:26.339Z",
     "files": [
       {
         "file": "index.html",
@@ -100,37 +109,77 @@
       },
       {
         "file": "starhermit-files.json",
-        "sha256": "c95610c2eccc78fee402123c1a9090824acfc33c3a821dbc2b03f47f1c133b92",
-        "status": 200
-      },
-      {
-        "file": "server.js",
-        "sha256": "076bf772a3442950f0cfa9677ecaec52bce011291d7fcf809817beed5aa073cd",
-        "status": 200
-      },
-      {
-        "file": "src/main.ts",
-        "sha256": "dfdddf0347ccca4a3e7f56ccb318db86056cf3e2d8c8cf8ef88f860707bfc630",
-        "status": 200
-      },
-      {
-        "file": "src/brain/browser.ts",
-        "sha256": "e5334790fb89936772967ded6d3915a2024f2919a6a1025aec6ed8560b1d0824",
-        "status": 200
-      },
-      {
-        "file": "src/crew-voice.ts",
-        "sha256": "d3a8cb46a9a72b28b913e27a18669ffea796d506b67ddc46662edbe84e0265f3",
-        "status": 200
-      },
-      {
-        "file": "src/chimera-speech.ts",
-        "sha256": "8fe53e3f06c38519c21515d2818147f594d93988e40f476c4731d916334e4703",
+        "sha256": "f46e0fc1f934909ba7219228ae5b4cc3b98b1993c2cd631819cf83a166564a5e",
         "status": 200
       },
       {
         "file": "assets/voices/chimera.wasm",
         "sha256": "5ef2b8b085e18c1b42982c39c3bb039f8de09dd545ce4113d4e239020b7aa63c",
+        "status": 200
+      },
+      {
+        "file": "assets/maritime.wasm",
+        "sha256": "edd1e9c3df5eca4227b4842011a23e84cc9a35b7400fbd391630dea3aeaf666d",
+        "status": 200
+      },
+      {
+        "file": "models/kernel.wasm",
+        "sha256": "d0ec7ef0e8d199520bc553f7befb3cef15c326261c3b9bff6b6a0bfc65d3284e",
+        "status": 200
+      },
+      {
+        "file": "server.js",
+        "sha256": "b4af93cec1bc658ca66add19e84fe4f2c5666c2ee3f9cc4acaa38643ea4ac4b9",
+        "status": 200
+      },
+      {
+        "file": "src/brain/browser.ts",
+        "sha256": "893f50e7f8efeb392cdbbdc4dfdf9b4c2f4b61dbb530a0ae8b71c3e5008906cb",
+        "status": 200
+      },
+      {
+        "file": "src/brain/inference.js",
+        "sha256": "a0c9469e56a82e26cc27edb6be6415fbbe3b93c56cc47ad253a06e69aace0ecd",
+        "status": 200
+      },
+      {
+        "file": "src/brain/policy.js",
+        "sha256": "e39b47e7d9f1433cedb3c9a6b653dcc62ff32d76b0bc63f479806f8f31df6d3a",
+        "status": 200
+      },
+      {
+        "file": "src/cloth.ts",
+        "sha256": "aad55271afadbfc7c3b05a9a591d1be01fbee87dae8161be40d19b65cb37cffb",
+        "status": 200
+      },
+      {
+        "file": "src/crew-voice.ts",
+        "sha256": "677fc1984e764479b1085b612c4d8b171d339d69818cab93d3c601aa8313b3e0",
+        "status": 200
+      },
+      {
+        "file": "src/crew.ts",
+        "sha256": "9b61128fdf77d72d82792fedaf65c9b12520bc5a0825d3d948eed777236ca285",
+        "status": 200
+      },
+      {
+        "file": "src/main.ts",
+        "sha256": "3646d8259a8af7d9a99ff8236043957248cea9a09d76be7aa40b04e3a0baf95e",
+        "status": 200
+      },
+      {
+        "file": "src/maritime-kernel.ts",
+        "sha256": "f694d61c6fb345579f07d8d7a53b6e976eb590431739cee83ff4beda288aa1fd",
+        "status": 200
+      },
+      {
+        "file": "src/maritime-motion.ts",
+        "sha256": "b0e24929b29f404ca9fcd137bc67913f5b3c9eb68e67c4c96c9ede9b47c85a11",
+        "status": 200
+      },
+      {
+        "file": "src/navigation.js",
+        "sha256": "eb8334f3bdb7de88ff96f8dc50bf86d87ff2fc7e8d65e847774cbd9ca5fd12d0",
         "status": 200
       }
     ],
@@ -142,5 +191,5 @@
       }
     ]
   },
-  "verifiedAt": "2026-11-26T12:47:53.489Z"
+  "verifiedAt": "2026-11-26T13:54:26.339Z"
 }
