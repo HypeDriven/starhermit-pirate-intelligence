@@ -1,7 +1,7 @@
 import { files, runtime } from 'starhermit:engine';
 import { Tokenizer } from './tokenizer.js';
 import { TinyModel } from './inference.js';
-import { LOADS, loadSetting, brainRequest, designRequest, dialogueRequest, nextWorkAt } from './policy.js';
+import { LOADS, loadSetting, brainRequest, designRequest, dialogueRequest, banterRequest, nextWorkAt } from './policy.js';
 
 // The game already runs off the browser's rendering thread. SIMD math runs in
 // that realm so it uses the browser's WASM engine rather than an interpreted
@@ -20,12 +20,13 @@ export class BrowserBrain {
  private cursor=0;
  private attempts:Record<string,number>={};
  private briefs:Record<string,boolean>={};
+ private attemptedBanter=0;
  private generation=0;
  private stream:any=null;
  private paused=false;
  private pendingDialogue:{ crewId:string }|null=null;
  requestDialogue(crewId:string){
-  if(this.load===3||this.failed||runtime?.()!=='web')return false;
+  if(!LOADS[this.load].duty||this.failed||runtime?.()!=='web')return false;
   this.pendingDialogue={crewId};
   this.nextAt=0;
   return true;
@@ -33,7 +34,7 @@ export class BrowserBrain {
  setLoad(value:number){
   const n=loadSetting(value);if(n===this.load)return;
   this.load=n;this.nextAt=0;
-  if(n===3){this.cancel();this.pendingDialogue=null;}
+  if(!LOADS[n].duty){this.cancel();this.pendingDialogue=null;}
  }
  cancel(){this.iterator=null;this.request=null;this.generation++;if(this.model)this.model.prefix=[];}
  suspend(){this.paused=true;this.cancel();this.pendingDialogue=null;}
@@ -59,7 +60,7 @@ export class BrowserBrain {
   catch(e){this.cancel();this.failed=true;this.status='Tiny model paused · '+String(e).slice(0,160);}
  }
  private work(state:any,configs:any,send:(c:any)=>void,stream:any){
-  if(stream!==this.stream){this.stream=stream;this.cancel();this.attempts={};this.pendingDialogue=null;this.nextAt=0;}
+  if(stream!==this.stream){this.stream=stream;this.cancel();this.attempts={};this.attemptedBanter=0;this.pendingDialogue=null;this.nextAt=0;}
   const setting=LOADS[this.load];
   if(!setting.duty){this.status='Paused · crew instincts continue';return;}
   if(this.paused||!state?.myShip)return;
@@ -102,11 +103,25 @@ export class BrowserBrain {
     const c=eligible[(this.cursor+i)%eligible.length];
     if(!c.away&&state.time>=c.manualUntil&&start-(this.attempts[c.id]??-Infinity)>60000){selected=c;this.cursor=(this.cursor+i+1)%eligible.length;break;}
    }
-   if(!selected){this.status='Ready · waiting for the next crew watch';return;}
-   const input=brainRequest(state,selected);
-   this.request={crewId:selected.id,ownerId:state.myShip.id,issuedAt:state.time,manualUntil:selected.manualUntil,revision:selected.orderRevision,emergency:input.emergency,generation:this.generation};
-   this.attempts[selected.id]=start;this.iterator=this.model.choose(input.prompt,input.allowed);
-   this.status='Thinking for '+selected.name.split(' ')[0];
+   if(selected){
+    const input=brainRequest(state,selected);
+    this.request={crewId:selected.id,ownerId:state.myShip.id,issuedAt:state.time,manualUntil:selected.manualUntil,revision:selected.orderRevision,emergency:input.emergency,generation:this.generation};
+    this.attempts[selected.id]=start;this.iterator=this.model.choose(input.prompt,input.allowed);
+    this.status='Thinking for '+selected.name.split(' ')[0];
+   }else{
+    // An idle lane can draft a reply while the authored reply waits for its cue.
+    const reply=state.myShip.watchBanter?.reply;
+    const speaker=reply&&eligible.find((c:any)=>c.id===reply.crewId);
+    const opening=reply&&state.myShip.log.find((entry:any)=>entry.seq===reply.id);
+    if(!state.banterQuiet||!speaker||speaker.away||!opening||reply.generated||
+       speaker.orderRevision!==reply.revision||reply.at-state.time<3||reply.id===this.attemptedBanter){
+     this.status='Ready · waiting for the next crew watch';return;
+    }
+    this.attemptedBanter=reply.id;
+    this.request={dialogue:true,banterId:reply.id,crewId:speaker.id,ownerId:state.myShip.id,revision:speaker.orderRevision};
+    this.iterator=this.model.speak(banterRequest(speaker,opening));
+    this.status=speaker.name.split(' ')[0]+' is thinking of a reply';
+   }
   }
   const current=state.myShip.crew.find((c:any)=>c.id===this.request.crewId);
   if(this.request.design){
@@ -119,16 +134,21 @@ export class BrowserBrain {
    const end=performance.now();this.nextAt=Math.max(nextWorkAt(end,end-start,setting.duty),done?end+setting.rest*1000:0);return;
   }
   if(this.request.dialogue){
+   const banterId=this.request.banterId;
+   const reply=state.myShip.watchBanter?.reply;
+   if(banterId&&(!state.banterQuiet||reply?.id!==banterId||state.time>=reply.at)){this.cancel();return;}
    if(!current||!eligible.includes(current)||current.away||current.orderRevision!==this.request.revision||
       state.myShip.id!==this.request.ownerId){this.cancel();return;}
    do{
     const result=this.iterator.next();
     if(!result.done)continue;
-    if(result.value&&state.time>=(current.lastDialogue??-999)+20){
+    if(result.value&&banterId){
+     send({type:'crew-banter-reply',id:banterId,text:result.value});
+    }else if(result.value&&state.time>=(current.lastDialogue??-999)+20){
      send({type:'crew-dialogue',crewId:current.id,revision:this.request.revision,text:result.value});
     }
     this.iterator=null;this.request=null;
-    this.status=result.value?'Ready · '+current.name.split(' ')[0]+' spoke':'Ready · waiting for the next crew watch';
+    this.status=result.value&&!banterId?'Ready · '+current.name.split(' ')[0]+' spoke':'Ready · waiting for the next crew watch';
     break;
    }while(performance.now()-start<setting.slice);
    const end=performance.now();

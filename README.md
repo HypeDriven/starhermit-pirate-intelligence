@@ -73,7 +73,7 @@ StarHermit's `persistent: true` pauses an empty session rather than keeping a se
 
 ## Browser brains and CPU usage
 
-**Tiny CPU default · in browser** runs SmolLM2-135M-Instruct Q8_0 locally using single-threaded WebAssembly SIMD. It needs no Python, localhost service, API key or second account. The 138 MB model downloads on first use through StarHermit's verified remote-file API and is cached when browser storage permits. The model, tokenizer and kernel are shared; each character receives its own personality, preferences, recent orders and live ship context. Existing `tiny` character settings now select the browser provider.
+**Tiny CPU default · in browser** runs SmolLM2-135M-Instruct Q8_0 locally using single-threaded WebAssembly SIMD. It needs no Python, localhost service, API key or second account. The 138 MB model downloads on first use through StarHermit's verified remote-file API and is cached when browser storage permits. The model, tokenizer and kernel are shared. Each character receives its own personality, preferences, recent orders and live ship context. The Rust WebAssembly module runs the transformer’s normalization, projections, attention and feed-forward math. The StarHermit client schedules its work slices and handles the game interface and commands. Existing `tiny` character settings now select the browser provider.
 
 Under **Individual brain** or **Brain setup**, CPU usage is shared across all browser brains and saved on this device:
 
@@ -82,11 +82,13 @@ Under **Individual brain** or **Brain setup**, CPU usage is shared across all br
 | Low load (default) | 10% of one CPU core | 2 ms |
 | Balanced | 25% of one CPU core | 4 ms |
 | Faster | 50% of one CPU core | 8 ms |
+| High | 75% of one CPU core | 12 ms |
+| Maximum | No added idle time during inference | 16 ms |
 | Paused | No inference | — |
 
-These are cooperative pacing targets for inference, not operating-system CPU caps or limits on rendering/downloads. A small indivisible kernel call can exceed a slice on a slow device. Idle gaps follow measured work; unused time never accumulates into a burst. Inference pauses when hidden. Low load produces slower decisions; deterministic instincts fill the gaps. One character thinks at a time, with at least a minute between its requests and a 15-second rest between completed requests at Low load.
+These are cooperative pacing targets for inference, not operating-system CPU caps or limits on rendering/downloads. A small indivisible kernel call can exceed a slice on a slow device. Idle gaps follow measured work; unused time never accumulates into a burst. Inference pauses when hidden. Low load produces slower decisions; deterministic instincts fill the gaps. One character thinks at a time, with at least a minute between its task requests and a 15-second rest after decisions at Low load. Maximum omits the pacing delay and the rest after a decision, while yielding after each work slice. StarHermit 1.47 runs the game and its script workers on one browser thread. Dedicated inference workers require runtime support.
 
-The browser model chooses duties using constrained number-token decoding. The authority revalidates ownership, duties, emergency warrants and command priority. The same model can write short remarks in English using the sailor’s personality, current station and ship conditions. Choose **Ask for a remark** in a sailor’s crew panel or listen for remarks during a watch. The captain’s log keeps the text, and the browser runs inference locally.
+The browser model chooses duties using constrained number-token decoding. The authority revalidates ownership, duties, emergency warrants and command priority. The same model can write short remarks in English using the sailor’s personality, current station and ship conditions. Choose **Ask for a remark** in a sailor’s crew panel or listen for remarks during a watch. The captain’s log keeps the text, and the browser runs inference locally. On quiet watches two shipmates sometimes trade a line and a reply. An idle browser brain can supply the reply, and the crew has an authored response ready if it misses its cue.
 
 Each sailor has a different voice. Mara speaks steadily, Brisk has a low, crisp voice, Little Fuse is high and quick, Peg is dry and measured, Tallow is low and gravelly, and Pip is airy and brisk. Choose **Hear voice** to preview a sailor. **Options → Crew voices** toggles speech, and the effects volume controls its level.
 
@@ -143,6 +145,8 @@ The exact, unmodified `LICENSE-engine` text from the official StarHermit 1.20.0 
 At an island, wait for the anchor, open **Longboat** (or **Go ashore · timber**), pick one of that island's jobs and two sailors (the right specialist helps), then **Lower the longboat**. The party rows ashore, works at the labelled site and returns with the haul automatically; the encounter offers an optional risky haul. **Watch the shore party** follows their work. Wrecks offer salvage instead.
 
 **Options → StarHermit engine options** opens runtime graphics and frame-rate settings; **F1** opens it directly. Sound and browser brain CPU controls are also in Options, with **Low load** selected by default. The clock, wind, compass and minimap stay visible during sailing. Aboard ship, select a deck in the left rail, or cycle the deck button on phones.
+
+Ship interpolation, wave motion, sail furling, crew animation and the camera run in a shared Rust WebAssembly module. The browser also uses it for sail and flag cloth. The script solvers cover startup, and desktop play retains the script cloth solver. Rebuild the module with `scripts/build-maritime-kernel.sh`.
 
 The visual remaster adds spectral ocean waves, planar reflections and depth-aware refraction, crest scattering, shoreline foam, persistent curved wakes and wave-driven ship motion. Sun and moon lighting, a procedural HDR sky and prefiltered environment, cascaded shadows, ambient occlusion, restrained bloom, wet timber, metal patina, terrain detail and dense wind-bent shore grass replace the flat first art pass. Clouds, marine fog, ship fires and cannon smoke use StarHermit’s ray-marched volumes with self-shadowing, multiple scattering and blackbody fire; GPU rain completes storm weather. Illustrated crew portraits, the nautical chart and brass/teal menus remain. The original Yue score follows harbour, sailing and combat; 14 MOSS effects cover cannons, impacts, anchors, rigging, oars, timber work, rewards, warnings and ambience. Use **Options** for saved music/effects controls. Audio begins after the first interaction and uses the engine mixer.
 

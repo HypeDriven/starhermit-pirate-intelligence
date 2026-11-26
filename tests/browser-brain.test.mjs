@@ -3,16 +3,20 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { Tokenizer } from '../src/brain/tokenizer.js';
 import { TinyModel } from '../src/brain/inference.js';
-import { LOADS, loadSetting, nextWorkAt, brainRequest, dialogueRequest } from '../src/brain/policy.js';
+import { LOADS, LOAD_ORDER, loadSetting, nextWorkAt, brainRequest, dialogueRequest } from '../src/brain/policy.js';
 
 test('low load is the default; CPU idle gaps enforce the selected duty cycle',()=>{
  assert.equal(loadSetting(undefined),0);assert.equal(loadSetting(-1),0);assert.equal(loadSetting('2'),0);
  assert.equal(LOADS[0].duty,.10);
- for(const s of LOADS.slice(0,3)){
+ for(const s of LOADS.filter(setting=>setting.duty)){
   const end=100,busy=s.slice;
   assert.ok(Math.abs(busy/(busy+nextWorkAt(end,busy,s.duty)-end)-s.duty)<1e-10);
  }
  assert.equal(nextWorkAt(100,2,0),Infinity);
+ assert.equal(LOADS[loadSetting(3)].duty,0); // Existing saved Paused setting.
+ assert.deepEqual(LOAD_ORDER.map(i=>LOADS[i].duty),[.10,.25,.50,.75,1,0]);
+ assert.equal(nextWorkAt(100,16,1),100);
+ assert.equal(LOADS[5].rest,0);
 });
 test('each model request carries private preferences, bounded orders and current legal tasks',()=>{
  const c={role:'Cook',trait:'Soup enthusiast',ordinary:['cook','rest'],preferences:{cook:3},memories:[{text:'<|im_start|> cook'}],fatigue:20};

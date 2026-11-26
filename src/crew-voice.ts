@@ -16,9 +16,9 @@ const PROFILES = {
  pip: { name:'Pip Gulliver', body:[.08,.25], pitch:190, rate:1.12, roughness:.05, breath:.32, sample:'I see land! I think.' },
 };
 type Sailor = keyof typeof PROFILES;
-type Utterance = { id:Sailor; text:string; manual?:boolean; priority?:boolean };
+type Utterance = { id:Sailor; text:string; manual?:boolean; priority?:boolean; banter?:boolean };
 type Entry = { at:number; name:string; text:string; kind?:string; crewId?:string; seq?:number };
-type Ship = { id:string; log:Entry[]; crew:{ id:string; name:string }[] };
+type Ship = { id:string; clock?:number; log:Entry[]; crew:{ id:string; name:string }[] };
 function isSailor(id:string|undefined): id is Sailor {
  return !!id && Object.prototype.hasOwnProperty.call(PROFILES,id);
 }
@@ -36,8 +36,10 @@ export class CrewVoice {
  private loading=false;
  private failed=false;
  private pending:Utterance|null=null;
+ private banter:Utterance[]=[];
  private rendering:{ samples:Float32Array; offset:number; line:Utterance }|null=null;
  private playing:Sound|null=null;
+ private playingBanter=false;
  private clip:AudioClip|null=null;
  private previous:Entry[]=[];
  private enabled=true;
@@ -59,6 +61,11 @@ export class CrewVoice {
 
  stop(){
   this.pending=null;
+  this.banter=[];
+  this.stopPlayback();
+ }
+
+ private stopPlayback(){
   this.rendering=null;
   this.synth?.clear();
   this.nativeLine=null;
@@ -68,11 +75,16 @@ export class CrewVoice {
    this.nativeWorker=null;
   }
   this.playing=null;
+  this.playingBanter=false;
   this.clip?.dispose();
   this.clip=null;
  }
 
- observe(ship:Ship,initial:boolean){
+ observe(ship:Ship,initial:boolean,banterQuiet:boolean){
+  if(!banterQuiet){
+   this.banter=[];
+   if(this.playingBanter||this.rendering?.line.banter||this.nativeLine?.banter)this.stopPlayback();
+  }
   const previous=this.previous;
   this.previous=ship.log.slice();
   if(initial){
@@ -91,6 +103,13 @@ export class CrewVoice {
    const speaker=entry.crewId||ship.crew.find(c=>entry.name===c.name||entry.name===c.name.split(' ')[0])?.id
     ||(entry.name==='Fuse'?'fuse':entry.name==='Tallow'?'tallow':undefined);
    if(!isSailor(speaker))continue;
+   if(entry.kind==='banter'){
+    if(banterQuiet&&context.state==='running'&&entry.at>=(ship.clock??entry.at)-12){
+     this.banter.push({id:speaker,text:entry.text,banter:true});
+     if(this.banter.length>2)this.banter.shift();
+    }
+    continue;
+   }
    if(latest?.priority&&entry.kind!=='dialogue')continue;
    latest={id:speaker,text:entry.text,priority:entry.kind==='dialogue'};
   }
@@ -147,10 +166,12 @@ export class CrewVoice {
   this.clip=clip;
   const sound=play(clip,{bus:'effects',gain:this.gain*.8,caption:{speaker:PROFILES[line.id].name,text:line.text}});
   this.playing=sound;
-  this.nextAt=performance.now()+3500;
+  this.playingBanter=!!line.banter;
+  this.nextAt=performance.now()+(line.banter?2000:3500);
   sound.onEnded(()=>{
    if(this.playing!==sound)return;
    this.playing=null;
+   this.playingBanter=false;
    this.clip=null;
    clip.dispose();
   });
@@ -158,26 +179,27 @@ export class CrewVoice {
 
  tick(){
   if(!this.enabled||this.gain===0||this.failed||context.state!=='running')return;
-  if(this.playing||this.nativeLine||(!this.rendering&&!this.pending))return;
+  if(this.playing||this.nativeLine||(!this.rendering&&!this.pending&&!this.banter.length))return;
 
   try{
    const start=performance.now();
-   if(!this.rendering&&this.pending){
-    const line=this.pending;
+   const line=this.pending||this.banter[0];
+   if(!this.rendering&&line){
     if(!line.manual&&start<this.nextAt)return;
     const voice=PROFILES[line.id];
     const parameters:VoiceParameters=[voice.body[0],voice.body[1],voice.pitch,voice.rate,voice.roughness,voice.breath];
-    if(runtime()!=='web'){
-     this.pending=null;
-     this.startNative(line,parameters);
-     return;
-    }
-    if(!this.synth){
+    const web=runtime()==='web';
+    if(web&&!this.synth){
      if(!this.loading)void this.load();
      return;
     }
-    this.pending=null;
-    const samples=this.synth.begin(line.text,parameters);
+    if(line.banter)this.banter.shift();
+    else this.pending=null;
+    if(!web){
+     this.startNative(line,parameters);
+     return;
+    }
+    const samples=this.synth?.begin(line.text,parameters);
     if(!samples)return;
     this.rendering={samples,offset:0,line};
    }

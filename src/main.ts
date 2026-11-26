@@ -32,8 +32,11 @@ import {applyLook,box,mat,crewDoll,makeLongboat,shipModel,createOcean,setShoals,
 import {MaritimeGraphics} from './render/graphics.js';
 import {maritimeVolumes} from './render/volumes.js';
 import { BrowserBrain } from './brain/browser.js';
-import { LOADS, loadSetting } from './brain/policy.js';
-import { METRES, bearing, compass, clock, daylight, windSpeed, smoothPose, boatProgress } from './navigation.js';
+import { LOADS, LOAD_ORDER, loadSetting } from './brain/policy.js';
+import { METRES, bearing, compass, clock, daylight, windSpeed, boatProgress } from './navigation.js';
+
+import {loadMaritimeKernel} from './maritime-kernel.js';
+import {MaritimeMotion} from './maritime-motion.js';
 
 // The renderer, input, UI, storage, practice authority and online sockets are
 // all the real StarHermit host API. No browser-only replacement renderer.
@@ -56,7 +59,18 @@ let crewVoicesOn=storage.getJson('crew-voices')!==false;
 browserBrain.setLoad(loadSetting(storage.getJson('brain-cpu-load')));
 function saveSoundSettings(){storage.setJson('crew-voices',crewVoicesOn);storage.setJson('sound-effects',effectsOn);storage.setJson('sea-ambience',seaOn);storage.setJson('soundtrack-enabled',musicOn);storage.setJson('music-volume',musicVolume);storage.setJson('sfx-volume',effectsVolume);soundSettings(effectsOn,seaOn,musicOn,musicVolume,effectsVolume);crewVoice.settings(crewVoicesOn,effectsVolume);}
 function changeVolume(music:boolean,delta:number){if(music)musicVolume=Math.max(0,Math.min(1,Math.round((musicVolume+delta)*100)/100));else effectsVolume=Math.max(0,Math.min(1,Math.round((effectsVolume+delta)*100)/100));saveSoundSettings();}
-function brainLoadControl(){ui.label(__displayText('Browser brain CPU usage'),{size:12,color:C.gold,weight:'bold'});const value=ui.select(__displayText('CPU usage · shared by all browser brains'),browserBrain.load,__displayOptions(LOADS.map(s=>s.name)));if(value!==browserBrain.load){browserBrain.setLoad(value);storage.setJson('brain-cpu-load',value);}ui.paragraph(__displayText('One inference lane. Targets 10% / 25% / 50% of one CPU core over time. Short work slices and idle gaps keep the game responsive; exact CPU usage varies by device. Pauses when hidden.'),dialogWidth,{size:11});}
+function brainLoadControl(){
+ ui.label(__displayText('Browser brain CPU usage'),{size:12,color:C.gold,weight:'bold'});
+ const selected=LOAD_ORDER.indexOf(browserBrain.load);
+ const option=ui.select(__displayText('CPU usage · shared by all browser brains'),selected,
+  __displayOptions(LOAD_ORDER.map(i=>LOADS[i].name)));
+ if(option!==selected){
+  const load=LOAD_ORDER[option];
+  browserBrain.setLoad(load);
+  storage.setJson('brain-cpu-load',load);
+ }
+ ui.paragraph(__displayText('All browser brains share one inference lane. High targets 75% of one core. Maximum runs up to 16 ms of inference per update with no added idle time. Inference pauses when hidden.'),dialogWidth,{size:11});
+}
 
 let labelHits:any[]=[],mobilePanel=false,dialogWidth=530;
 const camera=new PerspectiveCamera(45,16/9,.1,2500);
@@ -80,11 +94,12 @@ const JOB_TEXT:any={timber:'Chop timber · 25–45 wood',treasure:'Seek treasure
 buildIslands(places);scene.traverse((o:any)=>{if(o.castShadow)o.layers.enable(1);});const {sea}=createOcean(places);createSeaLife();
 const graphics=new MaritimeGraphics(places,sea,oceanWakeData.wakes,oceanWakeData.crumbs,oceanWakeData.shoals,sun,ambient,hemisphere);
 const ships:any={};
-let longboat:any=null,shoreParty:any=null,battleFrame=0;const battleAim={x:0,z:0};let snapshotAt=0,frameDt=1/60,cameraYaw=Math.atan2(30,39),cameraRange=1,orbitYaw=0,orbitPitch=0,orbiting:{x:number,y:number,moved:number}|null=null;const poses:any={};
+let longboat:any=null,shoreParty:any=null,snapshotAt=0,frameDt=1/60,orbitYaw=0,orbitPitch=0,orbiting:{x:number,y:number,moved:number}|null=null;
+const motion=new MaritimeMotion(),poses=motion.poses;
 function buildShip(id:string,enemy=false){const obj=shipModel(enemy);obj.g.userData.waterCaster=true;obj.g.traverse((o:any)=>{if(o.castShadow)o.layers.enable(1);});scene.add(obj.g);ships[id]=obj;return obj;}
 function flash(text:string){notice=text;noticeTime=7;}
 function command(c:any){if(!channel||!channel.sendCommand(c))flash('The channel is busy. Try again in a moment.');}
-function got(data:any){if(!data)return;if(data.type==='snapshot'&&!online){lastSnapshot=data.world;storage.setJson('practice-world',lastSnapshot);return;}if(data.type!=='state')return;const oldDelegate=state?.myShip?.delegate;for(const event of audioEvents(state,data))cue(event);if(data.myShip)crewVoice.observe(data.myShip,state?.myShip?.id!==data.myShip.id);if(!state&&data.myShip)console.info('Authoritative ship ready: '+data.myShip.crew.length+' crew.');state=data;snapshotAt=elapsed;if(state.myShip&&oldDelegate!==state.myShip.delegate)delegate=state.myShip.delegate||'';}
+function got(data:any){if(!data)return;if(data.type==='snapshot'&&!online){lastSnapshot=data.world;storage.setJson('practice-world',lastSnapshot);return;}if(data.type!=='state')return;const oldDelegate=state?.myShip?.delegate;for(const event of audioEvents(state,data))cue(event);if(data.myShip)crewVoice.observe(data.myShip,state?.myShip?.id!==data.myShip.id,data.banterQuiet===true);if(!state&&data.myShip)console.info('Authoritative ship ready: '+data.myShip.crew.length+' crew.');state=data;snapshotAt=elapsed;if(state.myShip&&oldDelegate!==state.myShip.delegate)delegate=state.myShip.delegate||'';}
 function watch(c:any){c.on('game',got);c.on('error',(e:any)=>flash(String(e)));c.on('open',()=>c.sendCommand({type:'sync'}));c.on('stopped',(e:any)=>{network='Disconnected · '+e;flash('Connection ended: '+e+'. Open World to reconnect.');});}
 function local(){if(roomSocket){roomSocket.close();roomSocket=null;}room=null;if(channel)channel.close();state=null;crewVoice.reset();shipNameDraft='';online=false;me='captain-local';const saved:any=storage.getJson('practice-world');channel=authority('server.js',{context:{sessionId:'brine-local',players:[{id:me,name:'Captain'}],sessionState:saved||null},rate:4});watch(channel);network='Local practice · saved on device';}
 function connect(id:string){activeSession=id;if(channel)channel.close();state=null;crewVoice.reset();shipNameDraft='';me=platform.player()?.userId||'';online=true;channel=platform.connectGame(id);watch(channel);network='StarHermit · connecting';channel.on('open',()=>{network='StarHermit · persistent world';});channel.on('disconnected',()=>{network='Reconnecting to StarHermit…';});}
@@ -157,6 +172,7 @@ function parseOrder(){
  if(!task){flash('Try “Peg, repair the hull”, “Fuse, guns” or “Pip, lookout”.');return;}doOrder(task);orderText='';
 }
 onStart(()=>{
+  void loadMaritimeKernel();
   showCursor();files.fetch('assets/fonts/CormorantGaramond.ttf').then(()=>{fonts.add(new FontFace('Captain','assets/fonts/CormorantGaramond.ttf',{weight:'600'}));headingFont='Captain';__l10nStyles({heading:{text:{font:__l10nFont(headingFont),weight:'bold',color:'#f1e5c8'}}});}).catch(()=>{});initAudio();
  soundSettings(effectsOn,seaOn,musicOn,musicVolume,effectsVolume);crewVoice.settings(crewVoicesOn,effectsVolume);
  ui.setTheme({fontSize:13,headingSize:20,smallSize:11,padding:12,spacing:8,text:C.cream,muted:C.muted,panel:C.panel,control:'#23474b',hovered:'#3d675d',pressed:'#14363d',field:'#0d2933',accent:C.gold,focus:C.gold,outline:C.edge,radius:4});
@@ -207,33 +223,43 @@ function labelAt(text:string,x:number,y:number,z:number,color:string,id?:string,
 function renderScene(){
  const f=frame(),s=state?.myShip;camera.aspect=f.width/Math.max(1,f.height);camera.updateProjectionMatrix();
  const allShips=state?state.ships.concat(state.raiders):[];
- for(const ship of allShips)poses[ship.id]=smoothPose(poses[ship.id],ship,frameDt);
+ const liveShips=allShips.filter((ship:any)=>ship.hull>0);
+ motion.smooth(allShips,frameDt);
  const shipPose=s?poses[s.id]||s:{x:0,z:0},focus={x:shipPose.x,z:shipPose.z};
  if(s?.away){const p=places.find(p=>p.id===s.away.place)!,dx=shipPose.x-p.x,dz=shipPose.z-p.z,d=Math.max(.1,Math.hypot(dx,dz)),move=boatProgress(state.time+Math.min(.3,elapsed-snapshotAt),s.away);const site=jobSite(p.id,s.away.job),sx=site?site.x/METRES:p.x+dx/d*2.2,sz=site?site.z/METRES:p.z+dz/d*2.2;focus.x+=(sx-shipPose.x)*move;focus.z+=(sz-shipPose.z)*move;}
- const foe=s&&!s.away&&inBattle(state,me)?battleTarget(s):null,foePose=foe&&(poses[foe.id]||foe),foeGap=foe?Math.hypot(foePose.x-shipPose.x,foePose.z-shipPose.z):0;battleFrame+=((foe?1:0)-battleFrame)*(1-Math.exp(-frameDt*1.5));if(foe){battleAim.x=foePose.x-shipPose.x;battleAim.z=foePose.z-shipPose.z;}focus.x+=battleAim.x*.45*battleFrame;focus.z+=battleAim.z*.45*battleFrame;
- const cx=focus.x*zoom*METRES,cz=focus.z*zoom*METRES,dist=1-zoom;
- const narrow=f.width/ui.preferences().scale<600;cameraRange+=((narrow?1.2:1)*(s?.away?1.15:1)*(1+battleFrame*(Math.min(3.4,Math.max(1.3,foeGap*.24))-1))-cameraRange)*(1-Math.exp(-frameDt*(foe?2:5)));const p=s?.away&&places.find(p=>p.id===s.away.place),yaw=p?Math.atan2(shipPose.x-p.x,shipPose.z-p.z):Math.atan2(30,39);cameraYaw+=Math.atan2(Math.sin(yaw-cameraYaw),Math.cos(yaw-cameraYaw))*(1-Math.exp(-frameDt*4));
- const quake=cameraShake()*zoom,qx=Math.sin(elapsed*53)*quake*.6,qy=Math.sin(elapsed*71)*quake*.4;const yawNow=cameraYaw+orbitYaw*zoom,elev=Math.max(.12,Math.min(1.42,(deck>0?.74:.25)+orbitPitch*zoom)),reach=(deck>0?62.8:74)*zoom*cameraRange,flat=Math.cos(elev)*reach;camera.position.set(qx+cx+340*dist+Math.sin(yawNow)*flat,qy+660*dist+Math.sin(elev)*reach,cz+540*dist+Math.cos(yawNow)*flat);camera.lookAt(cx,zoom*(deck>0?3:7.5),cz);camera.updateMatrixWorld();
+ const foe=s&&!s.away&&inBattle(state,me)?battleTarget(s):null,foePose=foe&&(poses[foe.id]||foe);
+ const p=s?.away&&places.find(p=>p.id===s.away.place),yaw=p?Math.atan2(shipPose.x-p.x,shipPose.z-p.z):Math.atan2(30,39);
+ const [x,y,z,lookX,lookY,lookZ]=motion.view({focus,foeX:foePose?foePose.x-shipPose.x:0,
+  foeZ:foePose?foePose.z-shipPose.z:0,hasFoe:!!foe,targetYaw:yaw,dt:frameDt,elapsed,
+  zoom,deck,orbitYaw,orbitPitch,shake:cameraShake(),narrow:f.width/ui.preferences().scale<600,away:!!s?.away});
+ camera.position.set(x,y,z);camera.lookAt(lookX,lookY,lookZ);camera.updateMatrixWorld();
  sea.visible=!(zoom>.6&&deck>0);
  animateEnvironment(elapsed,frameDt,focus);animateIslands(elapsed);
  if(!state)return;
- setShoals(state.shoals||[]);animateSeaLife(state.time+Math.min(.3,elapsed-snapshotAt),frameDt,focus,state.ships.concat(state.raiders).filter((ss:any)=>ss.hull>0).map((ss:any)=>{const p=poses[ss.id]||ss;return {x:p.x*METRES,z:p.z*METRES,heading:p.heading||0,way:ss.anchored?0:Math.min(1,Math.hypot(ss.vx||0,ss.vz||0)/1.7)};}),state.shoals||[]);
+ setShoals(state.shoals||[]);animateSeaLife(state.time+Math.min(.3,elapsed-snapshotAt),frameDt,focus,liveShips.map((ss:any)=>{const p=poses[ss.id]||ss;return {x:p.x*METRES,z:p.z*METRES,heading:p.heading||0,way:ss.anchored?0:Math.min(1,Math.hypot(ss.vx||0,ss.vz||0)/1.7)};}),state.shoals||[]);
  const storm=state.weather!=='Fair winds',light=daylight(state.time);
  graphics.begin(state.time,frameDt,camera,storm,zoom);
- const all=state.ships.concat(state.raiders);const visible:any={};let clothBudget=graphics.profile.clothShips;
- for(const ss of all){visible[ss.id]=true;let obj=ships[ss.id];if(!obj)obj=buildShip(ss.id,!!ss.npc);obj.g.visible=ss.hull>0;if(!obj.g.visible)continue;const mine=ss.id===me;const pose=poses[ss.id]||ss;obj.g.position.set(pose.x*METRES,Math.sin(elapsed*1.3+ss.x)*.12,pose.z*METRES);obj.g.rotation.y=pose.heading||0;obj.g.rotation.z=Math.sin(elapsed+ss.x)*.012;const wave=graphics.water?.probe.poses.get(ss.id),blend=1-Math.exp(-frameDt*3);if(wave){obj.bob=(obj.bob??obj.g.position.y)+(wave.height-(obj.bob??obj.g.position.y))*blend;obj.g.position.y=obj.bob;const h=pose.heading||0;obj.g.rotation.x+=(-Math.atan(wave.sx*Math.sin(h)+wave.sz*Math.cos(h))-obj.g.rotation.x)*blend;obj.roll=(obj.roll||0)+(Math.atan(wave.sx*Math.cos(h)-wave.sz*Math.sin(h))-(obj.roll||0))*blend;obj.g.rotation.z+=obj.roll;}else obj.g.rotation.x*=1-blend;
+ const all=allShips,visible:any={};let clothBudget=graphics.profile.clothShips;
+ for(const ss of all){
+  const obj=ships[ss.id]||buildShip(ss.id,!!ss.npc);
+  visible[ss.id]=true;
+  obj.g.visible=ss.hull>0;
+ }
+ motion.hulls(liveShips,ships,graphics.water?.probe.poses,me,!!s?.away,frameDt,elapsed);
+ for(const ss of liveShips){
+  const obj=ships[ss.id],mine=ss.id===me,pose=poses[ss.id]||ss;
   const fire=mine?s.fire:ss.fire||0;for(let i=0;i<obj.flames.length;i++){const flame=obj.flames[i];flame.visible=fire>0&&!graphics.profile.fireVolumes;if(fire>0){flame.scale.y=(.35+Math.sin(elapsed*8+i)*.10)*Math.min(2,1+fire/60);flame.position.y=1.6+i*.12+Math.sin(elapsed*5+i)*.12;}}
   const cut=mine&&zoom>.6&&deck>0;maritimeVolumes.shipFire(ss.id,pose.x*METRES,pose.z*METRES,pose.heading||0,fire,!cut);
   const near=Math.hypot(pose.x*METRES-camera.position.x,pose.z*METRES-camera.position.z)<(zoom>.5?520:260);animateShip(obj,elapsed,!ss.anchored&&!cut,mine,light,{simulate:near&&clothBudget-->0,dt:frameDt,wind:state.wind||0,knots:state.windKnots||12,heading:pose.heading||0,speed:ss.anchored?0:Math.hypot(ss.vx||0,ss.vz||0)||(ss.npc?1.2:1.6),storm});if(!ss.npc)applyLook(obj,mine?previewLook(ss.look):ss.look,state.workshop?.palette);
-  obj.rig.visible=!cut;{const furlTo=ss.anchored||(mine&&s.away)||(ss.npc&&ss.ai==='patrol'&&Math.hypot(ss.vx||0,ss.vz||0)<.2)?.12:1;obj.furl=(obj.furl??furlTo);obj.furl+=Math.sign(furlTo-obj.furl)*Math.min(Math.abs(furlTo-obj.furl),frameDt*.45);for(const sail of obj.sails){sail.castShadow=graphics.profile.index>=4;if(sail.castShadow)sail.layers.enable(1);else sail.layers.disable(1);sail.visible=true;sail.material.hooks.uniforms.furl.value=obj.furl;}}obj.hull.visible=!cut;obj.guns.visible=cut&&deck===1;obj.hold.visible=cut;obj.section.visible=cut;
+  obj.rig.visible=!cut;obj.furl=obj.nextFurl;{for(const sail of obj.sails){sail.castShadow=graphics.profile.index>=4;if(sail.castShadow)sail.layers.enable(1);else sail.layers.disable(1);sail.visible=true;sail.material.hooks.uniforms.furl.value=obj.furl;}}obj.hull.visible=!cut;obj.guns.visible=cut&&deck===1;obj.hold.visible=cut;obj.section.visible=cut;
   for(let i=0;i<obj.dolls.length;i++){const d=obj.dolls[i],c=mine?s.crew[i]:null;d.visible=(mine?(!c||!c.away):i<3)&&(!cut||(deck===1?['guns','repair'].includes(c?.task):['cook','forage','rest'].includes(c?.task)));}
   animateCrew(obj,mine?s:ss.npc?NPC_CREW:PEER_CREW,elapsed+(mine?0:[...ss.id].reduce((a:number,ch:string)=>a+ch.charCodeAt(0),0)*1.7),frameDt,cut,deck);
 
  }
  for(const id of Object.keys(ships))if(!visible[id])ships[id].g.visible=false;
- setWakes(all.filter((ss:any)=>ss.hull>0&&!ss.anchored||ss.npc&&ss.hull>0).map((ss:any)=>{const p=poses[ss.id]||ss,v=Math.hypot(ss.vx||0,ss.vz||0);return {id:ss.id,x:p.x*METRES,z:p.z*METRES,heading:p.heading||0,way:ss.npc?v/1.6:(ss.vx===undefined?.8:v/1.8),d:Math.hypot(p.x*METRES-camera.position.x,p.z*METRES-camera.position.z)};}).filter((w:any)=>w.way>.05).sort((a:any,b:any)=>a.d-b.d).slice(0,8),elapsed);
+ setWakes(liveShips.filter((ss:any)=>!ss.anchored||ss.npc).map((ss:any)=>{const p=poses[ss.id]||ss,v=Math.hypot(ss.vx||0,ss.vz||0);return {id:ss.id,x:p.x*METRES,z:p.z*METRES,heading:p.heading||0,way:ss.npc?v/1.6:(ss.vx===undefined?.8:v/1.8),d:Math.hypot(p.x*METRES-camera.position.x,p.z*METRES-camera.position.z)};}).filter((w:any)=>w.way>.05).sort((a:any,b:any)=>a.d-b.d).slice(0,8),elapsed);
  combatUpdate(state,me,serverNow(),frameDt,poses,ships);
- graphics.finish(frameDt,elapsed,camera,focus,storm,state.wind||0,state.windKnots||12,zoom,!(zoom>.6&&deck>0),all.filter((ss:any)=>ss.hull>0).map((ss:any)=>{const p=poses[ss.id]||ss;return {id:ss.id,x:p.x*METRES,z:p.z*METRES};}));
+ graphics.finish(frameDt,elapsed,camera,focus,storm,state.wind||0,state.windKnots||12,zoom,!(zoom>.6&&deck>0),liveShips.map((ss:any)=>{const p=poses[ss.id]||ss;return {id:ss.id,x:p.x*METRES,z:p.z*METRES};}));
  if(s?.away){if(!longboat)longboat=makeLongboat();longboat.visible=true;const p=places.find(p=>p.id===s.away.place)!,time=state.time+Math.min(.3,elapsed-snapshotAt),move=boatProgress(time,s.away),pose=poses[s.id]||s,dx=pose.x-p.x,dz=pose.z-p.z,d=Math.max(.1,Math.hypot(dx,dz)),shore={x:p.x+dx/d*3.25,z:p.z+dz/d*3.25};
   longboat.position.set((pose.x+(shore.x-pose.x)*move)*METRES,-1.9,(pose.z+(shore.z-pose.z)*move)*METRES);longboat.rotation.y=Math.atan2(shore.x-pose.x,shore.z-pose.z)+(s.away.returnAt-time<5?Math.PI:0);
   for(const oar of longboat.userData.oars)oar.rotation.y=move<1?Math.sign(oar.position.x)*Math.sin(elapsed*5)*.5:0;

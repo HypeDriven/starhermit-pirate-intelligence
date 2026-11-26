@@ -4,16 +4,34 @@ export class TinyModel {
  constructor(index,tokenizer,wasm){
   this.index=index;this.tokenizer=tokenizer;this.w=wasm.exports;
   this.base=this.w.reserve(index.bytes);this.memory=this.w.memory;
-  this.alloc=n=>{const p=this.w.reserve(n*4);return {p,a:new Float32Array(this.memory.buffer,p,n)};};
-  this.x=this.alloc(576);this.norm=this.alloc(576);this.q=this.alloc(576);this.k=this.alloc(192);this.v=this.alloc(192);
-  this.att=this.alloc(576);this.proj=this.alloc(576);this.gate=this.alloc(1536);this.up=this.alloc(1536);this.scores=this.alloc(256);
-  this.keys=Array.from({length:30},()=>this.alloc(256*192));this.values=Array.from({length:30},()=>this.alloc(256*192));
+  const alloc=n=>this.w.reserve(n*4);
+  const pointers=values=>{
+   const p=alloc(values.length);
+   new Uint32Array(this.memory.buffer,p,values.length).set(values);
+   return p;
+  };
+  this.x={p:alloc(576)};
+  this.norm={p:alloc(576)};
+  const rope=this.w.reserve(256*64*8);
+  const angles=new Float64Array(this.memory.buffer,rope,256*64);
+  for(let pos=0;pos<256;pos++)for(let j=0;j<64;j+=2){
+   const angle=pos/Math.pow(index.ropeTheta,j/64);
+   angles[pos*64+j]=Math.cos(angle);
+   angles[pos*64+j+1]=Math.sin(angle);
+  }
+  // Table layouts match Buffers and Layer in tools/brain-transformer.rs.
+  this.buffers=pointers([this.x.p,this.norm.p,alloc(576),alloc(192),alloc(192),
+   alloc(576),alloc(576),alloc(1536),alloc(1536),alloc(256),rope]);
+  const weights=['attn_norm','attn_q','attn_k','attn_v','attn_output','ffn_norm','ffn_gate','ffn_up','ffn_down'];
+  this.layers=Array.from({length:30},(_,i)=>pointers([
+   ...weights.map(name=>this.tensor('blk.'+i+'.'+name+'.weight').p),alloc(256*192),alloc(256*192)
+  ]));
+  this.embedding=this.tensor('token_embd.weight').p;
+  this.outputNorm=this.tensor('output_norm.weight').p;
   this.prefix=[];
  }
  tensor(name){const t=this.index.tensors[name];if(!t)throw Error('Missing model tensor: '+name);return {...t,p:this.base+t.offset};}
- rms(out,input,name){const t=this.tensor(name);const weight=new Float32Array(this.memory.buffer,t.p,576);let ss=0;for(let i=0;i<576;i++)ss+=input.a[i]*input.a[i];const scale=1/Math.sqrt(ss/576+this.index.epsilon);for(let i=0;i<576;i++)out.a[i]=input.a[i]*scale*weight[i];}
- *linear(name,input,out){const t=this.tensor(name);for(let row=0;row<t.shape[1];row+=16){this.w.linear(t.p,input.p,out.p,t.shape[0],row,Math.min(row+16,t.shape[1]));yield;}}
- rope(vector,heads,pos){for(let h=0;h<heads;h++)for(let j=0;j<64;j+=2){const angle=pos/Math.pow(this.index.ropeTheta,j/64),c=Math.cos(angle),s=Math.sin(angle),i=h*64+j,a=vector.a[i],b=vector.a[i+1];vector.a[i]=a*c-b*s;vector.a[i+1]=a*s+b*c;}}
+ normalize(){this.w.normalize(this.norm.p,this.x.p,this.outputNorm,this.index.epsilon);}
  *prefill(tokens){
   let common=0;while(common<tokens.length-1&&common<this.prefix.length&&tokens[common]===this.prefix[common])common++;
   // Prefix K/V rows are valid only after a complete preceding request.
@@ -24,25 +42,13 @@ export class TinyModel {
   }
  }
  *forward(token,pos){
-  this.w.embed(this.tensor('token_embd.weight').p,this.x.p,576,token);
-  for(let layer=0;layer<30;layer++){
-   const name='blk.'+layer+'.';
-   this.rms(this.norm,this.x,name+'attn_norm.weight');
-   yield* this.linear(name+'attn_q.weight',this.norm,this.q);
-   yield* this.linear(name+'attn_k.weight',this.norm,this.k);
-   yield* this.linear(name+'attn_v.weight',this.norm,this.v);
-   this.rope(this.q,9,pos);this.rope(this.k,3,pos);
-   this.keys[layer].a.set(this.k.a,pos*192);this.values[layer].a.set(this.v.a,pos*192);
-   this.w.attention(this.q.p,this.keys[layer].p,this.values[layer].p,this.att.p,this.scores.p,pos,9,3,64);yield;
-   yield* this.linear(name+'attn_output.weight',this.att,this.proj);
-   for(let i=0;i<576;i++)this.x.a[i]+=this.proj.a[i];
-   this.rms(this.norm,this.x,name+'ffn_norm.weight');
-   yield* this.linear(name+'ffn_gate.weight',this.norm,this.gate);
-   yield* this.linear(name+'ffn_up.weight',this.norm,this.up);
-   for(let i=0;i<1536;i++)this.gate.a[i]=this.gate.a[i]/(1+Math.exp(-this.gate.a[i]))*this.up.a[i];
-   yield* this.linear(name+'ffn_down.weight',this.gate,this.proj);
-   for(let i=0;i<576;i++)this.x.a[i]+=this.proj.a[i];
-   yield;
+  this.w.embed(this.embedding,this.x.p,576,token);
+  for(const layer of this.layers){
+   let continuation=0;
+   do{
+    continuation=this.w.layer_step(this.buffers,layer,pos,continuation,this.index.epsilon);
+    yield;
+   }while(continuation);
   }
  }
  *choose(prompt,allowed){
@@ -50,7 +56,7 @@ export class TinyModel {
   // Leave room for the task choices even when memories tokenize poorly.
   const tokens=encoded.length>256?encoded.slice(0,160).concat(encoded.slice(-96)):encoded;
   yield* this.prefill(tokens);
-  this.rms(this.norm,this.x,'output_norm.weight');
+  this.normalize();
   // Constrained decoding: only digits corresponding to legal tasks can win.
   const output=this.tensor(this.index.tensors['output.weight']?'output.weight':'token_embd.weight');
   let best=-Infinity,choice=null;
@@ -71,7 +77,7 @@ export class TinyModel {
   const spoken=new Map();
   let line='';
   for(let step=0;step<maxTokens;step++){
-   this.rms(this.norm,this.x,'output_norm.weight');
+   this.normalize();
    let best=-Infinity,piece='',winner=-1;
    const vocabulary=this.tokenizer.speechVocabulary;
    for(let i=0;i<vocabulary.length;i++){

@@ -64,3 +64,42 @@ test('delegated model dialogue is displayed only after a valid task decision',()
  assert.equal(f.cmd(proposal,'brain').ok,true);
  assert.equal(f.ship.log.at(-1).text,proposal.dialogue);
 });
+
+test('quiet watches produce a private two-sailor exchange with time between lines',()=>{
+ const f=fixture();
+ f.tick(24);
+ assert.equal(f.ship.log.filter(l=>l.kind==='banter').length,0);
+ f.tick();
+ const opener=f.ship.log.find(l=>l.kind==='banter');
+ assert.equal(opener.crewId,'brisk');
+ f.tick(8);
+ assert.equal(f.ship.log.filter(l=>l.kind==='banter').length,1);
+ f.tick();
+ const reply=f.ship.log.filter(l=>l.kind==='banter').at(-1);
+ assert.equal(reply.crewId,'morrow');
+ assert.equal(reply.at-opener.at,9);
+ const other=f.cmd({type:'sync'}).broadcast.find(b=>b.to.includes('bob')).data;
+ assert.equal(other.ships.find(ship=>ship.id==='alice').log,undefined);
+ f.tick(20);
+ assert.equal(f.ship.log.filter(l=>l.kind==='banter').length,2);
+});
+
+test('a timely model reply replaces the authored line and danger interrupts the exchange',()=>{
+ const f=fixture();
+ f.tick(25);
+ const {id}=f.ship.watchBanter.reply;
+ const text='I could get used to a watch this quiet.';
+ f.cmd({type:'crew-banter-reply',id:id-1,text:'This stale line should disappear.'});
+ f.cmd({type:'crew-banter-reply',id,text});
+ f.tick(9);
+ assert.equal(f.ship.log.filter(l=>l.kind==='banter').at(-1).text,text);
+
+ const interrupted=fixture();
+ interrupted.tick(25);
+ interrupted.ship.fire=12;
+ interrupted.tick();
+ assert.equal(interrupted.ship.watchBanter.reply,null);
+ assert.equal(interrupted.cmd({type:'sync'}).broadcast.find(b=>b.to.includes('alice')).data.banterQuiet,false);
+ interrupted.tick(11);
+ assert.equal(interrupted.ship.log.filter(l=>l.kind==='banter').length,1);
+});

@@ -7,12 +7,17 @@
 // Cost control: coarse grids, a fixed 30 Hz step, two constraint passes, and
 // the caller only steps the nearest ships' cloth; far ones keep their last shape.
 
-const STEP=1/30,PASSES=2;
+import {runtime} from 'starhermit:engine';
+import {loadMaritimeKernel,maritimeKernel} from './maritime-kernel.js';
+
+const STEP=1/30,PASSES=2,browserCloth=runtime()==='web';
 
 export class Cloth{
  nx:number;ny:number;n:number;p:Float32Array;q:Float32Array;rest:Float32Array;pin:Uint8Array;
  ca:Int32Array;cb:Int32Array;cl:Float32Array;cl2:Float32Array;mesh:any;pos:any;nor:any;acc=0;flag:boolean;phase:number;
+ private wasmCloth:{handle:number;positions:Float32Array;normals:Float32Array;positionOffset:number;normalOffset:number}|null=null;
  constructor(mesh:any,nx:number,ny:number,pinned:(i:number,j:number)=>boolean,flag=false){
+  if(browserCloth)void loadMaritimeKernel();
   this.mesh=mesh;this.nx=nx;this.ny=ny;this.n=(nx+1)*(ny+1);this.flag=flag;this.phase=Math.random()*10;
   const geo=mesh.geometry;this.pos=geo.getAttribute('position');this.nor=geo.getAttribute('normal');
   this.p=new Float32Array(this.pos.array);this.q=new Float32Array(this.p);this.rest=new Float32Array(this.p);
@@ -26,9 +31,40 @@ export class Cloth{
  }
  /** wx,wz: apparent wind in the cloth's own frame (units/s²); gust 0..1. */
  step(dt:number,time:number,wx:number,wz:number,gust:number){
-  this.acc=Math.min(this.acc+dt,STEP*3);let moved=false;
-  while(this.acc>=STEP){this.acc-=STEP;this.tick(time,wx,wz,gust);moved=true;}
-  if(moved)this.write();
+  this.acc=Math.min(this.acc+dt,STEP*3);
+  let steps=0;
+  while(this.acc>=STEP){this.acc-=STEP;steps++;}
+  if(!steps)return;
+
+  const kernel=browserCloth?maritimeKernel:null;
+  if(kernel){
+   const cloth=this.wasmCloth??this.createWasmCloth(kernel);
+   kernel.cloth_step(cloth.handle,steps,time+this.phase,wx,wz,gust);
+   const memory=kernel.memory.buffer;
+   if(cloth.positions.buffer!==memory){
+    cloth.positions=new Float32Array(memory,cloth.positionOffset,this.p.length);
+    cloth.normals=new Float32Array(memory,cloth.normalOffset,this.p.length);
+   }
+   this.pos.array.set(cloth.positions);
+   this.nor.array.set(cloth.normals);
+   this.pos.needsUpdate=true;this.nor.needsUpdate=true;
+   return;
+  }
+  for(let i=0;i<steps;i++)this.tick(time,wx,wz,gust);
+  this.write();
+ }
+ private createWasmCloth(wasm:NonNullable<typeof maritimeKernel>){
+  const handle=wasm.cloth_new(this.nx,this.ny,Number(this.flag));
+  const memory=wasm.memory.buffer;
+  const [positions,previous,rest,pins,normals]=new Uint32Array(memory,wasm.cloth_buffers(handle),5);
+  new Float32Array(memory,positions,this.p.length).set(this.p);
+  new Float32Array(memory,previous,this.q.length).set(this.q);
+  new Float32Array(memory,rest,this.rest.length).set(this.rest);
+  new Uint8Array(memory,pins,this.pin.length).set(this.pin);
+  wasm.cloth_setup(handle);
+  return this.wasmCloth={handle,positionOffset:positions,normalOffset:normals,
+   positions:new Float32Array(wasm.memory.buffer,positions,this.p.length),
+   normals:new Float32Array(wasm.memory.buffer,normals,this.p.length)};
  }
  private tick(time:number,wx:number,wz:number,gust:number){
   const {p,q,pin,rest,n}=this,t=time+this.phase,flag=this.flag,dt2=STEP*STEP,damp=flag?.985:.97,g=flag?-2.2:-1.2;

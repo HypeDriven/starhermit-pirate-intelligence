@@ -5,6 +5,8 @@
 // swings a limb backwards. A walk swings the legs in opposition and each arm
 // against the leg on its own side.
 
+import {maritimeKernel,motionBuffer} from './maritime-kernel.js';
+
 const DECK=1.34,GUN_DECK=.28,HOLD=-.72;
 const FORE={z:1.15,top:6.8},WHEEL={x:0,z:-2.2},GARLAND={x:-.3,z:.3};
 const GUNS=[-1.35,.02,1.39];
@@ -82,13 +84,56 @@ function limbs(d:any,pose:Pose,phase:number,t:number){
 }
 
 const states=new WeakMap<any,any>();
+const POSE_CODES:Record<Pose,number>={stand:0,walk:1,helm:2,scope:3,climb:4,carry:5,place:6,hammer:7,fish:8,stir:9,rest:10,ram:11};
+const PROPS=['','scope','shot','rod','tool'];
+const CREW_FIELDS=16;
+
+function setProp(d:any,prop:string,toolAngle:number){
+ d.userData.scope.visible=prop==='scope';
+ d.userData.shot.visible=prop==='shot';
+ d.userData.rod.visible=prop==='rod';
+ d.userData.tool.visible=prop==='tool';
+ if(prop==='tool')d.userData.tool.rotation.x=toolAngle;
+}
+
 /** Moves and poses one ship's dolls for its crew. */
 export function animateCrew(obj:any,s:any,t:number,dt:number,cut:boolean,deck:number){
+ const kernel=maritimeKernel,values=kernel?motionBuffer():null,visibleDeck=cut?deck:0;
+ let active=0;
  for(let i=0;i<obj.dolls.length;i++){
-  const d=obj.dolls[i],c=s?.crew?.[i];if(!c||!d.visible)continue;
-  const slot=s.crew.slice(0,i).filter((o:any)=>!o.away&&o.task===c.task).length,goal=plan(c.task,t,i,slot,cut?deck:0,s);
-  let st=states.get(d);if(!st||st.deck!==(cut?deck:0)){st={x:goal.x,y:goal.y,z:goal.z,face:goal.face,phase:0,deck:cut?deck:0};states.set(d,st);}
-  // Walk on the deck, climb in the rigging; vertical moves are climbs.
+  const d=obj.dolls[i],c=s?.crew?.[i],row=i*CREW_FIELDS;
+  if(values)values[row+15]=0;
+  if(!c||!d.visible)continue;
+  let slot=0;
+  for(let prior=0;prior<i;prior++){
+   const other=s.crew[prior];
+   if(!other.away&&other.task===c.task)slot++;
+  }
+  const goal=plan(c.task,t,i,slot,visibleDeck,s);
+  let st=states.get(d);
+  if(!st||st.deck!==visibleDeck){
+   st={x:goal.x,y:goal.y,z:goal.z,face:goal.face,phase:0,deck:visibleDeck};
+   states.set(d,st);
+  }
+  if(values){
+   values[row]=st.x;
+   values[row+1]=st.y;
+   values[row+2]=st.z;
+   values[row+3]=st.face;
+   values[row+4]=st.phase;
+   values[row+5]=goal.x;
+   values[row+6]=goal.y;
+   values[row+7]=goal.z;
+   values[row+8]=goal.face;
+   values[row+9]=POSE_CODES[goal.pose];
+   values[row+10]=t+i;
+   values[row+11]=PROPS.indexOf(goal.prop||'');
+   values[row+15]=1;
+   active=i+1;
+   continue;
+  }
+
+  // The fallback keeps models moving before the Rust module is ready.
   const dx=goal.x-st.x,dy=goal.y-st.y,dz=goal.z-st.z,flat=Math.hypot(dx,dz),climbing=Math.abs(dy)>.3;
   let pose:Pose=goal.pose,moving=false;
   if(climbing){const step=Math.min(1,CLIMB*dt/Math.max(.001,Math.hypot(dy,flat)));st.x+=dx*step;st.y+=dy*step;st.z+=dz*step;pose='climb';moving=true;st.face=faceTo(-st.x,FORE.z-st.z);}
@@ -96,9 +141,27 @@ export function animateCrew(obj:any,s:any,t:number,dt:number,cut:boolean,deck:nu
   else{st.y+=dy*Math.min(1,dt*6);st.face+=Math.atan2(Math.sin(goal.face-st.face),Math.cos(goal.face-st.face))*Math.min(1,dt*4);}
   st.phase+=dt*(moving?(climbing?7:8.5):0);
   d.position.set(st.x,st.y,st.z);d.rotation.y=st.face;limbs(d,pose,st.phase,t+i);
-  const prop=climbing?'':goal.prop||'';
-  d.userData.scope.visible=prop==='scope';d.userData.shot.visible=prop==='shot';d.userData.rod.visible=prop==='rod';d.userData.tool.visible=prop==='tool';
-  if(prop==='tool')d.userData.tool.rotation.x=pose==='hammer'?-.9+Math.max(0,Math.sin((t+i)*6))*1.1:0;
+  setProp(d,climbing?'':goal.prop||'',pose==='hammer'?-.9+Math.max(0,Math.sin((t+i)*6))*1.1:0);
+ }
+ if(kernel&&values&&active){
+  kernel.pose_crew(active,dt);
+  for(let i=0;i<active;i++){
+   const row=i*CREW_FIELDS;
+   if(!values[row+15])continue;
+   const d=obj.dolls[i],st=states.get(d),[legL,armL,legR,armR]=d.userData.limbs;
+   st.x=values[row];
+   st.y=values[row+1];
+   st.z=values[row+2];
+   st.face=values[row+3];
+   st.phase=values[row+4];
+   d.position.set(st.x,st.y,st.z);
+   d.rotation.set(values[row+5],st.face,values[row+6]);
+   legL.rotation.set(values[row+7],0,0);
+   armL.rotation.set(values[row+8],0,values[row+9]);
+   legR.rotation.set(values[row+10],0,0);
+   armR.rotation.set(values[row+11],0,values[row+12]);
+   setProp(d,PROPS[values[row+13]],values[row+14]);
+  }
  }
  // The ready racks show the authority's stocked volleys on each side.
  if(obj.racks)for(const side of ['port','starboard'])obj.racks[side].forEach((b:any,k:number)=>{b.visible=!cut&&!!s&&(s.racks?.[side]||0)>k;});

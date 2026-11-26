@@ -1,6 +1,8 @@
 //! Small single-threaded GGUF Q8_0 kernels. No network, threads or allocator.
 #![no_std]
 use core::arch::wasm32::*;
+#[path = "brain-transformer.rs"]
+mod transformer;
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! { core::arch::wasm32::unreachable() }
 static mut NEXT: usize = 0;
@@ -20,6 +22,8 @@ unsafe fn dot(w: *const u8, x: *const f32, n: usize) -> f32 {
     let mut sum = f32x4_splat(0.0);
     for b in 0..n/32 {
         let p = w.add(b*34); let d = f32x4_splat(half(core::ptr::read_unaligned(p as *const u16)));
+        // One scale applies to all 32 weights in this block.
+        let mut block = f32x4_splat(0.0);
         for j in 0..2 {
             let q = v128_load(p.add(2+j*16) as *const v128);
             let lo = i16x8_extend_low_i8x16(q); let hi = i16x8_extend_high_i8x16(q);
@@ -27,9 +31,10 @@ unsafe fn dot(w: *const u8, x: *const f32, n: usize) -> f32 {
                          i32x4_extend_low_i16x8(hi), i32x4_extend_high_i16x8(hi)];
             for k in 0..4 {
                 let v = v128_load(x.add(b*32+j*16+k*4) as *const v128);
-                sum = f32x4_add(sum, f32x4_mul(f32x4_mul(f32x4_convert_i32x4(lanes[k]),d),v));
+                block = f32x4_add(block, f32x4_mul(f32x4_convert_i32x4(lanes[k]),v));
             }
         }
+        sum = f32x4_add(sum, f32x4_mul(block, d));
     }
     f32x4_extract_lane::<0>(sum)+f32x4_extract_lane::<1>(sum)+f32x4_extract_lane::<2>(sum)+f32x4_extract_lane::<3>(sum)
 }

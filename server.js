@@ -154,6 +154,54 @@ function crewDialogue(s,w,c,line){
  c.lastDialogue=w.time;
  log(s,w.time,c.name.split(' ')[0],line,'dialogue',c.id);
 }
+const WATCH_BANTER=[
+ [['brisk','Captain, what counts as a quiet watch?'],['morrow','I can hear the sea over the crew.']],
+ [['tallow','Pip, taste this before I name it.'],['pip','Could you name it from over there?']],
+ [['fuse','Peg, I made a new hole for ventilation.'],['peg','And I made you a patch called no.']],
+ [['pip','Brisk, do we have a map of the galley?'],['brisk','Just follow the smoke.']],
+ [['morrow','Tallow, what are we having for supper?'],['tallow','Second thoughts, Captain.']],
+ [['peg','Pip, your chart has a stain on it.'],['pip','I was hoping that was an island.']],
+ [['brisk','Fuse, why is your pocket ticking?'],['fuse','That is where I keep my patience.']],
+ [['tallow','Peg, can you fix my soup pot?'],['peg','Depends what bent it.']]
+];
+function banterQuiet(w,s,danger){
+ return !s.away&&!s.boarding&&!s.fire&&!s.leak&&s.food>=35&&s.hull>=s.maxHull*s.standing.repairAt/100
+  &&(s.anchored||w.weather==='Fair winds'&&s.controlMode!=='manual')
+  &&!s.destination?.startsWith('ship:')&&w.time-(s.lastShot??-999)>=18
+  &&!danger&&!w.raiders.some(function(r){return r.aim?.target===s.id||r.lastTarget===s.id&&w.time-r.lastShot<18;});
+}
+function banterSpeaker(s,id,time){
+ var c=crewById(s,id);
+ return c&&!c.away&&time>=c.manualUntil?c:null;
+}
+function banterTick(w,s){
+ var watch=s.watchBanter||(s.watchBanter={nextAt:w.time+24,cursor:0,reply:null});
+ if(!banterQuiet(w,s,emergency(w,s))){
+  if(watch.reply){watch.reply=null;watch.nextAt=w.time+20;}
+  return;
+ }
+ if(watch.reply){
+  var reply=watch.reply,speaker=banterSpeaker(s,reply.crewId,w.time);
+  if(!speaker||speaker.orderRevision!==reply.revision){watch.reply=null;return;}
+  if(w.time>=reply.at){
+   log(s,w.time,speaker.name.split(' ')[0],reply.generated||reply.fallback,'banter',speaker.id);
+   watch.reply=null;
+  }
+  return;
+ }
+ if(w.time<watch.nextAt)return;
+ for(var n=0;n<WATCH_BANTER.length;n++){
+  var index=(watch.cursor+n)%WATCH_BANTER.length,pair=WATCH_BANTER[index];
+  var first=banterSpeaker(s,pair[0][0],w.time),second=banterSpeaker(s,pair[1][0],w.time);
+  if(!first||!second)continue;
+  log(s,w.time,first.name.split(' ')[0],pair[0][1],'banter',first.id);
+  watch.reply={id:s.log[s.log.length-1].seq,at:w.time+9,crewId:second.id,revision:second.orderRevision,fallback:pair[1][1]};
+  watch.cursor=(index+1)%WATCH_BANTER.length;
+  watch.nextAt=w.time+65;
+  return;
+ }
+ watch.nextAt=w.time+8;
+}
 function xp(s,n){s.xp+=n;while(s.xp>=s.level*100){s.xp-=s.level*100;s.level++;s.maxHull+=10;s.hull=Math.min(s.maxHull,s.hull+15);log(s,s.clock||0,'Shipwright','Ship level '+s.level+'! More hull. More swagger.','reward');}}
 function cxp(c,n){c.xp+=n;while(c.xp>=c.level*35){c.xp-=c.level*35;c.level++;}}
 function harbourSafe(s){return !!(s.anchored&&near(s,'port'));}
@@ -180,7 +228,7 @@ function choose(w,s,c,counts){
  return best;
 }
 function windKnots(w){return Math.round(12+3*Math.sin(w.time/90)+(w.weather!=='Fair winds'?8:0));}
-function view(w,id){var own=w.ships[id];if(own){own.inHarbour=harbourSafe(own);own.emergency=emergency(w,own);}return {type:'state',schema:1,featureVersion:2,crewDialogue:true,time:w.time,day:Math.floor(w.time/240)+1,weather:w.weather,wind:Math.sin(w.time/240),windKnots:windKnots(w),places:PLACES,jobs:JOBS,shoals:shoals(w.time),ships:Object.keys(w.ships).map(function(k){var s=w.ships[k];return {id:s.id,name:s.name,ownerName:s.ownerName,x:s.x,z:s.z,hull:s.hull,maxHull:s.maxHull,heading:s.heading,level:s.level,anchored:s.anchored,fire:s.fire||0,leak:s.leak||0,lastShot:s.lastShot,lastTarget:s.lastTarget||'',vx:s.vx||0,vz:s.vz||0,look:lookOf(s)};}),raiders:w.raiders,shots:w.shots,fx:w.fx,loot:w.loot,myShip:own||null,goods:GOODS,fittings:FITTINGS,workshop:{kinds:MOD_KINDS,palette:MOD_PALETTE,emblems:MOD_EMBLEMS},contracts:BOOK,markets:w.markets,prices:PLACES.filter(function(p){return p.kind==='port';}).map(function(p){var prices={};Object.keys(GOODS).forEach(function(g){prices[g]=portPrice(w,p,g);});return {id:p.id,goods:prices};})};}
+function view(w,id){var own=w.ships[id];if(own){own.inHarbour=harbourSafe(own);own.emergency=emergency(w,own);}return {type:'state',schema:1,featureVersion:2,crewDialogue:true,banterQuiet:!!own&&banterQuiet(w,own,own.emergency),time:w.time,day:Math.floor(w.time/240)+1,weather:w.weather,wind:Math.sin(w.time/240),windKnots:windKnots(w),places:PLACES,jobs:JOBS,shoals:shoals(w.time),ships:Object.keys(w.ships).map(function(k){var s=w.ships[k];return {id:s.id,name:s.name,ownerName:s.ownerName,x:s.x,z:s.z,hull:s.hull,maxHull:s.maxHull,heading:s.heading,level:s.level,anchored:s.anchored,fire:s.fire||0,leak:s.leak||0,lastShot:s.lastShot,lastTarget:s.lastTarget||'',vx:s.vx||0,vz:s.vz||0,look:lookOf(s)};}),raiders:w.raiders,shots:w.shots,fx:w.fx,loot:w.loot,myShip:own||null,goods:GOODS,fittings:FITTINGS,workshop:{kinds:MOD_KINDS,palette:MOD_PALETTE,emblems:MOD_EMBLEMS},contracts:BOOK,markets:w.markets,prices:PLACES.filter(function(p){return p.kind==='port';}).map(function(p){var prices={};Object.keys(GOODS).forEach(function(g){prices[g]=portPrice(w,p,g);});return {id:p.id,goods:prices};})};}
 function result(ctx,w){var b=[];for(var i=0;i<ctx.players.length;i++)b.push({to:[ctx.players[i].id],data:view(w,ctx.players[i].id)});var keys=Object.keys(w.ships);for(var j=0;j<keys.length;j++){var s=w.ships[keys[j]];if(s.delegate&&ctx.players.some(function(p){return p.id===s.delegate;}))b.push({to:[s.delegate],data:{type:'brain_context',ownerId:s.id,time:w.time,ship:s,emergency:emergency(w,s),nearbyEnemies:w.raiders.filter(function(r){return r.hull>0&&distance(s,r)<17;}).map(function(r){return {name:r.name,hull:r.hull};})}});}return {ok:true,sessionState:w,broadcast:b};}
 function near(s,kind){var best=null,d=999;for(var i=0;i<PLACES.length;i++){var p=PLACES[i],n=distance(s,p);if((!kind||p.kind===kind)&&n<d){d=n;best=p;}}return d<7?best:null;}
 function mission(w,s){var m=s.mission;if(!m)return;var port=near(s,'port'),done=
@@ -584,6 +632,7 @@ function tick(w,dt,random){
   mission(w,s);progress(w,s);
  }
  combatTick(w,dt,random);
+ keys.forEach(function(id){banterTick(w,w.ships[id]);});
 }
 globalThis.game={
  persistent:true,tickRateHz:4,replays:true,queues:[{key:'free-sea',teams:1,teamSize:8}],
@@ -605,6 +654,12 @@ globalThis.game={
   else if(m.type==='pursue'){var target=(Object.prototype.hasOwnProperty.call(w.ships,m.target)?w.ships[m.target]:null)||w.raiders.filter(function(e){return e.id===m.target&&e.hull>0;})[0];if(!target||target.id===s.id||!Number.isFinite(target.x))error='No target afloat.';else if(s.away||s.boarding)error='Wait for the away party.';else{s.controlMode='course';s.destination='ship:'+target.id;s.anchored=false;if(w.time>=s.crew[0].manualUntil)s.crew[0].task='helm';log(s,w.time,'Mara','Close with '+target.name+'. Looking charming is optional.','combat');}}
   else if(m.type==='anchor'){s.sheltered=false;s.anchored=!s.anchored;if(!s.anchored&&!s.destination)s.anchored=true;log(s,w.time,'Brisk',s.anchored?'Anchor down. Mind your toes.':'Heave away!');}
   else if(m.type==='directive'){if(['prosper','hunt','explore','survive'].indexOf(m.value)<0)error='Unknown directive.';else{s.directive=m.value;log(s,w.time,'Captain’s orders','Standing directive: '+m.value+'.');coordinate(w,s);}}
+  else if(m.type==='crew-banter-reply'){
+   var reply=s.watchBanter?.reply,c=reply&&banterSpeaker(s,reply.crewId,w.time),text=dialogueText(m.text);
+   if(reply&&reply.id===m.id&&c&&c.orderRevision===reply.revision&&w.time<reply.at&&text&&
+      !reply.generated&&banterQuiet(w,s,emergency(w,s)))reply.generated=text;
+   return result(ctx,w);
+  }
   else if(m.type==='crew-dialogue'){
    var speaker=crewById(s,m.crewId),line=dialogueText(m.text);
    if(!speaker||speaker.away||speaker.orderRevision!==m.revision)error='That sailor is unavailable for a shipboard remark.';

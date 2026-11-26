@@ -2,8 +2,12 @@ export const LOADS=[
  {name:'Low load · default',duty:0.10,slice:2,rest:15},
  {name:'Balanced',duty:0.25,slice:4,rest:8},
  {name:'Faster',duty:0.50,slice:8,rest:3},
- {name:'Paused',duty:0,slice:0,rest:0}
+ {name:'Paused',duty:0,slice:0,rest:0},
+ {name:'High · 75% target',duty:0.75,slice:12,rest:1},
+ {name:'Maximum · no idle gap',duty:1,slice:16,rest:0}
 ];
+// The stored index for Paused predates the higher presets.
+export const LOAD_ORDER=LOADS.map((_,i)=>i).sort((a,b)=>(LOADS[a].duty||Infinity)-(LOADS[b].duty||Infinity));
 export function loadSetting(value){return Number.isInteger(value)&&value>=0&&value<LOADS.length?value:0;}
 const clean=(s,n)=>String(s||'').replace(/[<>|]/g,'').slice(0,n);
 export function brainRequest(state,crew){
@@ -50,4 +54,12 @@ export function dialogueRequest(state,crew){
   +'<|im_start|>assistant\nKeep your fingers clear of my fuse!<|im_end|>\n'
   +'<|im_start|>user\n'+clean(crew.role,24)+'. '+clean(crew.trait,80)
   +' Current duty: '+clean(crew.task,12)+'. '+condition+'.<|im_end|>\n<|im_start|>assistant\n';
+}
+
+export function banterRequest(crew,opening){
+ return '<|im_start|>system\nWrite one short English reply between pirate shipmates. Reply in character with spoken words only.<|im_end|>\n'
+  +'<|im_start|>user\nA grumpy carpenter hears, "Could you make me a bigger cannon?"<|im_end|>\n'
+  +'<|im_start|>assistant\nOnly if you make me a bigger ship.<|im_end|>\n'
+  +'<|im_start|>user\nA '+clean(crew.role,24)+'. '+clean(crew.trait,80)
+  +' '+clean(opening.name,24)+' says, "'+clean(opening.text,110)+'"<|im_end|>\n<|im_start|>assistant\n';
 }
