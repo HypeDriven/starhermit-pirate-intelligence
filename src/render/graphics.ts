@@ -87,9 +87,11 @@ export class MaritimeGraphics {
  finish(dt:number,time:number,camera:any,focus:any,storm:boolean,wind:number,knots:number,zoom:number,visible:boolean,bodies:{id:string,x:number,z:number}[]){
   maritimeVolumes.update(dt,time,focus,wind,knots,storm,zoom,visible);
   this.rain?.update(time,camera,wind,knots,visible?this.sky.storm*zoom:0);
-  this.fallback.visible=visible&&!this.water;
-  if(this.water){
-   this.water.mesh.visible=visible;
+  if(visible&&this.water&&!this.water.sim.ready)void this.water.sim.prepare();
+  const spectral=visible&&this.water?.sim.ready;
+  this.fallback.visible=visible&&!spectral;
+  if(this.water)this.water.mesh.visible=!!spectral;
+  if(this.water&&spectral){
    const reflectedVolumes=this.profile.index>=7&&visible,effects=maritimeVolumes.group.effects;
    // The mirror has its own camera; its volumes must not clip against the
    // main view's opaque depth. Restore before the window's draw.

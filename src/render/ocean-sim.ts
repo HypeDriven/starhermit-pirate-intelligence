@@ -31,6 +31,7 @@
 // (n + 1/2) L / N, as crates/starhermit-water's WaveField assumes.
 
 import {
+  Color,
   DoubleSide,
   FloatType,
   Group,
@@ -394,6 +395,10 @@ export class OceanSim {
   private readonly slopePasses: Pass[];
   private parity = 0;
   private readonly harmonics: DataTexture;
+  private preparation = renderer.compileAsync ? "idle" : "ready";
+  private disposed = false;
+  private readonly savedClear = new Color();
+  private readonly clearSpectrum = new Color(0);
   readonly resolution: number;
 
   /** `slopeMips` gives the slope targets mipmaps (FloatType + generateMipmaps,
@@ -481,6 +486,38 @@ export class OceanSim {
     renderer.setRenderTarget(previousTarget);
   }
 
+  get ready() {
+    return this.preparation === "ready";
+  }
+
+  /** The spectrum is written once per weather change. A skipped first draw
+   * would leave the clear colour in the texture, where all four channels
+   * are interpreted as wave data. Wait for the render-target pipelines. */
+  async prepare() {
+    if (this.preparation !== "idle" || this.disposed) return;
+    this.preparation = "compiling";
+    // Instances of the same pass share the pipeline. Uniform values and
+    // which ping-pong texture they refer to do not change that pipeline.
+    const passes: [Pass, RenderTarget][] = [
+      [this.init, this.h0],
+      [this.evolve[0]!, this.fields[0]![0]],
+      [this.fft[0]![0]!, this.fields[0]![1]],
+      [this.assemble[0]!, this.disp[1]],
+      [this.slopePasses[0]!, this.slopeTargets[0]!],
+    ];
+    try {
+      await Promise.all(passes.map(([pass, target]) => renderer.compileAsync!(pass.group, passCamera, target)));
+      if (this.disposed) return;
+      const rejected = passes.find(([pass]) => pass.material.shaderError);
+      if (rejected) throw new Error(rejected[0].material.shaderError ?? "Ocean shader rejected");
+      this.preparation = "ready";
+    } catch (error) {
+      if (this.disposed) return;
+      this.preparation = "failed";
+      console.warn("Spectral ocean unavailable: " + String(error));
+    }
+  }
+
   /** Regenerates h0 from `params` (the JS updateSpectrum). */
   updateSpectrum() {
     const p = this.params;
@@ -497,12 +534,21 @@ export class OceanSim {
       new Vector4(swell.alpha, swell.peakOmega, p.gamma, p.shortWavesFade),
     ];
     u.capFade!.value = p.capillaryFade;
-    draw(this.init, this.h0);
-    this.dirty = false;
+    // An empty spectrum has zero amplitude in all channels, including alpha.
+    renderer.getClearColor(this.savedClear);
+    const alpha = renderer.getClearAlpha();
+    try {
+      renderer.setClearColor(this.clearSpectrum, 0);
+      draw(this.init, this.h0);
+      this.dirty = false;
+    } finally {
+      renderer.setClearColor(this.savedClear, alpha);
+    }
   }
 
   /** Advances by dt seconds (times params.timeScale) and runs the passes. */
   update(dt: number) {
+    if (!this.ready) return;
     const p = this.params;
     const previousTarget = renderer.getRenderTarget();
     if (this.dirty) this.updateSpectrum();
@@ -538,6 +584,7 @@ export class OceanSim {
   }
 
   dispose() {
+    this.disposed = true;
     for (const t of [this.h0, ...this.fields.flat(), ...this.disp, ...this.slopeTargets]) t.dispose();
     this.harmonics.dispose();
     for (const p of [this.init, ...this.evolve, ...this.fft.flat(), ...this.assemble, ...this.slopePasses]) {

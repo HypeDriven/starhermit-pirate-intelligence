@@ -41,6 +41,10 @@ onRender(()=>{
  setWakes(fleet.map((s,i)=>({id:'ship'+i,x:s.g.position.x,z:s.g.position.z,heading:s.g.rotation.y,way:.8})),clock);
  animateEnvironment(clock,dt,{x:12,z:21.7});animateIslands(clock);
  graphics.finish(dt,clock,camera,{x:12,z:21.7},storm,.6,storm?26:12,1,true,bodies);
+ if(graphics.water&&!graphics.water.sim.ready){
+  if(graphics.water.mesh.visible)throw new Error('Spectral water was exposed before its GPU pipelines were ready');
+  if(f.frame>100)throw new Error('Spectral water pipelines never became ready');
+ }
  if(!checked&&f.frame>8){
   graphics.sky.material.compile();graphics.water?.material.compile();graphics.water?.sim.compile();
   if(maritimeVolumes.group.shaderError)throw new Error(maritimeVolumes.group.shaderError);

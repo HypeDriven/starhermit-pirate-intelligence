@@ -5,12 +5,15 @@ runtime="${STARHERMIT_BIN:-starhermit}"
 fixture="$(mktemp -d /tmp/pirate-graphics.XXXXXX)"
 trap 'rm -rf "$fixture"' EXIT
 cp -R src "$fixture/src"
+mkdir -p "$fixture/assets/localization"
+cp assets/strings.json "$fixture/assets/"
+cp assets/localization/messages.json "$fixture/assets/localization/"
 cp tests/fixtures/graphics-scene.ts "$fixture/src/graphics-check.ts"
 cat > "$fixture/starhermit.txt" <<'MANIFEST'
 name=Pirate Intelligence graphics check
 engine.api=1
-engine.version=1.39.0
-engine.minor=39
+engine.version=1.47.0
+engine.minor=47
 engine.entry=src/graphics-check.ts
 engine.limits.image_mib=512
 engine.limits.mesh_mib=256
