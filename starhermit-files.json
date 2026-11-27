@@ -32,7 +32,7 @@
     "description.md": {"sha256": "97d3151c0cd0e6f9c230e3de8784fd8ee3e866c06e3efb3c6a9675b430fd09ed", "size": 867},
     "favicon.png": {"sha256": "8ec83067dd83a7a2b6f8563947d277219a52ab08e3223ee88d04d40115e28add", "size": 84415},
     "favicon.png.ktx2": {"sha256": "43aadca3660b8612eb5186649c834c38f73da909c29678c52be9df8fb2c5df58", "size": 87776},
-    "index.html": {"sha256": "c4ad667b76c3c398610b11c653c6e44f3d9163ad62a91ce73464578e2dd05b36", "size": 1797},
+    "index.html": {"sha256": "40d364f396779f87377ee25b937d79adf72c768e4499b319511b72a0f42fd19e", "size": 1797},
     "licenses/CMUDICT.txt": {"sha256": "bd4ce8e44170a5f9f481310ca85c51de3c4f851a65e679b40e603b143bd3542a", "size": 1754},
     "licenses/Chimera-MIT.txt": {"sha256": "0b8d6e0649e7b2068a8300cafb9ebded80d9a0fe99e699b96538ba0a8c5236b1", "size": 1070},
     "licenses/Ultra-Water-MIT.txt": {"sha256": "d5a8b50baec35c7e5efc430d7a03cd3fe160c4840326d153d308050f545c282e", "size": 1255},
@@ -108,7 +108,8 @@
     "src/sound.ts": {"sha256": "a7fcdfd4806c6328d5603a7cfb60be672518b2170da8ad71f51795304a954060", "size": 3609},
     "src/visuals.ts": {"sha256": "b088a5a7a800e50b8603c641648c2b2212bf73df1920ed2de0f599a0ed1c660b", "size": 36135},
     "starhermit-remote.json": {"sha256": "257e2012233aad71a673f1e83ce0c542e770c65b48a8caee0d89325bd742e5c9", "size": 169},
-    "starhermit.txt": {"sha256": "a5238bc8e69e769d8c3c04509df02930ce6d29644c9f9a6b7b744f3e266a37e0", "size": 1699}
+    "starhermit.txt": {"sha256": "7802a8061ed308ed8b3c98e598a4eb9caf5621a68931705b16163b752bf8c37b", "size": 1699}
   },
+  "excluded": ["DESIGN.md", "README.md", "companion/", "package.json", "publication.json", "scripts/", "spec.md", "tests/", "tools/", "tsconfig.json"],
   "format": 1
 }
