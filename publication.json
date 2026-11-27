@@ -19,7 +19,7 @@
       "deployError": null,
       "deployStatus": "live",
       "deployWarning": null,
-      "deployedAt": "2026-11-27T07:24:14.572701+00:00",
+      "deployedAt": "2026-11-27T07:29:26.356637+00:00",
       "deployedCommitSha": null,
       "engineVersion": "1.47.0",
       "externalLaunchUrl": null,
@@ -42,12 +42,12 @@
     "links": [],
     "isDisabled": false
   },
-  "publishedAt": "2026-11-27T07:24:14.572701+00:00",
-  "sourceCommit": "5175b928132c8af6c453872e5438cb7bedd377ba",
-  "bytesReceived": 19895028,
-  "archiveSha256": "e89e47a3f958f34a7425e0f798e2d46bb0fe765b41368acd071671a75235257e",
+  "publishedAt": "2026-11-27T07:29:26.356637+00:00",
+  "sourceCommit": "1440ceb4c4bdb595190d953f171e2a950aeb5698",
+  "bytesReceived": 19895223,
+  "archiveSha256": "33fd5f8fd07694225e12fb5b5df46173bb03a236a9c7fe730d294d7db0a24f51",
   "result": {
-    "bytesReceived": 19895028,
+    "bytesReceived": 19895223,
     "clientPublished": true,
     "deployWarning": null,
     "engineVersion": "1.47.0",
@@ -65,18 +65,22 @@
     "sentBytes": 0
   },
   "verification": {
-    "verifiedAt": "2026-11-27T07:24:20.903Z",
+    "verifiedAt": "2026-11-27T07:29:29.432Z",
     "packageHeadlessFrames": 120,
     "typeScriptPassed": true,
     "nodeTestFilesPassed": 12,
-    "nodeTestsPassed": 105,
+    "nodeTestsPassed": 106,
     "crewDialoguePlaybackTimingTestsPassed": true,
+    "crewVoiceLoudnessPreviewGainDb": {
+      "min": 9.2,
+      "max": 9.9,
+      "voicesMeasured": 6
+    },
     "hostedFilesMatchUpload": [
       "index.html",
       "starhermit-files.json",
       "assets/voices/chimera.wasm",
-      "src/crew-voice.ts",
-      "src/main.ts"
+      "src/crew-voice.ts"
     ],
     "remoteObjectsAccessible": [
       {
@@ -86,9 +90,9 @@
       }
     ]
   },
-  "indexSha256": "f6114038c62e892716527124641ae50077a7c0d73953bc6391dcfacd19afed4a",
+  "indexSha256": "aeb060a7a49af889f0f47af60f5c7cc2bfdcb301faf0889db96d11674393e394",
   "liveVerification": {
-    "at": "2026-11-27T07:24:20.903Z",
+    "at": "2026-11-27T07:29:29.432Z",
     "files": [
       {
         "file": "index.html",
@@ -97,7 +101,7 @@
       },
       {
         "file": "starhermit-files.json",
-        "sha256": "f6114038c62e892716527124641ae50077a7c0d73953bc6391dcfacd19afed4a",
+        "sha256": "aeb060a7a49af889f0f47af60f5c7cc2bfdcb301faf0889db96d11674393e394",
         "status": 200
       },
       {
@@ -107,12 +111,7 @@
       },
       {
         "file": "src/crew-voice.ts",
-        "sha256": "f1876f13c9dff45cc69913c902c87b6da43d041c1a70e545d61d5222fd718b6f",
-        "status": 200
-      },
-      {
-        "file": "src/main.ts",
-        "sha256": "0afc8bf3c017787f286edfe1911eb7496a484b956897da846e190ce52e976622",
+        "sha256": "87e4fbe2dca8b408896d1b500d9f1eec378bc6f6d55afcc4d49fcccdb4d3f90f",
         "status": 200
       }
     ],
@@ -124,5 +123,5 @@
       }
     ]
   },
-  "verifiedAt": "2026-11-27T07:24:20.903Z"
+  "verifiedAt": "2026-11-27T07:29:29.432Z"
 }
