@@ -58,7 +58,7 @@ export class CrewVoice {
    this.stop();
    this.hidden.clear();
   }
-  else if(this.playing)this.playing.fade(this.gain*.8,.1);
+  else if(this.playing)this.playing.fade(this.gain,.1);
  }
 
  reset(){
@@ -191,9 +191,16 @@ export class CrewVoice {
  }
 
  private playLine(samples:Float32Array,line:Utterance){
+  // Raise quiet speech and compress loud peaks before applying the player's volume.
+  const boost=2.5,knee=.55,headroom=.35;
+  for(let i=0;i<samples.length;i++){
+   const boosted=samples[i]*boost;
+   const over=Math.abs(boosted)-knee;
+   samples[i]=over>0?Math.sign(boosted)*(knee+headroom*over/(headroom+over)):boosted;
+  }
   const clip=createClip([samples],CREW_SAMPLE_RATE);
   this.clip=clip;
-  const sound=play(clip,{bus:'effects',gain:this.gain*.8,caption:{speaker:PROFILES[line.id].name,text:line.text}});
+  const sound=play(clip,{bus:'effects',gain:this.gain,caption:{speaker:PROFILES[line.id].name,text:line.text}});
   this.playing=sound;
   this.playingLine=line;
   if(line.entry)this.hidden.delete(entryKey(line.entry));

@@ -77,7 +77,7 @@
     "src/cloth.ts": {"sha256": "aad55271afadbfc7c3b05a9a591d1be01fbee87dae8161be40d19b65cb37cffb", "size": 6034},
     "src/combat.ts": {"sha256": "7b546200c638e1db92438233872a04e543d6409496f3b245c9a0652418bfd449", "size": 11896},
     "src/crew-voice-worker.ts": {"sha256": "531f3587688d2026e1063269a60e367aab7f9471f5af31dad03a2cfc0e6e2f44", "size": 1159},
-    "src/crew-voice.ts": {"sha256": "f1876f13c9dff45cc69913c902c87b6da43d041c1a70e545d61d5222fd718b6f", "size": 8684},
+    "src/crew-voice.ts": {"sha256": "87e4fbe2dca8b408896d1b500d9f1eec378bc6f6d55afcc4d49fcccdb4d3f90f", "size": 9004},
     "src/crew.ts": {"sha256": "9b61128fdf77d72d82792fedaf65c9b12520bc5a0825d3d948eed777236ca285", "size": 9455},
     "src/cursor.ts": {"sha256": "2ce8868b7c376e5d2d6380439e4e723dfa89be064a39a2255efa4e04441f342f", "size": 988},
     "src/islands.ts": {"sha256": "d330dd6537c3060642c379974fa6034440d63ee2fbab8a349f78ca6f6de752b7", "size": 17267},

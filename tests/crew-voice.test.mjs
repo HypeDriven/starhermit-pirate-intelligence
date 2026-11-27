@@ -7,18 +7,18 @@ const engineModules={
  './chimera-speech.js':"export const CHIMERA_PATH='voice.wasm',CREW_SAMPLE_RATE=24000; export class ChimeraSpeech {}",
  'starhermit:engine':"export const runtime=()=>'native',files={};",
  'starhermit:audio':`export const context={state:'running'};
-  export const createClip=()=>({dispose(){}});
+  export const createClip=([samples])=>({samples,dispose(){}});
   export const play=(...args)=>globalThis.crewVoiceTest.play(...args);`,
  'starhermit:script':'export const worker=()=>globalThis.crewVoiceTest.worker();',
 };
 globalThis.crewVoiceTest={
- play:(_clip,options)=>{onPlay(options.caption);return {onEnded(){}};},
+ play:(clip,options)=>{onPlay(options.caption,clip.samples,options.gain);return {onEnded(){}};},
  worker:()=>{
   const handlers={};
   return voiceWorker={
    on:(event,handler)=>{handlers[event]=handler;},
    post:({sequence})=>{voiceWorker.sequence=sequence;},
-   finish:()=>handlers.message({sequence:voiceWorker.sequence,samples:new Float32Array([.1])}),
+   finish:(samples=[.1])=>handlers.message({sequence:voiceWorker.sequence,samples:new Float32Array(samples)}),
    terminate(){},
   };
  },
@@ -63,4 +63,20 @@ test('canceled banter stays hidden and muted voices use text',()=>{
  assert.deepEqual(voice.visibleLog(ship(banter).log),[]);
  voice.settings(false,.65);
  assert.deepEqual(voice.visibleLog(ship(banter,reward).log),[banter,reward]);
+});
+
+test('speech boosts quiet samples and limits loud peaks',()=>{
+ const voice=new CrewVoice();
+ voice.settings(true,.4);
+ voice.preview('peg');
+ voice.tick();
+ let playback;
+ onPlay=(_caption,samples,gain)=>{playback={samples,gain};};
+ voiceWorker.finish([0,.1,1,-1]);
+ assert.equal(playback.gain,.4);
+ const [silence,quiet,peak,negativePeak]=playback.samples;
+ assert.equal(silence,0);
+ assert.equal(quiet,.25);
+ assert.ok(peak>.55&&peak<.9);
+ assert.equal(negativePeak,-peak);
 });
