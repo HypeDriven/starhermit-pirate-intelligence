@@ -19,7 +19,7 @@
       "deployError": null,
       "deployStatus": "live",
       "deployWarning": null,
-      "deployedAt": "2026-11-26T16:27:35.201612+00:00",
+      "deployedAt": "2026-11-27T07:24:14.572701+00:00",
       "deployedCommitSha": null,
       "engineVersion": "1.47.0",
       "externalLaunchUrl": null,
@@ -42,12 +42,12 @@
     "links": [],
     "isDisabled": false
   },
-  "publishedAt": "2026-11-26T16:27:35.201612+00:00",
-  "sourceCommit": "0d8e1d8ea71233c89ff5804252e024369c37e973",
-  "bytesReceived": 19894668,
-  "archiveSha256": "c19cc605cdde7502b3f31f69bbc81a8aca609fe0b08c1d771a4d150e94302e6c",
+  "publishedAt": "2026-11-27T07:24:14.572701+00:00",
+  "sourceCommit": "5175b928132c8af6c453872e5438cb7bedd377ba",
+  "bytesReceived": 19895028,
+  "archiveSha256": "e89e47a3f958f34a7425e0f798e2d46bb0fe765b41368acd071671a75235257e",
   "result": {
-    "bytesReceived": 19894668,
+    "bytesReceived": 19895028,
     "clientPublished": true,
     "deployWarning": null,
     "engineVersion": "1.47.0",
@@ -65,29 +65,18 @@
     "sentBytes": 0
   },
   "verification": {
-    "verifiedAt": "2026-11-26T16:27:54.945Z",
+    "verifiedAt": "2026-11-27T07:24:20.903Z",
     "packageHeadlessFrames": 120,
     "typeScriptPassed": true,
-    "nodeTestFilesPassed": 11,
-    "graphicsQualitySweep": true,
-    "windowsBrowserOceanChecks": {
-      "browsers": [
-        "Edge",
-        "Chrome"
-      ],
-      "levels": [
-        "Terrestrial",
-        "Stellar"
-      ],
-      "gpu": "NVIDIA GeForce RTX 5090"
-    },
-    "liveWindowsEdgeStellar": true,
+    "nodeTestFilesPassed": 12,
+    "nodeTestsPassed": 105,
+    "crewDialoguePlaybackTimingTestsPassed": true,
     "hostedFilesMatchUpload": [
       "index.html",
       "starhermit-files.json",
       "assets/voices/chimera.wasm",
-      "src/render/graphics.ts",
-      "src/render/ocean-sim.ts"
+      "src/crew-voice.ts",
+      "src/main.ts"
     ],
     "remoteObjectsAccessible": [
       {
@@ -97,9 +86,9 @@
       }
     ]
   },
-  "indexSha256": "114247d4c4fa9483b25ecb45542932cfa7aa326aaf8a8ba97f4397fb9e6267bb",
+  "indexSha256": "f6114038c62e892716527124641ae50077a7c0d73953bc6391dcfacd19afed4a",
   "liveVerification": {
-    "at": "2026-11-26T16:27:54.945Z",
+    "at": "2026-11-27T07:24:20.903Z",
     "files": [
       {
         "file": "index.html",
@@ -108,7 +97,7 @@
       },
       {
         "file": "starhermit-files.json",
-        "sha256": "114247d4c4fa9483b25ecb45542932cfa7aa326aaf8a8ba97f4397fb9e6267bb",
+        "sha256": "f6114038c62e892716527124641ae50077a7c0d73953bc6391dcfacd19afed4a",
         "status": 200
       },
       {
@@ -117,13 +106,13 @@
         "status": 200
       },
       {
-        "file": "src/render/graphics.ts",
-        "sha256": "8ab70d8017c05ea92ee8853afbb2962aa4283c30ec9e6a10a894c203dc1fb075",
+        "file": "src/crew-voice.ts",
+        "sha256": "f1876f13c9dff45cc69913c902c87b6da43d041c1a70e545d61d5222fd718b6f",
         "status": 200
       },
       {
-        "file": "src/render/ocean-sim.ts",
-        "sha256": "640aa297aa899d18f1292d5e0e249eb99f8e3d2433a217c92078fc09a8a442f3",
+        "file": "src/main.ts",
+        "sha256": "0afc8bf3c017787f286edfe1911eb7496a484b956897da846e190ce52e976622",
         "status": 200
       }
     ],
@@ -135,5 +124,5 @@
       }
     ]
   },
-  "verifiedAt": "2026-11-26T16:27:54.945Z"
+  "verifiedAt": "2026-11-27T07:24:20.903Z"
 }
