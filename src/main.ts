@@ -273,7 +273,7 @@ function renderScene(){
  const ashore=s&&!s.away&&zoom>.65?landing(s):null;if(ashore)for(const site of jobSites(ashore.id))labelAt(siteLabel(site.job),site.x,site.y+7,site.z,C.cream);
  if(s&&zoom>.65)for(const q of state.shoals||[])if(Math.hypot(q.x-s.x,q.z-s.z)<22)labelAt(s.fishing?'Fish shoal · foragers catch ×3':'Fish shoal',q.x*METRES,3,q.z*METRES,C.green);
  if(zoom>=.35&&zoom<.65){for(const p of places)labelAt((p.kind==='port'?'⚓ ':'')+p.name,p.x*METRES,20,p.z*METRES,selectedPlace===p.id?C.gold:C.cream,p.id);for(const ss of state.raiders)if(ss.hull>0)labelAt(ss.name,(poses[ss.id]?.x||ss.x)*METRES,24,(poses[ss.id]?.z||ss.z)*METRES,C.red);}
- else if(s&&zoom>=.65){labelAt(s.name,shipPose.x*METRES,20,shipPose.z*METRES,C.gold);const l=s.log[s.log.length-1];if(l&&state.time-l.at<8)labelAt(l.name+': '+(l.text.length>54?l.text.slice(0,l.text.lastIndexOf(' ',53)>20?l.text.lastIndexOf(' ',53):53)+'…':l.text),shipPose.x*METRES,14,shipPose.z*METRES+6,C.cream);}
+ else if(s&&zoom>=.65){labelAt(s.name,shipPose.x*METRES,20,shipPose.z*METRES,C.gold);const speaking=crewVoice.speakingEntry,l=speaking??crewVoice.visibleLog(s.log).at(-1);if(l&&(speaking||state.time-l.at<8))labelAt(l.name+': '+(l.text.length>54?l.text.slice(0,l.text.lastIndexOf(' ',53)>20?l.text.lastIndexOf(' ',53):53)+'…':l.text),shipPose.x*METRES,14,shipPose.z*METRES+6,C.cream);}
 }
 function instruments(w:number,h:number,scale:number,mobile:boolean){
  const s=state?.myShip;if(!s)return;
@@ -350,7 +350,7 @@ function bottom(w:number,h:number,scale:number,mobile:boolean){
  const width=w/scale,height=h/scale,bh=mobile?156:167,y=height-bh;
  draw.box(0,y*scale,w,bh*scale,'deckbar');
  ui.area({x:20*scale,y:(y+13)*scale,width:(width-40)*scale,height:(bh-20)*scale},()=>ui.row('Bottom',()=>{
-  ui.column('Ship talk',()=>{ui.label(__displayText('OVERHEARD ABOARD'),{size:9,color:C.gold,weight:'bold'});const logs=s.log.slice(-(mobile?2:3));for(const l of logs){ui.paragraph(__displayText(l.name+': “'+l.text+'”'),mobile?width-40:Math.min(480,width*.4),{size:11});}ui.label(__displayText(network),{size:9,color:C.muted});},{width:mobile?width-40:Math.min(490,width*.41),spacing:7});
+  ui.column('Ship talk',()=>{ui.label(__displayText('OVERHEARD ABOARD'),{size:9,color:C.gold,weight:'bold'});const logs=crewVoice.visibleLog(s.log).slice(-(mobile?2:3));for(const l of logs){ui.paragraph(__displayText(l.name+': “'+l.text+'”'),mobile?width-40:Math.min(480,width*.4),{size:11});}ui.label(__displayText(network),{size:9,color:C.muted});},{width:mobile?width-40:Math.min(490,width*.41),spacing:7});
   if(!mobile){ui.column('Orders and battle',()=>{
    ui.row('command box',()=>{orderText=ui.textField(__displayText('Direct command'),orderText,{width:Math.max(150,width-885),placeholder:__displayText('Peg, repair the hull…'),maxChars:160});button('Give order  ↵',parseOrder,true);},{spacing:8});
    if(s.controlMode==='manual'&&!s.away&&!s.boarding&&!panel)helmControls();
@@ -435,7 +435,7 @@ function logbook(s:any){
  const badges:any={chart:'Every destination visited',trader:'First market trade',raider:'First enemy defeated',shore:'Three expeditions returned',fortune:'1,000 gold in the strongbox'};
  for(const id of Object.keys(badges))ui.label(__displayText((s.badges?.includes(id)?'✓ ':'○ ')+badges[id]),{size:12,color:s.badges?.includes(id)?C.green:C.muted});
  ui.label(__displayText('VOYAGE JOURNAL'),{color:C.gold,size:10});
- for(const entry of s.log.slice().reverse()){ui.label(__displayText('Day '+(Math.floor(entry.at/240)+1)+' · '+entry.name),{size:10,color:C.gold});ui.paragraph(__displayText(entry.text),dialogWidth,{size:12});}
+ for(const entry of crewVoice.visibleLog(s.log).slice().reverse()){ui.label(__displayText('Day '+(Math.floor(entry.at/240)+1)+' · '+entry.name),{size:10,color:C.gold});ui.paragraph(__displayText(entry.text),dialogWidth,{size:12});}
 }
 function crewDialog(s:any){
  const c=s.crew.find((c:any)=>c.id===selectedCrew)||s.crew[0];

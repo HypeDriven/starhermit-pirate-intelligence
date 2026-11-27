@@ -16,8 +16,8 @@ const PROFILES = {
  pip: { name:'Pip Gulliver', body:[.08,.25], pitch:190, rate:1.12, roughness:.05, breath:.32, sample:'I see land! I think.' },
 };
 type Sailor = keyof typeof PROFILES;
-type Utterance = { id:Sailor; text:string; manual?:boolean; priority?:boolean; banter?:boolean };
 type Entry = { at:number; name:string; text:string; kind?:string; crewId?:string; seq?:number };
+type Utterance = { id:Sailor; text:string; entry?:Entry; manual?:boolean; priority?:boolean; banter?:boolean };
 type Ship = { id:string; clock?:number; log:Entry[]; crew:{ id:string; name:string }[] };
 function isSailor(id:string|undefined): id is Sailor {
  return !!id && Object.prototype.hasOwnProperty.call(PROFILES,id);
@@ -26,6 +26,10 @@ function isSailor(id:string|undefined): id is Sailor {
 function sameEntry(a:Entry,b:Entry){
  return a.seq!==undefined&&b.seq!==undefined?a.seq===b.seq:
   a.at===b.at&&a.name===b.name&&a.text===b.text&&a.kind===b.kind;
+}
+
+function entryKey(entry:Entry){
+ return entry.seq??JSON.stringify([entry.at,entry.name,entry.text,entry.kind]);
 }
 
 export class CrewVoice {
@@ -39,9 +43,10 @@ export class CrewVoice {
  private banter:Utterance[]=[];
  private rendering:{ samples:Float32Array; offset:number; line:Utterance }|null=null;
  private playing:Sound|null=null;
- private playingBanter=false;
+ private playingLine:Utterance|null=null;
  private clip:AudioClip|null=null;
  private previous:Entry[]=[];
+ private hidden=new Set<number|string>();
  private enabled=true;
  private gain=.65;
  private nextAt=0;
@@ -49,15 +54,25 @@ export class CrewVoice {
  settings(enabled:boolean,gain:number){
   this.enabled=enabled;
   this.gain=gain;
-  if(!enabled||gain===0)this.stop();
+  if(!enabled||gain===0){
+   this.stop();
+   this.hidden.clear();
+  }
   else if(this.playing)this.playing.fade(this.gain*.8,.1);
  }
 
  reset(){
   this.stop();
   this.previous=[];
+  this.hidden.clear();
   this.nextAt=0;
  }
+
+ visibleLog(log:Entry[]){
+  return this.hidden.size?log.filter(entry=>!this.hidden.has(entryKey(entry))):log;
+ }
+
+ get speakingEntry(){return this.playingLine?.entry;}
 
  stop(){
   this.pending=null;
@@ -75,7 +90,7 @@ export class CrewVoice {
    this.nativeWorker=null;
   }
   this.playing=null;
-  this.playingBanter=false;
+  this.playingLine=null;
   this.clip?.dispose();
   this.clip=null;
  }
@@ -83,35 +98,49 @@ export class CrewVoice {
  observe(ship:Ship,initial:boolean,banterQuiet:boolean){
   if(!banterQuiet){
    this.banter=[];
-   if(this.playingBanter||this.rendering?.line.banter||this.nativeLine?.banter)this.stopPlayback();
+   if(this.playingLine?.banter||this.rendering?.line.banter||this.nativeLine?.banter)this.stopPlayback();
   }
   const previous=this.previous;
   this.previous=ship.log.slice();
+  const voiced=this.enabled&&this.gain>0&&!this.failed;
   if(initial){
+   this.hidden.clear();
    const welcome=ship.log.length===1&&ship.log[0].at===0&&ship.log[0].name==='Mara';
-   if(welcome&&this.enabled)this.pending={id:'morrow',text:ship.log[0].text};
+   if(welcome&&voiced){
+    const entry=ship.log[0];
+    this.hidden.add(entryKey(entry));
+    this.pending={id:'morrow',text:entry.text,entry};
+   }
    return;
+  }
+  if(!voiced)return;
+  if(this.hidden.size){
+   const keys=new Set(ship.log.map(entryKey));
+   for(const key of this.hidden)if(!keys.has(key))this.hidden.delete(key);
   }
 
   // Match the rolling log, including older seas whose entries lack sequence numbers.
   let overlap=Math.min(previous.length,ship.log.length);
   while(overlap&&!previous.slice(-overlap).every((entry,i)=>sameEntry(entry,ship.log[i])))overlap--;
-  if(!this.enabled||this.gain===0||this.pending?.manual)return;
-
   let latest:Utterance|null=null;
   for(const entry of ship.log.slice(overlap)){
    const speaker=entry.crewId||ship.crew.find(c=>entry.name===c.name||entry.name===c.name.split(' ')[0])?.id
     ||(entry.name==='Fuse'?'fuse':entry.name==='Tallow'?'tallow':undefined);
    if(!isSailor(speaker))continue;
+   // Keep event reports readable while spoken remarks wait for their audio.
+   if(!entry.kind||entry.kind==='crew'||entry.kind==='dialogue'||entry.kind==='banter'){
+    this.hidden.add(entryKey(entry));
+   }
+   if(this.pending?.manual)continue;
    if(entry.kind==='banter'){
     if(banterQuiet&&context.state==='running'&&entry.at>=(ship.clock??entry.at)-12){
-     this.banter.push({id:speaker,text:entry.text,banter:true});
+     this.banter.push({id:speaker,text:entry.text,entry,banter:true});
      if(this.banter.length>2)this.banter.shift();
     }
     continue;
    }
    if(latest?.priority&&entry.kind!=='dialogue')continue;
-   latest={id:speaker,text:entry.text,priority:entry.kind==='dialogue'};
+   latest={id:speaker,text:entry.text,entry,priority:entry.kind==='dialogue'};
   }
   if(latest&&(!this.pending?.priority||latest.priority))this.pending=latest;
  }
@@ -128,9 +157,8 @@ export class CrewVoice {
    await files.fetch(CHIMERA_PATH);
    this.synth=await ChimeraSpeech.load(files.readBytes(CHIMERA_PATH));
   }catch(error){
-   this.failed=true;
    this.synth=null;
-   console.warn('Crew voices unavailable: '+String(error));
+   this.fail(error);
   }finally{
    this.loading=false;
   }
@@ -158,6 +186,7 @@ export class CrewVoice {
  private fail(error:unknown){
   this.stop();
   this.failed=true;
+  this.hidden.clear();
   console.warn('Crew voice playback unavailable: '+String(error));
  }
 
@@ -166,12 +195,13 @@ export class CrewVoice {
   this.clip=clip;
   const sound=play(clip,{bus:'effects',gain:this.gain*.8,caption:{speaker:PROFILES[line.id].name,text:line.text}});
   this.playing=sound;
-  this.playingBanter=!!line.banter;
+  this.playingLine=line;
+  if(line.entry)this.hidden.delete(entryKey(line.entry));
   this.nextAt=performance.now()+(line.banter?2000:3500);
   sound.onEnded(()=>{
    if(this.playing!==sound)return;
    this.playing=null;
-   this.playingBanter=false;
+   this.playingLine=null;
    this.clip=null;
    clip.dispose();
   });
