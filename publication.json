@@ -12,7 +12,7 @@
     "metadataSource": "manual",
     "createdAt": "2026-10-28T10:06:59.596865+00:00",
     "coverArtSource": "manifest",
-    "coverArtUpdatedAt": "2026-11-27T17:07:28.333202+00:00",
+    "coverArtUpdatedAt": "2026-11-28T15:46:42.95023+00:00",
     "submittedByUserId": "2712e04e-461b-4d23-81ae-e40b429128a8",
     "submittedByUsername": "starhermit",
     "hosting": {
@@ -22,7 +22,7 @@
       "pinnedCommitSha": null,
       "deployedCommitSha": null,
       "deployError": null,
-      "deployedAt": "2026-11-27T17:07:28.303145+00:00",
+      "deployedAt": "2026-11-28T15:46:42.926526+00:00",
       "externalLaunchUrl": null,
       "engineVersion": "1.53.0",
       "deployWarning": null
@@ -31,7 +31,7 @@
     "releaseNotesUpdatedAt": "2026-11-06T13:38:34.835863+00:00",
     "serverRuntime": "script",
     "bannerArtSource": "manifest",
-    "bannerArtUpdatedAt": "2026-11-27T17:07:28.333202+00:00",
+    "bannerArtUpdatedAt": "2026-11-28T15:46:42.95023+00:00",
     "tags": [
       "Pirates",
       "Simulation",
@@ -42,15 +42,15 @@
     "links": [],
     "isDisabled": false
   },
-  "publishedAt": "2026-11-27T17:07:28.500Z",
-  "sourceCommit": "4feaa7a9f7f26f70a6bf8ad6bd679dd874cb626d",
-  "bytesReceived": 18152473,
-  "archiveSha256": "7ed4915df8cba4269ddb334728b0c1a8088a90f40ecc7c9be70884f36bf26115",
+  "publishedAt": "2026-11-28T15:46:43.253Z",
+  "sourceCommit": "a0e92af4ce014628cd7491210533243f555f73fa",
+  "bytesReceived": 18179293,
+  "archiveSha256": "d67ae98f5d434c3c35607aa52bb444755073f96b3d09070de73e660c95b72cb4",
   "result": {
     "clientPublished": true,
     "serverImageLoaded": false,
     "imageDigest": null,
-    "bytesReceived": 18152473,
+    "bytesReceived": 18179293,
     "mode": "replace",
     "filesRemoved": 0,
     "engineVersion": "1.53.0",
