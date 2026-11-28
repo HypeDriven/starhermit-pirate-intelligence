@@ -1,115 +1,861 @@
 {
   "files": {
-    "LICENSE": {"sha256": "420223151f78e03dcd339b760dab7100186564bdf01c98896c4e84d0920a6d16", "size": 5446},
-    "LICENSE.md": {"sha256": "420223151f78e03dcd339b760dab7100186564bdf01c98896c4e84d0920a6d16", "size": 5446},
-    "assets/art/crew-portraits.png": {"sha256": "fdd288fc89eb69d81daeb89fb279384236fdbad21fbea3c911c9357adc4d98d9", "size": 2920321},
-    "assets/art/crew-portraits.png.ktx2": {"sha256": "4b9f3f2b0de527ba305c7c91b95ee9c88f265238d75375fa64972e63f2d87465", "size": 2097600},
-    "assets/art/manifest.json": {"sha256": "90d3af559462b29f81f2f9279b3da7ac33bda832800a98008173289ba04891fe", "size": 3397},
-    "assets/art/quarrelsome-sea.png": {"sha256": "8613fadd25256b1c0997ff7281e4a8fbc7f37c07ff81a7e2f8ec98b400666cf3", "size": 2932071},
-    "assets/fonts/CormorantGaramond.ttf": {"sha256": "b20b7d9626dd956b2c5e558692ad328b1f19e3275e2782db4fa07670d83f35e0", "size": 1195560},
-    "assets/fonts/OFL.txt": {"sha256": "60700d351cac4650c51f3f9db318d2a420f8b45052dba2715eb5fec41f0f6956", "size": 4387},
-    "assets/localization/CJK-OFL.txt": {"sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2", "size": 4301},
-    "assets/localization/Japanese.otf": {"sha256": "b1132cbb47a40dabbf303b72a22c017b1816d37572c8693d7ba4b6a8b70406ff", "size": 631120},
-    "assets/localization/Khmer-OFL.txt": {"sha256": "be0407f060aea48787ff9e75d8d3aedef70aef113b3ce9aca26fdaacd10b1870", "size": 4381},
-    "assets/localization/Khmer.ttf": {"sha256": "d78d0b07c58acc43ef616b6ea599a5ac4f61f9fc31ab4d3abc06af376a2b3951", "size": 66016},
-    "assets/localization/SimplifiedChinese.otf": {"sha256": "4928878ce6313173fc35a02b5b8e41b1b5cd2037448253b790f393f7b70e74d0", "size": 555228},
-    "assets/localization/Tamil-OFL.txt": {"sha256": "f8ff8ce7d0a81bf8d5e121c635ef027250c531f2fd37d5988b8dd6e45f19d7f1", "size": 4381},
-    "assets/localization/Tamil.ttf": {"sha256": "3640decccf2ef0c4393e7a5b8acdb1cba59b9aa358f01b98cbaabb80448a0c91", "size": 42688},
-    "assets/localization/TraditionalChinese.otf": {"sha256": "2048ff0da13d256230c8febb0890722bee71fa38302cf3ebf7f166b00fbb2f87", "size": 813640},
-    "assets/localization/common.json": {"sha256": "d5adcb1a556165f715a37095d1f5c8290cf442cf610be85bd358b7cca4d818a6", "size": 69321},
-    "assets/localization/fonts.json": {"sha256": "37beaea0dba54c9f2c45995cbf9fd19fad21719d701718c41d7e58dd7748ca13", "size": 517},
-    "assets/localization/locales.json": {"sha256": "131d65447f1d24ca644931d483028a5825974d97cc1eb67380094a4dab768ca6", "size": 1462},
-    "assets/localization/messages.json": {"sha256": "d651d3d526a786cb4b1d64d3e3faaa1216a8957eb79ae073676c01ff1a47a441", "size": 78291},
-    "assets/maritime.wasm": {"sha256": "edd1e9c3df5eca4227b4842011a23e84cc9a35b7400fbd391630dea3aeaf666d", "size": 65216},
-    "assets/parchment.png": {"sha256": "41c6f5091796999dabcd2de1021b396da6f0d38ac1a80c396403b3539cede8e1", "size": 396096},
-    "assets/parchment.png.ktx2": {"sha256": "6ac9675f5bc5461eae833a2d73a2ffd19213a0c32e9b7cfaa1c1061ca150744e", "size": 349952},
-    "assets/strings.json": {"sha256": "fb3cc6a80411a27137ee2ca8736b2d8b6ce9b3a3acccc6f216ba83612c645d86", "size": 3720394},
-    "assets/voices/chimera.wasm": {"sha256": "5ef2b8b085e18c1b42982c39c3bb039f8de09dd545ce4113d4e239020b7aa63c", "size": 1461815},
-    "assets/wood.png": {"sha256": "8f4da89c53cc01d053707ae526e63aa1b984466b68da2135bb43fe69bf8255bb", "size": 592775},
-    "assets/wood.png.ktx2": {"sha256": "30f99d28a30e0a6aebba59fd88f5d9c7aa7130605e092baaab4df89c505e601a", "size": 349952},
-    "banner.jpg": {"sha256": "e8d67132a8f11b6fd9e9c79f6ee2a954b6836195dc228841709c382664c3b13e", "size": 594923},
-    "cover.jpg": {"sha256": "57c4f0c0f0952424b6a1208c4c5b0943a72e41e56f6647d53725232674c272b3", "size": 777676},
-    "description.md": {"sha256": "97d3151c0cd0e6f9c230e3de8784fd8ee3e866c06e3efb3c6a9675b430fd09ed", "size": 867},
-    "favicon.png": {"sha256": "8ec83067dd83a7a2b6f8563947d277219a52ab08e3223ee88d04d40115e28add", "size": 84415},
-    "favicon.png.ktx2": {"sha256": "43aadca3660b8612eb5186649c834c38f73da909c29678c52be9df8fb2c5df58", "size": 87776},
-    "index.html": {"sha256": "40d364f396779f87377ee25b937d79adf72c768e4499b319511b72a0f42fd19e", "size": 1797},
-    "licenses/CMUDICT.txt": {"sha256": "bd4ce8e44170a5f9f481310ca85c51de3c4f851a65e679b40e603b143bd3542a", "size": 1754},
-    "licenses/Chimera-MIT.txt": {"sha256": "0b8d6e0649e7b2068a8300cafb9ebded80d9a0fe99e699b96538ba0a8c5236b1", "size": 1070},
-    "licenses/Ultra-Water-MIT.txt": {"sha256": "d5a8b50baec35c7e5efc430d7a03cd3fe160c4840326d153d308050f545c282e", "size": 1255},
-    "models/LICENSE-Apache-2.0.txt": {"sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30", "size": 11358},
-    "models/index.json": {"sha256": "6ec1a854e92ca5d7720f2b337afa95627721090358f644d895a5aa0fe6b321b7", "size": 19672},
-    "models/kernel.wasm": {"sha256": "d0ec7ef0e8d199520bc553f7befb3cef15c326261c3b9bff6b6a0bfc65d3284e", "size": 10296},
-    "models/tokenizer.json": {"sha256": "7869f2bbda7f18283e163bf836fd83b5bcf2c65002fe558ecf7dca5472143c15", "size": 1375150},
-    "music/black-sails.ogg": {"sha256": "9eab49b08de8b83427c71a24bdeec13043612183dbee5ed5b585487cfd5fa576", "size": 629010},
-    "music/lantern-harbour.ogg": {"sha256": "09cbd30ebba61ec1f314a1c83f3199104ec021b95b132bef444b19522e3591da", "size": 286478},
-    "music/manifest.json": {"sha256": "cc83be04bdc53d363cf5ae0e5b12567c9ef168f7239af7dda6e04bb13dbb4711", "size": 2431},
-    "music/manifest.txt": {"sha256": "20b031f09bc1d81924a7d0fddaf9407de6a838ee9a0b5ec9b2d521ae995c8632", "size": 1223},
-    "music/open-sea.ogg": {"sha256": "99a18aa87406649567eb35743300478a22bf9b5bb5ca8a892afdb168af941ad1", "size": 481044},
-    "music/quality.json": {"sha256": "b2bff482ab3575720ff14a0bbe55d0e31790d6490ca1ad4fbf20d030fbd63eab", "size": 1665},
-    "server.js": {"sha256": "b4af93cec1bc658ca66add19e84fe4f2c5666c2ee3f9cc4acaa38643ea4ac4b9", "size": 82525},
-    "sfx/anchor-chain.ogg": {"sha256": "bff4f632664db52fc3b9ce3092c24e65ea1fd919231966a8da790a9280bb1f30", "size": 35774},
-    "sfx/cannon-fire.ogg": {"sha256": "a2a1b3c738a2fffa4f20e94b3c522957da4aa0ce3b0c889573a752d742871dff", "size": 24194},
-    "sfx/coins.ogg": {"sha256": "529e59f144998b6eb2d4af6dcfc57d75c5d0a8b22b05b3a3556c26380e73334a", "size": 19940},
-    "sfx/creaking-deck.ogg": {"sha256": "a6df1fbfc8ea261219f49ce8115b526312f5959165586abf53f8252bc0a37c1a", "size": 49032},
-    "sfx/cutlass.ogg": {"sha256": "63728787c5aeaec3057af4c0b60f81cb711801cf86485c5e7f771b792c2c74fb", "size": 9743},
-    "sfx/gulls.ogg": {"sha256": "8de526178717f3b25efc928f5d8fb2670cf128467e8a08a6c5355b429d7836cc", "size": 53745},
-    "sfx/guns-run-out.ogg": {"sha256": "0e32cc6b20073567ae0c5fb80c9cfebbeb854e8e14b8a99f98ae4588849835b4", "size": 29365},
-    "sfx/hull-impact.ogg": {"sha256": "8ef9706cc5d0bec67b8f43e84ecdc6cfec0164c1ae74301d63ff1836c2338dd7", "size": 21539},
-    "sfx/manifest.json": {"sha256": "de7d0b21a9b9db50df8d0aa8c6585fe748dbba5f17993175241cdc2df94d76b5", "size": 9240},
-    "sfx/manifest.txt": {"sha256": "08b1754793dc412b612b5e669ac1b31a866ce9742c592a475666bf31156671f1", "size": 4390},
-    "sfx/ocean.ogg": {"sha256": "292331823731769a4d3e36d28a96bca3b2e47a60760fd996084a963426d2db00", "size": 120611},
-    "sfx/repair-hammer.ogg": {"sha256": "3ef72ef5f26c8a22bd878c4092fdeff847649396ce8b1dc3bc83525b398aa94f", "size": 26399},
-    "sfx/rowing.ogg": {"sha256": "e6de8c569180fe3d923cbfc9161496ccba7814f9a8542b582b8a3561ce706fbd", "size": 52170},
-    "sfx/sail-hoist.ogg": {"sha256": "2f6db60ce4cf45dffcc2641eaf031d2b0abdfd6630cc7530a81030840ce05efe", "size": 38506},
-    "sfx/ship-bell.ogg": {"sha256": "fa82f413312bf2e6f8104bc3c5d4abd2324ac1a6a2d67c5c07bd286425dffe49", "size": 12217},
-    "sfx/ship-sinking.ogg": {"sha256": "39bc235e8054597e24776f8db65517cb556f6373f212b9b18b02450d9d7eb1e1", "size": 57860},
-    "sfx/shot-splash.ogg": {"sha256": "17b67719eb820d68cce09b34e98069f8df42ae4ad55090fa5b319f0067c07644", "size": 28042},
-    "sfx/shot-whistle.ogg": {"sha256": "0ec24e59ae7d1204396551fc305c3e2cbbe9af5dab8b46a05c44f4c06f09255a", "size": 20857},
-    "sfx/storm.ogg": {"sha256": "9f5f735f1d579d326827dd41d8a8a30cc81cca80b5fb79189c58a2f0e98ba244", "size": 71350},
-    "sfx/timber-chop.ogg": {"sha256": "0fcd462a79e7063adce9f1cce92e4aff1d5f83a6abadfc8a7328ffe5aca0773a", "size": 22120},
-    "src/audio-events.js": {"sha256": "f95d33fb27ab88e96a87ebc0b520ef550fe19cfa6af6ef3602b3c583228df5e0", "size": 1432},
-    "src/brain/browser.ts": {"sha256": "893f50e7f8efeb392cdbbdc4dfdf9b4c2f4b61dbb530a0ae8b71c3e5008906cb", "size": 10463},
-    "src/brain/inference.js": {"sha256": "a0c9469e56a82e26cc27edb6be6415fbbe3b93c56cc47ad253a06e69aace0ecd", "size": 4495},
-    "src/brain/policy.js": {"sha256": "e39b47e7d9f1433cedb3c9a6b653dcc62ff32d76b0bc63f479806f8f31df6d3a", "size": 4982},
-    "src/brain/tokenizer.js": {"sha256": "fb4e90a45badf96077a623acb7b50813f371503456cdb922dd907caad1b88588", "size": 2034},
-    "src/charts.ts": {"sha256": "98abc7fe26a3d4cf4f1fd87305e5fee7a0528b6169ad6bc78aa364fdaf8c4a4b", "size": 4544},
-    "src/chimera-speech.ts": {"sha256": "8fe53e3f06c38519c21515d2818147f594d93988e40f476c4731d916334e4703", "size": 1429},
-    "src/cloth.ts": {"sha256": "aad55271afadbfc7c3b05a9a591d1be01fbee87dae8161be40d19b65cb37cffb", "size": 6034},
-    "src/combat.ts": {"sha256": "7b546200c638e1db92438233872a04e543d6409496f3b245c9a0652418bfd449", "size": 11896},
-    "src/crew-voice-worker.ts": {"sha256": "531f3587688d2026e1063269a60e367aab7f9471f5af31dad03a2cfc0e6e2f44", "size": 1159},
-    "src/crew-voice.ts": {"sha256": "87e4fbe2dca8b408896d1b500d9f1eec378bc6f6d55afcc4d49fcccdb4d3f90f", "size": 9004},
-    "src/crew.ts": {"sha256": "9b61128fdf77d72d82792fedaf65c9b12520bc5a0825d3d948eed777236ca285", "size": 9455},
-    "src/cursor.ts": {"sha256": "2ce8868b7c376e5d2d6380439e4e723dfa89be064a39a2255efa4e04441f342f", "size": 988},
-    "src/islands.ts": {"sha256": "d330dd6537c3060642c379974fa6034440d63ee2fbab8a349f78ca6f6de752b7", "size": 17267},
-    "src/l10n/font.ts": {"sha256": "7f1628951943bd20cc3afa3ead0ad5ef2b5d9415683a7bd74953a40cbf5fd142", "size": 6298},
-    "src/l10n/menu.ts": {"sha256": "171e533d03753e0a0194559a1e96a4b91d8fe2d68d690825e4565f6d39d469ca", "size": 6317},
-    "src/l10n/text-core.d.ts": {"sha256": "2aeca7cfe13545bda09e41d75b333672e5dd0296219afbab73673021b9783a72", "size": 493},
-    "src/l10n/text-core.js": {"sha256": "503c33926ff106669f78859ecbc9e02a7dc3e7fc9584dccc5b29007e65d11166", "size": 6015},
-    "src/l10n/text.ts": {"sha256": "22fbf223af9a8a5712cdd34677bd11c046f14589f34aa9840844f5db25e2e6f8", "size": 717},
-    "src/main.ts": {"sha256": "0afc8bf3c017787f286edfe1911eb7496a484b956897da846e190ce52e976622", "size": 86691},
-    "src/maritime-kernel.ts": {"sha256": "f694d61c6fb345579f07d8d7a53b6e976eb590431739cee83ff4beda288aa1fd", "size": 1313},
-    "src/maritime-motion.ts": {"sha256": "b0e24929b29f404ca9fcd137bc67913f5b3c9eb68e67c4c96c9ede9b47c85a11", "size": 4571},
-    "src/navigation.js": {"sha256": "eb8334f3bdb7de88ff96f8dc50bf86d87ff2fc7e8d65e847774cbd9ca5fd12d0", "size": 3239},
-    "src/plucks.ts": {"sha256": "1c1262eb60bc83ba1fa46c6d94ca3ef2eb7df165f616931d4a22c9a41dbfa480", "size": 3770},
-    "src/render/graphics.ts": {"sha256": "8ab70d8017c05ea92ee8853afbb2962aa4283c30ec9e6a10a894c203dc1fb075", "size": 7946},
-    "src/render/materials.ts": {"sha256": "37c76d0427a95ca12c33a45d2d13e8855f9127db1c520d457ee634039055fe68", "size": 2394},
-    "src/render/ocean-sim.ts": {"sha256": "640aa297aa899d18f1292d5e0e249eb99f8e3d2433a217c92078fc09a8a442f3", "size": 23555},
-    "src/render/precipitation.ts": {"sha256": "754bbc2e29be2b775d1511a510959984f68cfac193aff4b0d5d05d8aa38fb7f9", "size": 2630},
-    "src/render/quality.js": {"sha256": "4c6f12156ff869435530a6f1c7f06adfdcf94289a384451cc6db4a582d6e3330", "size": 874},
-    "src/render/reflection.ts": {"sha256": "f0c4d5f4c00ab5d8f6520385645ce413fb9270b2b7ec03268ac8792dd0b5e3b4", "size": 4281},
-    "src/render/shore-detail.ts": {"sha256": "0bef5868bd8d1ab7eaefe6940011929b54997dc8d77012beb8f991b8a6d5bbac", "size": 2907},
-    "src/render/sky.ts": {"sha256": "3f040eb56bcf41761e1cfb2857ad0af15a921b49dc86bdbcafd1b9e26912b27f", "size": 3878},
-    "src/render/volumes.ts": {"sha256": "c689b20a61f951e7fa90c0735ba0e94a2739c963bd5725c248116cf6b71c55c2", "size": 7048},
-    "src/render/water-shadow.ts": {"sha256": "16ff48e675fb9432d140e568c243f6fe1465ce48d61667bcac53c7211b0b5c08", "size": 5107},
-    "src/render/water.ts": {"sha256": "1057dafd9fbcbbf3eeb49f93bf8c762626871d1da8addd597ea271ed9351923b", "size": 10711},
-    "src/render/wave-probe.ts": {"sha256": "1fa5c0d7aee9d5d896f218dda91383319f520e4ed076f868d295c897fa50495d", "size": 2707},
-    "src/render/weather.ts": {"sha256": "66e1bb4cacd915daf73300a215702ced7fc208422d88ef9e97bf797b53361aa3", "size": 803},
-    "src/sealife.ts": {"sha256": "46b1f4c3aa0a8054bf9c41bfbf1095e040c99a45f98b57095a4098708d444a8b", "size": 8662},
-    "src/sound.ts": {"sha256": "a7fcdfd4806c6328d5603a7cfb60be672518b2170da8ad71f51795304a954060", "size": 3609},
-    "src/visuals.ts": {"sha256": "b088a5a7a800e50b8603c641648c2b2212bf73df1920ed2de0f599a0ed1c660b", "size": 36135},
-    "starhermit-remote.json": {"sha256": "257e2012233aad71a673f1e83ce0c542e770c65b48a8caee0d89325bd742e5c9", "size": 169},
-    "starhermit.txt": {"sha256": "7802a8061ed308ed8b3c98e598a4eb9caf5621a68931705b16163b752bf8c37b", "size": 1699}
+    "LICENSE": {
+      "sha256": "420223151f78e03dcd339b760dab7100186564bdf01c98896c4e84d0920a6d16",
+      "size": 5446
+    },
+    "LICENSE.md": {
+      "sha256": "420223151f78e03dcd339b760dab7100186564bdf01c98896c4e84d0920a6d16",
+      "size": 5446
+    },
+    "assets/art/crew-portraits.png": {
+      "sha256": "fdd288fc89eb69d81daeb89fb279384236fdbad21fbea3c911c9357adc4d98d9",
+      "size": 2920321
+    },
+    "assets/art/crew-portraits.png.ktx2": {
+      "sha256": "4b9f3f2b0de527ba305c7c91b95ee9c88f265238d75375fa64972e63f2d87465",
+      "size": 2097600
+    },
+    "assets/art/manifest.json": {
+      "sha256": "90d3af559462b29f81f2f9279b3da7ac33bda832800a98008173289ba04891fe",
+      "size": 3397
+    },
+    "assets/art/quarrelsome-sea.png": {
+      "sha256": "8613fadd25256b1c0997ff7281e4a8fbc7f37c07ff81a7e2f8ec98b400666cf3",
+      "size": 2932071
+    },
+    "assets/fonts/CormorantGaramond.ttf": {
+      "sha256": "b20b7d9626dd956b2c5e558692ad328b1f19e3275e2782db4fa07670d83f35e0",
+      "size": 1195560
+    },
+    "assets/fonts/OFL.txt": {
+      "sha256": "60700d351cac4650c51f3f9db318d2a420f8b45052dba2715eb5fec41f0f6956",
+      "size": 4387
+    },
+    "assets/l10n/common/bew-ID.json": {
+      "sha256": "9d9a85fd26bb1aed9778f4b64b41c766a2d53a1fbfcb40a88d89ca55767efa87",
+      "size": 1198
+    },
+    "assets/l10n/common/ca-ES.json": {
+      "sha256": "2e85c82a9667e09a6285c88d75ea727cd9bcfc41401885e35c7853f3b5dc8b75",
+      "size": 1403
+    },
+    "assets/l10n/common/ca-FR.json": {
+      "sha256": "2e85c82a9667e09a6285c88d75ea727cd9bcfc41401885e35c7853f3b5dc8b75",
+      "size": 1403
+    },
+    "assets/l10n/common/ca-IT.json": {
+      "sha256": "2e85c82a9667e09a6285c88d75ea727cd9bcfc41401885e35c7853f3b5dc8b75",
+      "size": 1403
+    },
+    "assets/l10n/common/co-FR.json": {
+      "sha256": "a0fcf047eb7ebb41813c43b3869c2922ce150ad53f6cbcfcfee68940002f7dcd",
+      "size": 1268
+    },
+    "assets/l10n/common/da-DE.json": {
+      "sha256": "c1b0e2478e2b622d8ac0b627b228001f6bc034d0c9ba4b4f454602131e97d74f",
+      "size": 1212
+    },
+    "assets/l10n/common/de-BE.json": {
+      "sha256": "398e3d7e5bcaf2bd434e78d1c73b4055e2f0aeb2d92593b41a9145d74d83ffe1",
+      "size": 1303
+    },
+    "assets/l10n/common/de-BR.json": {
+      "sha256": "398e3d7e5bcaf2bd434e78d1c73b4055e2f0aeb2d92593b41a9145d74d83ffe1",
+      "size": 1303
+    },
+    "assets/l10n/common/de-DE.json": {
+      "sha256": "398e3d7e5bcaf2bd434e78d1c73b4055e2f0aeb2d92593b41a9145d74d83ffe1",
+      "size": 1303
+    },
+    "assets/l10n/common/de-IT.json": {
+      "sha256": "398e3d7e5bcaf2bd434e78d1c73b4055e2f0aeb2d92593b41a9145d74d83ffe1",
+      "size": 1303
+    },
+    "assets/l10n/common/en-BQ.json": {
+      "sha256": "f022902ff711523d0dd71bab4c8a8312abb4d5677cf1219a081f88397eaff781",
+      "size": 1142
+    },
+    "assets/l10n/common/en-GB.json": {
+      "sha256": "f022902ff711523d0dd71bab4c8a8312abb4d5677cf1219a081f88397eaff781",
+      "size": 1142
+    },
+    "assets/l10n/common/en-HK.json": {
+      "sha256": "f022902ff711523d0dd71bab4c8a8312abb4d5677cf1219a081f88397eaff781",
+      "size": 1142
+    },
+    "assets/l10n/common/en-SG.json": {
+      "sha256": "f022902ff711523d0dd71bab4c8a8312abb4d5677cf1219a081f88397eaff781",
+      "size": 1142
+    },
+    "assets/l10n/common/en-US.json": {
+      "sha256": "67a3424eb69fed443ff17b0531f7e54435028de2b52cfd38efdf73c0227163ba",
+      "size": 1141
+    },
+    "assets/l10n/common/es-419.json": {
+      "sha256": "67bbf842adcfd48a45dbbd22e835429cbce33bd89445541d2b09b9e73e5805d0",
+      "size": 1300
+    },
+    "assets/l10n/common/es-AR.json": {
+      "sha256": "67bbf842adcfd48a45dbbd22e835429cbce33bd89445541d2b09b9e73e5805d0",
+      "size": 1300
+    },
+    "assets/l10n/common/es-CL.json": {
+      "sha256": "67bbf842adcfd48a45dbbd22e835429cbce33bd89445541d2b09b9e73e5805d0",
+      "size": 1300
+    },
+    "assets/l10n/common/es-CO.json": {
+      "sha256": "67bbf842adcfd48a45dbbd22e835429cbce33bd89445541d2b09b9e73e5805d0",
+      "size": 1300
+    },
+    "assets/l10n/common/es-EC.json": {
+      "sha256": "67bbf842adcfd48a45dbbd22e835429cbce33bd89445541d2b09b9e73e5805d0",
+      "size": 1300
+    },
+    "assets/l10n/common/es-ES.json": {
+      "sha256": "0308a838240dd7df544815610c0a9be36f8582ce76eea213ec76d7c79367644b",
+      "size": 1309
+    },
+    "assets/l10n/common/et-EE.json": {
+      "sha256": "71abca6d9a8b0f1090d4a45a4cfc3b8d1efe6acddba7b0aa990a0aae42f56243",
+      "size": 1204
+    },
+    "assets/l10n/common/eu-ES.json": {
+      "sha256": "65ce6104f32d2fa2a78339d90ccf0fb986e826097ca566e225878af6ff563f53",
+      "size": 1261
+    },
+    "assets/l10n/common/eu-FR.json": {
+      "sha256": "65ce6104f32d2fa2a78339d90ccf0fb986e826097ca566e225878af6ff563f53",
+      "size": 1261
+    },
+    "assets/l10n/common/fi-FI.json": {
+      "sha256": "45ef01253e60276644ed75979e685e4a1b4f053414a916460dd9229cc0702197",
+      "size": 1256
+    },
+    "assets/l10n/common/fr-BE.json": {
+      "sha256": "bdce7e4e7a3fe545a910a85d9c853c911a37798ff40beeac5f1c271cf4f14d99",
+      "size": 1265
+    },
+    "assets/l10n/common/fr-CA.json": {
+      "sha256": "2e0583ff472c9b403a6dbe14c0865b42621513e21565a0b1137c4fa8be96436d",
+      "size": 1276
+    },
+    "assets/l10n/common/fr-FR.json": {
+      "sha256": "bdce7e4e7a3fe545a910a85d9c853c911a37798ff40beeac5f1c271cf4f14d99",
+      "size": 1265
+    },
+    "assets/l10n/common/fr-IT.json": {
+      "sha256": "bdce7e4e7a3fe545a910a85d9c853c911a37798ff40beeac5f1c271cf4f14d99",
+      "size": 1265
+    },
+    "assets/l10n/common/fur-IT.json": {
+      "sha256": "e5d67efe2d33119904f20be6e14b3c6d3b95d5537d2f39b3c2e1c6603694a21a",
+      "size": 1272
+    },
+    "assets/l10n/common/gl-ES.json": {
+      "sha256": "01cb77f33759327030050b3a74ba2a25a7578691972e6ce9a73ef87f79dd044b",
+      "size": 1347
+    },
+    "assets/l10n/common/id-ID.json": {
+      "sha256": "a2305f62d3a361ebbfe6e8f79ce6345fded742ddd1c17464020ea0de19c8351f",
+      "size": 1193
+    },
+    "assets/l10n/common/it-IT.json": {
+      "sha256": "b6dcc86754139426dcce0685ebdd4cda57f8c49ce1386be204494030d16e4bf5",
+      "size": 1254
+    },
+    "assets/l10n/common/ja-JP.json": {
+      "sha256": "44815e5b2823741d0be4a636cadb46a876bac6014a82a3c883f96f05c87c9f50",
+      "size": 1430
+    },
+    "assets/l10n/common/km-VN.json": {
+      "sha256": "06c2b2790d44310a0bf9f45c9a7f40f1de4428bf1eb94f575bed0970b59c406f",
+      "size": 2096
+    },
+    "assets/l10n/common/lb-BE.json": {
+      "sha256": "a0b3915c543e2769a059b70713dc3e8369832f435e03a0a1deae7a39b8bc424a",
+      "size": 1260
+    },
+    "assets/l10n/common/ms-SG.json": {
+      "sha256": "ce4a2da43b617026b39fa5eacbe55fded0c1001924a9fbab3b770dfabd0a4945",
+      "size": 1236
+    },
+    "assets/l10n/common/nl-BE.json": {
+      "sha256": "b02b473d5d550af23dc893e474702f490ca838ac80f3487cda1737d6fdac041a",
+      "size": 1254
+    },
+    "assets/l10n/common/nl-NL.json": {
+      "sha256": "e7d5851d91dacfb88eae9a56937e6bd1a488982f8ce4f0ec8f47210ef0d77eb1",
+      "size": 1246
+    },
+    "assets/l10n/common/oc-FR.json": {
+      "sha256": "803b0878d84b4c83023c4901631537594661e98fa86da24bcb66fef81b6edf38",
+      "size": 1325
+    },
+    "assets/l10n/common/oc-IT.json": {
+      "sha256": "803b0878d84b4c83023c4901631537594661e98fa86da24bcb66fef81b6edf38",
+      "size": 1325
+    },
+    "assets/l10n/common/pt-BR.json": {
+      "sha256": "1d1256cf154bbcd1cd6ca77e0e431275d8bccfc78100c5edb3d30bf3777fbb19",
+      "size": 1252
+    },
+    "assets/l10n/common/ru-EE.json": {
+      "sha256": "b6ffd3f0bb0fa62f4d5d72fdef5de40d664181035a5bfa496a2af183ab7675c8",
+      "size": 1810
+    },
+    "assets/l10n/common/ru-FI.json": {
+      "sha256": "b6ffd3f0bb0fa62f4d5d72fdef5de40d664181035a5bfa496a2af183ab7675c8",
+      "size": 1810
+    },
+    "assets/l10n/common/sl-IT.json": {
+      "sha256": "902574a6897f0a53921672784cdf09f4f9708e0363b8ac4e93aaf39df9a1d2c2",
+      "size": 1291
+    },
+    "assets/l10n/common/su-ID.json": {
+      "sha256": "13b92c291a38a40419a73f9df66e91c303312cae0c69c2b4d550b8d47849b3c7",
+      "size": 1161
+    },
+    "assets/l10n/common/sv-FI.json": {
+      "sha256": "8314a9da4f5332516cfb8eba0f416d8eda73245694b6e38552ace2aa53d470d6",
+      "size": 1269
+    },
+    "assets/l10n/common/ta-SG.json": {
+      "sha256": "c1dfc9e4eb10ac4818aa1338c135ca91d886d3335f4d908e9992da87e11735ba",
+      "size": 2620
+    },
+    "assets/l10n/common/vi-VN.json": {
+      "sha256": "97d24f5889297cd3f5e6b502fb06233662cb30f1adfcae741cfc145697c287ab",
+      "size": 1410
+    },
+    "assets/l10n/common/yue-HK.json": {
+      "sha256": "98229d45e3cf191f96bd1fc8d8c400682aa85c37f0ad73d0e9e886109125c98f",
+      "size": 1124
+    },
+    "assets/l10n/common/zh-HK.json": {
+      "sha256": "5dfb7ec625afa8a8712b6b59988f79660f7fe5cab865a1adc9e35617039417e9",
+      "size": 1124
+    },
+    "assets/l10n/common/zh-SG.json": {
+      "sha256": "b7c75682e93f66f653a73e931b25aeb2869aaed6f89a69fffabc6d72bcbc0e97",
+      "size": 1120
+    },
+    "assets/l10n/strings/bew-ID.json": {
+      "sha256": "3747e3106f9d79a3facdc2e381adba7f57bfd0c5f84a8d4a67340f85cbe737c5",
+      "size": 65342
+    },
+    "assets/l10n/strings/ca-ES.json": {
+      "sha256": "9686d17c29acdb39f0b52896227d485535911dccdd7b7927c574721a246f5145",
+      "size": 68967
+    },
+    "assets/l10n/strings/ca-FR.json": {
+      "sha256": "9686d17c29acdb39f0b52896227d485535911dccdd7b7927c574721a246f5145",
+      "size": 68967
+    },
+    "assets/l10n/strings/ca-IT.json": {
+      "sha256": "9686d17c29acdb39f0b52896227d485535911dccdd7b7927c574721a246f5145",
+      "size": 68967
+    },
+    "assets/l10n/strings/co-FR.json": {
+      "sha256": "0c070eaf3671df174ce8135f457e6769951c9ee812a21e02dae4874e2a74e01f",
+      "size": 68605
+    },
+    "assets/l10n/strings/da-DE.json": {
+      "sha256": "1ec7919abf41847d593c23a1995fe369b989efc2374dbbf1ccc3b73f925cb759",
+      "size": 65262
+    },
+    "assets/l10n/strings/de-BE.json": {
+      "sha256": "3b3bc707e97d00ebbaf01da63eddc0349add95d4a16273798a9c06cdf22f8a25",
+      "size": 70823
+    },
+    "assets/l10n/strings/de-BR.json": {
+      "sha256": "3b3bc707e97d00ebbaf01da63eddc0349add95d4a16273798a9c06cdf22f8a25",
+      "size": 70823
+    },
+    "assets/l10n/strings/de-DE.json": {
+      "sha256": "3b3bc707e97d00ebbaf01da63eddc0349add95d4a16273798a9c06cdf22f8a25",
+      "size": 70823
+    },
+    "assets/l10n/strings/de-IT.json": {
+      "sha256": "3b3bc707e97d00ebbaf01da63eddc0349add95d4a16273798a9c06cdf22f8a25",
+      "size": 70823
+    },
+    "assets/l10n/strings/en-BQ.json": {
+      "sha256": "ce50d9208048c0e772b135f48e6e04b45e4c4601aae750d1e9414e938ced255e",
+      "size": 62913
+    },
+    "assets/l10n/strings/en-GB.json": {
+      "sha256": "ce50d9208048c0e772b135f48e6e04b45e4c4601aae750d1e9414e938ced255e",
+      "size": 62913
+    },
+    "assets/l10n/strings/en-HK.json": {
+      "sha256": "ce50d9208048c0e772b135f48e6e04b45e4c4601aae750d1e9414e938ced255e",
+      "size": 62913
+    },
+    "assets/l10n/strings/en-SG.json": {
+      "sha256": "ce50d9208048c0e772b135f48e6e04b45e4c4601aae750d1e9414e938ced255e",
+      "size": 62913
+    },
+    "assets/l10n/strings/en-US.json": {
+      "sha256": "ce50d9208048c0e772b135f48e6e04b45e4c4601aae750d1e9414e938ced255e",
+      "size": 62913
+    },
+    "assets/l10n/strings/es-419.json": {
+      "sha256": "05d2996190b35f9f2a726570540848ca9f93e6960ac88076da69d92f99161172",
+      "size": 70352
+    },
+    "assets/l10n/strings/es-AR.json": {
+      "sha256": "ff7583940254263bea87f25e15e02b70cdc803df6b5e28b2cdc90eeac3559c08",
+      "size": 70352
+    },
+    "assets/l10n/strings/es-CL.json": {
+      "sha256": "ff7583940254263bea87f25e15e02b70cdc803df6b5e28b2cdc90eeac3559c08",
+      "size": 70352
+    },
+    "assets/l10n/strings/es-CO.json": {
+      "sha256": "ff7583940254263bea87f25e15e02b70cdc803df6b5e28b2cdc90eeac3559c08",
+      "size": 70352
+    },
+    "assets/l10n/strings/es-EC.json": {
+      "sha256": "ff7583940254263bea87f25e15e02b70cdc803df6b5e28b2cdc90eeac3559c08",
+      "size": 70352
+    },
+    "assets/l10n/strings/es-ES.json": {
+      "sha256": "05d2996190b35f9f2a726570540848ca9f93e6960ac88076da69d92f99161172",
+      "size": 70352
+    },
+    "assets/l10n/strings/et-EE.json": {
+      "sha256": "6fb33749198eca67d48a77cb68a4ba19dd986d6161537c7c0151fddc84d03e28",
+      "size": 64998
+    },
+    "assets/l10n/strings/eu-ES.json": {
+      "sha256": "b24176eb218ccb8d816eec56e9134e5c54cbceb1bf9066a67ea02ab0de4931c6",
+      "size": 67800
+    },
+    "assets/l10n/strings/eu-FR.json": {
+      "sha256": "b24176eb218ccb8d816eec56e9134e5c54cbceb1bf9066a67ea02ab0de4931c6",
+      "size": 67800
+    },
+    "assets/l10n/strings/fi-FI.json": {
+      "sha256": "42abc04cf9cb827f12ef6254a769065e7af609da54482a6bf36097ff79f0802d",
+      "size": 67811
+    },
+    "assets/l10n/strings/fr-BE.json": {
+      "sha256": "dfe6bfb394b57744214ebdeba5ff14b163569a23c6fde045b36dc73c151ebdc0",
+      "size": 72119
+    },
+    "assets/l10n/strings/fr-CA.json": {
+      "sha256": "1464d8ee2579e277e4f2a95951dd898809679e86976c7b01e652c84c9f0ca718",
+      "size": 72120
+    },
+    "assets/l10n/strings/fr-FR.json": {
+      "sha256": "1464d8ee2579e277e4f2a95951dd898809679e86976c7b01e652c84c9f0ca718",
+      "size": 72120
+    },
+    "assets/l10n/strings/fr-IT.json": {
+      "sha256": "1464d8ee2579e277e4f2a95951dd898809679e86976c7b01e652c84c9f0ca718",
+      "size": 72120
+    },
+    "assets/l10n/strings/fur-IT.json": {
+      "sha256": "515043d06e809d160abf00e18c6172fd708df21d3bd7c1d19da6474f363bacff",
+      "size": 69864
+    },
+    "assets/l10n/strings/gl-ES.json": {
+      "sha256": "f88263e5a64ae8e7a5b62664e809f8e9d84d89bb2cd9a797e65604787e85c378",
+      "size": 68521
+    },
+    "assets/l10n/strings/id-ID.json": {
+      "sha256": "11914bcbe12e7e3ac2b3f029fd5a1b66fd75c04878516f875d04112185463567",
+      "size": 67625
+    },
+    "assets/l10n/strings/it-IT.json": {
+      "sha256": "c3df8f7297aeb269b8a504095d3def54d5db4f1db26e6d0839da2ae879daa4c5",
+      "size": 70157
+    },
+    "assets/l10n/strings/ja-JP.json": {
+      "sha256": "2c52f0654f68767e800ca3e1944f2158c535ad1fd796039ca8bfd20457ee2d36",
+      "size": 70111
+    },
+    "assets/l10n/strings/km-VN.json": {
+      "sha256": "05c624ba4b27fd30639b131c44381688e5de8af798cfe52810ba95d39810a0f9",
+      "size": 124269
+    },
+    "assets/l10n/strings/lb-BE.json": {
+      "sha256": "aeb2f0db76d1f1a2c8fba16f6067d405b06e7702274def65c570e514a69032fd",
+      "size": 67574
+    },
+    "assets/l10n/strings/ms-SG.json": {
+      "sha256": "fea0887b6925e8fa3dea936413f37cd94f168055a352e7a9cb2166245c656dd9",
+      "size": 68039
+    },
+    "assets/l10n/strings/nl-BE.json": {
+      "sha256": "45063b187f48df2bf2c660fc43cddd907c25eca5ea201f800d6a3bdffe4c370c",
+      "size": 67561
+    },
+    "assets/l10n/strings/nl-NL.json": {
+      "sha256": "45063b187f48df2bf2c660fc43cddd907c25eca5ea201f800d6a3bdffe4c370c",
+      "size": 67561
+    },
+    "assets/l10n/strings/oc-FR.json": {
+      "sha256": "4e982494109dd1421fe690fc5a3f17dbf4a66f1bfb91764e542b9e0ec6415305",
+      "size": 69207
+    },
+    "assets/l10n/strings/oc-IT.json": {
+      "sha256": "4e982494109dd1421fe690fc5a3f17dbf4a66f1bfb91764e542b9e0ec6415305",
+      "size": 69207
+    },
+    "assets/l10n/strings/pt-BR.json": {
+      "sha256": "50b0f4ac629899a1080486fe5e3855ee1d21087c7fdf94cf2d979e0566041e29",
+      "size": 68778
+    },
+    "assets/l10n/strings/ru-EE.json": {
+      "sha256": "4d36717b804881c4ad64b5e201b8cb5a09d2fcc11c3c00a716b03348085ef325",
+      "size": 96160
+    },
+    "assets/l10n/strings/ru-FI.json": {
+      "sha256": "4d36717b804881c4ad64b5e201b8cb5a09d2fcc11c3c00a716b03348085ef325",
+      "size": 96160
+    },
+    "assets/l10n/strings/sl-IT.json": {
+      "sha256": "d82ce2bafbae628e36213d36f972c173c91538fdb2ff4ac39e8932b79840333c",
+      "size": 65167
+    },
+    "assets/l10n/strings/su-ID.json": {
+      "sha256": "6c0bc270f286c015e682cc1cad2ee69275a130dc8bed1b24110d036b9925e253",
+      "size": 65411
+    },
+    "assets/l10n/strings/sv-FI.json": {
+      "sha256": "d2fa870cd3e97710deca5c02cb65893d4aa4b709e644bb50ba633f941b83f2cf",
+      "size": 66206
+    },
+    "assets/l10n/strings/ta-SG.json": {
+      "sha256": "82a8931f7d8af9630e86d86a6103e5b9daae13df7157e29ca6cdbb6b85739eaa",
+      "size": 139780
+    },
+    "assets/l10n/strings/vi-VN.json": {
+      "sha256": "caae446206a8a68617a48f1ad595fdab1a06244e6629dab0a637a1ebb89ff45e",
+      "size": 77920
+    },
+    "assets/l10n/strings/yue-HK.json": {
+      "sha256": "f8201d430856c2703d609a291e7f69e7290757ccd086d890efac25b2a928afed",
+      "size": 59861
+    },
+    "assets/l10n/strings/zh-HK.json": {
+      "sha256": "2e132d5845b3f9e8e13944aebfad44dff578c8846af1a1b784109f1dc4065051",
+      "size": 60429
+    },
+    "assets/l10n/strings/zh-SG.json": {
+      "sha256": "def0fbab8e13f157997281b9e4e2b4dd886b5edd4a703b95262d218729a8ee56",
+      "size": 61437
+    },
+    "assets/localization/CJK-OFL.txt": {
+      "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+      "size": 4301
+    },
+    "assets/localization/Japanese.otf": {
+      "sha256": "b1132cbb47a40dabbf303b72a22c017b1816d37572c8693d7ba4b6a8b70406ff",
+      "size": 631120
+    },
+    "assets/localization/Khmer-OFL.txt": {
+      "sha256": "be0407f060aea48787ff9e75d8d3aedef70aef113b3ce9aca26fdaacd10b1870",
+      "size": 4381
+    },
+    "assets/localization/Khmer.ttf": {
+      "sha256": "d78d0b07c58acc43ef616b6ea599a5ac4f61f9fc31ab4d3abc06af376a2b3951",
+      "size": 66016
+    },
+    "assets/localization/SimplifiedChinese.otf": {
+      "sha256": "4928878ce6313173fc35a02b5b8e41b1b5cd2037448253b790f393f7b70e74d0",
+      "size": 555228
+    },
+    "assets/localization/Tamil-OFL.txt": {
+      "sha256": "f8ff8ce7d0a81bf8d5e121c635ef027250c531f2fd37d5988b8dd6e45f19d7f1",
+      "size": 4381
+    },
+    "assets/localization/Tamil.ttf": {
+      "sha256": "3640decccf2ef0c4393e7a5b8acdb1cba59b9aa358f01b98cbaabb80448a0c91",
+      "size": 42688
+    },
+    "assets/localization/TraditionalChinese.otf": {
+      "sha256": "2048ff0da13d256230c8febb0890722bee71fa38302cf3ebf7f166b00fbb2f87",
+      "size": 813640
+    },
+    "assets/localization/fonts.json": {
+      "sha256": "37beaea0dba54c9f2c45995cbf9fd19fad21719d701718c41d7e58dd7748ca13",
+      "size": 517
+    },
+    "assets/localization/locales.json": {
+      "sha256": "131d65447f1d24ca644931d483028a5825974d97cc1eb67380094a4dab768ca6",
+      "size": 1462
+    },
+    "assets/localization/messages.json": {
+      "sha256": "d651d3d526a786cb4b1d64d3e3faaa1216a8957eb79ae073676c01ff1a47a441",
+      "size": 78291
+    },
+    "assets/maritime.wasm": {
+      "sha256": "edd1e9c3df5eca4227b4842011a23e84cc9a35b7400fbd391630dea3aeaf666d",
+      "size": 65216
+    },
+    "assets/parchment.png": {
+      "sha256": "41c6f5091796999dabcd2de1021b396da6f0d38ac1a80c396403b3539cede8e1",
+      "size": 396096
+    },
+    "assets/parchment.png.ktx2": {
+      "sha256": "6ac9675f5bc5461eae833a2d73a2ffd19213a0c32e9b7cfaa1c1061ca150744e",
+      "size": 349952
+    },
+    "assets/voices/chimera.wasm": {
+      "sha256": "5ef2b8b085e18c1b42982c39c3bb039f8de09dd545ce4113d4e239020b7aa63c",
+      "size": 1461815
+    },
+    "assets/wood.png": {
+      "sha256": "8f4da89c53cc01d053707ae526e63aa1b984466b68da2135bb43fe69bf8255bb",
+      "size": 592775
+    },
+    "assets/wood.png.ktx2": {
+      "sha256": "30f99d28a30e0a6aebba59fd88f5d9c7aa7130605e092baaab4df89c505e601a",
+      "size": 349952
+    },
+    "banner.jpg": {
+      "sha256": "e8d67132a8f11b6fd9e9c79f6ee2a954b6836195dc228841709c382664c3b13e",
+      "size": 594923
+    },
+    "cover.jpg": {
+      "sha256": "57c4f0c0f0952424b6a1208c4c5b0943a72e41e56f6647d53725232674c272b3",
+      "size": 777676
+    },
+    "description.md": {
+      "sha256": "97d3151c0cd0e6f9c230e3de8784fd8ee3e866c06e3efb3c6a9675b430fd09ed",
+      "size": 867
+    },
+    "favicon.png": {
+      "sha256": "8ec83067dd83a7a2b6f8563947d277219a52ab08e3223ee88d04d40115e28add",
+      "size": 84415
+    },
+    "favicon.png.ktx2": {
+      "sha256": "43aadca3660b8612eb5186649c834c38f73da909c29678c52be9df8fb2c5df58",
+      "size": 87776
+    },
+    "index.html": {
+      "sha256": "40d364f396779f87377ee25b937d79adf72c768e4499b319511b72a0f42fd19e",
+      "size": 1797
+    },
+    "licenses/CMUDICT.txt": {
+      "sha256": "bd4ce8e44170a5f9f481310ca85c51de3c4f851a65e679b40e603b143bd3542a",
+      "size": 1754
+    },
+    "licenses/Chimera-MIT.txt": {
+      "sha256": "0b8d6e0649e7b2068a8300cafb9ebded80d9a0fe99e699b96538ba0a8c5236b1",
+      "size": 1070
+    },
+    "licenses/Ultra-Water-MIT.txt": {
+      "sha256": "d5a8b50baec35c7e5efc430d7a03cd3fe160c4840326d153d308050f545c282e",
+      "size": 1255
+    },
+    "models/LICENSE-Apache-2.0.txt": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "size": 11358
+    },
+    "models/index.json": {
+      "sha256": "6ec1a854e92ca5d7720f2b337afa95627721090358f644d895a5aa0fe6b321b7",
+      "size": 19672
+    },
+    "models/kernel.wasm": {
+      "sha256": "d0ec7ef0e8d199520bc553f7befb3cef15c326261c3b9bff6b6a0bfc65d3284e",
+      "size": 10296
+    },
+    "models/tokenizer.json": {
+      "sha256": "7869f2bbda7f18283e163bf836fd83b5bcf2c65002fe558ecf7dca5472143c15",
+      "size": 1375150
+    },
+    "music/black-sails.ogg": {
+      "sha256": "9eab49b08de8b83427c71a24bdeec13043612183dbee5ed5b585487cfd5fa576",
+      "size": 629010
+    },
+    "music/lantern-harbour.ogg": {
+      "sha256": "09cbd30ebba61ec1f314a1c83f3199104ec021b95b132bef444b19522e3591da",
+      "size": 286478
+    },
+    "music/manifest.json": {
+      "sha256": "cc83be04bdc53d363cf5ae0e5b12567c9ef168f7239af7dda6e04bb13dbb4711",
+      "size": 2431
+    },
+    "music/manifest.txt": {
+      "sha256": "20b031f09bc1d81924a7d0fddaf9407de6a838ee9a0b5ec9b2d521ae995c8632",
+      "size": 1223
+    },
+    "music/open-sea.ogg": {
+      "sha256": "99a18aa87406649567eb35743300478a22bf9b5bb5ca8a892afdb168af941ad1",
+      "size": 481044
+    },
+    "music/quality.json": {
+      "sha256": "b2bff482ab3575720ff14a0bbe55d0e31790d6490ca1ad4fbf20d030fbd63eab",
+      "size": 1665
+    },
+    "server.js": {
+      "sha256": "b4af93cec1bc658ca66add19e84fe4f2c5666c2ee3f9cc4acaa38643ea4ac4b9",
+      "size": 82525
+    },
+    "sfx/anchor-chain.ogg": {
+      "sha256": "bff4f632664db52fc3b9ce3092c24e65ea1fd919231966a8da790a9280bb1f30",
+      "size": 35774
+    },
+    "sfx/cannon-fire.ogg": {
+      "sha256": "a2a1b3c738a2fffa4f20e94b3c522957da4aa0ce3b0c889573a752d742871dff",
+      "size": 24194
+    },
+    "sfx/coins.ogg": {
+      "sha256": "529e59f144998b6eb2d4af6dcfc57d75c5d0a8b22b05b3a3556c26380e73334a",
+      "size": 19940
+    },
+    "sfx/creaking-deck.ogg": {
+      "sha256": "a6df1fbfc8ea261219f49ce8115b526312f5959165586abf53f8252bc0a37c1a",
+      "size": 49032
+    },
+    "sfx/cutlass.ogg": {
+      "sha256": "63728787c5aeaec3057af4c0b60f81cb711801cf86485c5e7f771b792c2c74fb",
+      "size": 9743
+    },
+    "sfx/gulls.ogg": {
+      "sha256": "8de526178717f3b25efc928f5d8fb2670cf128467e8a08a6c5355b429d7836cc",
+      "size": 53745
+    },
+    "sfx/guns-run-out.ogg": {
+      "sha256": "0e32cc6b20073567ae0c5fb80c9cfebbeb854e8e14b8a99f98ae4588849835b4",
+      "size": 29365
+    },
+    "sfx/hull-impact.ogg": {
+      "sha256": "8ef9706cc5d0bec67b8f43e84ecdc6cfec0164c1ae74301d63ff1836c2338dd7",
+      "size": 21539
+    },
+    "sfx/manifest.json": {
+      "sha256": "de7d0b21a9b9db50df8d0aa8c6585fe748dbba5f17993175241cdc2df94d76b5",
+      "size": 9240
+    },
+    "sfx/manifest.txt": {
+      "sha256": "08b1754793dc412b612b5e669ac1b31a866ce9742c592a475666bf31156671f1",
+      "size": 4390
+    },
+    "sfx/ocean.ogg": {
+      "sha256": "292331823731769a4d3e36d28a96bca3b2e47a60760fd996084a963426d2db00",
+      "size": 120611
+    },
+    "sfx/repair-hammer.ogg": {
+      "sha256": "3ef72ef5f26c8a22bd878c4092fdeff847649396ce8b1dc3bc83525b398aa94f",
+      "size": 26399
+    },
+    "sfx/rowing.ogg": {
+      "sha256": "e6de8c569180fe3d923cbfc9161496ccba7814f9a8542b582b8a3561ce706fbd",
+      "size": 52170
+    },
+    "sfx/sail-hoist.ogg": {
+      "sha256": "2f6db60ce4cf45dffcc2641eaf031d2b0abdfd6630cc7530a81030840ce05efe",
+      "size": 38506
+    },
+    "sfx/ship-bell.ogg": {
+      "sha256": "fa82f413312bf2e6f8104bc3c5d4abd2324ac1a6a2d67c5c07bd286425dffe49",
+      "size": 12217
+    },
+    "sfx/ship-sinking.ogg": {
+      "sha256": "39bc235e8054597e24776f8db65517cb556f6373f212b9b18b02450d9d7eb1e1",
+      "size": 57860
+    },
+    "sfx/shot-splash.ogg": {
+      "sha256": "17b67719eb820d68cce09b34e98069f8df42ae4ad55090fa5b319f0067c07644",
+      "size": 28042
+    },
+    "sfx/shot-whistle.ogg": {
+      "sha256": "0ec24e59ae7d1204396551fc305c3e2cbbe9af5dab8b46a05c44f4c06f09255a",
+      "size": 20857
+    },
+    "sfx/storm.ogg": {
+      "sha256": "9f5f735f1d579d326827dd41d8a8a30cc81cca80b5fb79189c58a2f0e98ba244",
+      "size": 71350
+    },
+    "sfx/timber-chop.ogg": {
+      "sha256": "0fcd462a79e7063adce9f1cce92e4aff1d5f83a6abadfc8a7328ffe5aca0773a",
+      "size": 22120
+    },
+    "src/audio-events.js": {
+      "sha256": "f95d33fb27ab88e96a87ebc0b520ef550fe19cfa6af6ef3602b3c583228df5e0",
+      "size": 1432
+    },
+    "src/brain/browser.ts": {
+      "sha256": "893f50e7f8efeb392cdbbdc4dfdf9b4c2f4b61dbb530a0ae8b71c3e5008906cb",
+      "size": 10463
+    },
+    "src/brain/inference.js": {
+      "sha256": "a0c9469e56a82e26cc27edb6be6415fbbe3b93c56cc47ad253a06e69aace0ecd",
+      "size": 4495
+    },
+    "src/brain/policy.js": {
+      "sha256": "e39b47e7d9f1433cedb3c9a6b653dcc62ff32d76b0bc63f479806f8f31df6d3a",
+      "size": 4982
+    },
+    "src/brain/tokenizer.js": {
+      "sha256": "fb4e90a45badf96077a623acb7b50813f371503456cdb922dd907caad1b88588",
+      "size": 2034
+    },
+    "src/charts.ts": {
+      "sha256": "98abc7fe26a3d4cf4f1fd87305e5fee7a0528b6169ad6bc78aa364fdaf8c4a4b",
+      "size": 4544
+    },
+    "src/chimera-speech.ts": {
+      "sha256": "8fe53e3f06c38519c21515d2818147f594d93988e40f476c4731d916334e4703",
+      "size": 1429
+    },
+    "src/cloth.ts": {
+      "sha256": "aad55271afadbfc7c3b05a9a591d1be01fbee87dae8161be40d19b65cb37cffb",
+      "size": 6034
+    },
+    "src/combat.ts": {
+      "sha256": "7b546200c638e1db92438233872a04e543d6409496f3b245c9a0652418bfd449",
+      "size": 11896
+    },
+    "src/crew-voice-worker.ts": {
+      "sha256": "531f3587688d2026e1063269a60e367aab7f9471f5af31dad03a2cfc0e6e2f44",
+      "size": 1159
+    },
+    "src/crew-voice.ts": {
+      "sha256": "87e4fbe2dca8b408896d1b500d9f1eec378bc6f6d55afcc4d49fcccdb4d3f90f",
+      "size": 9004
+    },
+    "src/crew.ts": {
+      "sha256": "9b61128fdf77d72d82792fedaf65c9b12520bc5a0825d3d948eed777236ca285",
+      "size": 9455
+    },
+    "src/cursor.ts": {
+      "sha256": "2ce8868b7c376e5d2d6380439e4e723dfa89be064a39a2255efa4e04441f342f",
+      "size": 988
+    },
+    "src/islands.ts": {
+      "sha256": "d330dd6537c3060642c379974fa6034440d63ee2fbab8a349f78ca6f6de752b7",
+      "size": 17267
+    },
+    "src/l10n/font.ts": {
+      "sha256": "143760ea7c2594650e90b997026ff2a136d0aad175318ef66e2867597c927856",
+      "size": 9393
+    },
+    "src/l10n/menu.ts": {
+      "sha256": "171e533d03753e0a0194559a1e96a4b91d8fe2d68d690825e4565f6d39d469ca",
+      "size": 6317
+    },
+    "src/l10n/text-core.d.ts": {
+      "sha256": "2aeca7cfe13545bda09e41d75b333672e5dd0296219afbab73673021b9783a72",
+      "size": 493
+    },
+    "src/l10n/text-core.js": {
+      "sha256": "503c33926ff106669f78859ecbc9e02a7dc3e7fc9584dccc5b29007e65d11166",
+      "size": 6015
+    },
+    "src/l10n/text.ts": {
+      "sha256": "6480d4231d4ffd601135593e7b035015c4e0d897696d3f2be8a3abf896eb5fb3",
+      "size": 3825
+    },
+    "src/main.ts": {
+      "sha256": "0afc8bf3c017787f286edfe1911eb7496a484b956897da846e190ce52e976622",
+      "size": 86691
+    },
+    "src/maritime-kernel.ts": {
+      "sha256": "f694d61c6fb345579f07d8d7a53b6e976eb590431739cee83ff4beda288aa1fd",
+      "size": 1313
+    },
+    "src/maritime-motion.ts": {
+      "sha256": "b0e24929b29f404ca9fcd137bc67913f5b3c9eb68e67c4c96c9ede9b47c85a11",
+      "size": 4571
+    },
+    "src/navigation.js": {
+      "sha256": "eb8334f3bdb7de88ff96f8dc50bf86d87ff2fc7e8d65e847774cbd9ca5fd12d0",
+      "size": 3239
+    },
+    "src/plucks.ts": {
+      "sha256": "1c1262eb60bc83ba1fa46c6d94ca3ef2eb7df165f616931d4a22c9a41dbfa480",
+      "size": 3770
+    },
+    "src/render/graphics.ts": {
+      "sha256": "8ab70d8017c05ea92ee8853afbb2962aa4283c30ec9e6a10a894c203dc1fb075",
+      "size": 7946
+    },
+    "src/render/materials.ts": {
+      "sha256": "37c76d0427a95ca12c33a45d2d13e8855f9127db1c520d457ee634039055fe68",
+      "size": 2394
+    },
+    "src/render/ocean-sim.ts": {
+      "sha256": "640aa297aa899d18f1292d5e0e249eb99f8e3d2433a217c92078fc09a8a442f3",
+      "size": 23555
+    },
+    "src/render/precipitation.ts": {
+      "sha256": "754bbc2e29be2b775d1511a510959984f68cfac193aff4b0d5d05d8aa38fb7f9",
+      "size": 2630
+    },
+    "src/render/quality.js": {
+      "sha256": "4c6f12156ff869435530a6f1c7f06adfdcf94289a384451cc6db4a582d6e3330",
+      "size": 874
+    },
+    "src/render/reflection.ts": {
+      "sha256": "f0c4d5f4c00ab5d8f6520385645ce413fb9270b2b7ec03268ac8792dd0b5e3b4",
+      "size": 4281
+    },
+    "src/render/shore-detail.ts": {
+      "sha256": "0bef5868bd8d1ab7eaefe6940011929b54997dc8d77012beb8f991b8a6d5bbac",
+      "size": 2907
+    },
+    "src/render/sky.ts": {
+      "sha256": "3f040eb56bcf41761e1cfb2857ad0af15a921b49dc86bdbcafd1b9e26912b27f",
+      "size": 3878
+    },
+    "src/render/volumes.ts": {
+      "sha256": "c689b20a61f951e7fa90c0735ba0e94a2739c963bd5725c248116cf6b71c55c2",
+      "size": 7048
+    },
+    "src/render/water-shadow.ts": {
+      "sha256": "16ff48e675fb9432d140e568c243f6fe1465ce48d61667bcac53c7211b0b5c08",
+      "size": 5107
+    },
+    "src/render/water.ts": {
+      "sha256": "1057dafd9fbcbbf3eeb49f93bf8c762626871d1da8addd597ea271ed9351923b",
+      "size": 10711
+    },
+    "src/render/wave-probe.ts": {
+      "sha256": "1fa5c0d7aee9d5d896f218dda91383319f520e4ed076f868d295c897fa50495d",
+      "size": 2707
+    },
+    "src/render/weather.ts": {
+      "sha256": "66e1bb4cacd915daf73300a215702ced7fc208422d88ef9e97bf797b53361aa3",
+      "size": 803
+    },
+    "src/sealife.ts": {
+      "sha256": "46b1f4c3aa0a8054bf9c41bfbf1095e040c99a45f98b57095a4098708d444a8b",
+      "size": 8662
+    },
+    "src/sound.ts": {
+      "sha256": "a7fcdfd4806c6328d5603a7cfb60be672518b2170da8ad71f51795304a954060",
+      "size": 3609
+    },
+    "src/visuals.ts": {
+      "sha256": "b088a5a7a800e50b8603c641648c2b2212bf73df1920ed2de0f599a0ed1c660b",
+      "size": 36135
+    },
+    "starhermit-remote.json": {
+      "sha256": "257e2012233aad71a673f1e83ce0c542e770c65b48a8caee0d89325bd742e5c9",
+      "size": 169
+    },
+    "starhermit.txt": {
+      "sha256": "7802a8061ed308ed8b3c98e598a4eb9caf5621a68931705b16163b752bf8c37b",
+      "size": 1699
+    }
   },
-  "excluded": ["DESIGN.md", "README.md", "companion/", "package.json", "publication.json", "scripts/", "spec.md", "tests/", "tools/", "tsconfig.json"],
+  "excluded": [
+    "DESIGN.md",
+    "README.md",
+    "companion/",
+    "package.json",
+    "publication.json",
+    "scripts/",
+    "spec.md",
+    "tests/",
+    "tools/",
+    "tsconfig.json"
+  ],
   "format": 1
 }
